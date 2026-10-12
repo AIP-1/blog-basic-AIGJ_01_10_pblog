@@ -465,6 +465,18 @@
   font-size: 0.7rem;
   font-weight: 600;
 }
+/* 구독자 공개 표 (데모 .lock.sub): 파랑 */
+.badge--sub {
+  height: auto;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, #5b7fb8 14%, transparent);
+  color: var(--sub-ink);
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 .badge--new {
   background: var(--accent);
   margin-left: 0;
@@ -980,6 +992,11 @@
   line-height: 1.45;
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
+}
+/* 제목 앞 공개 범위 표시 (데모 .lock: 오른쪽에 6px) */
+.row__title .badge {
+  margin: 0 6px 0 0;
+  vertical-align: 2px;
 }
 .row__link:hover .row__title {
   text-decoration: underline;

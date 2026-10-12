@@ -4,7 +4,8 @@
  */
 
 export type ISODateString = string;
-export type Visibility = 'PUBLIC' | 'PRIVATE';
+/** 공개 · 구독자만(그 블로그나 다이어리를 구독한 사람과 주인) · 비공개 */
+export type Visibility = 'PUBLIC' | 'SUBSCRIBERS' | 'PRIVATE';
 
 export interface Page<T> {
   items: T[];
@@ -157,6 +158,8 @@ export interface PostSummary {
   commentCount?: number;
   /** 글쓴이(블로그 주인) 닉네임 — 목록의 작은 프로필 글자 */
   authorNickname?: string;
+  /** 구독 피드에는 구독자만 글도 나와서 표시에 쓴다 */
+  visibility?: Visibility;
 }
 
 /** 메인 '인기 다이어리' */
@@ -166,6 +169,8 @@ export interface PopularDiary {
   colorIndex: number;
   blog: BlogRef;
   postCount: number;
+  /** 다이어리 구독자 수 (인기 다이어리는 이 순서가 먼저) */
+  subscriberCount: number;
 }
 
 export type FeedSort = 'latest' | 'popular';
@@ -206,6 +211,18 @@ export interface BlogDetail {
   subscribedByMe: boolean;
 }
 
+/** 내가 구독한 다이어리 (최근에 구독한 것부터). postCount는 내가 볼 수 있는 글 수 */
+export interface SubscribedDiary {
+  id: number;
+  name: string;
+  colorIndex: number;
+  blog: BlogRef;
+  postCount: number;
+}
+
+/** 구독 피드 종류: 전체 · 다이어리 · 블로그 */
+export type SubscriptionKind = 'all' | 'diary' | 'blog';
+
 /** 내가 구독한 블로그 (최근에 구독한 것부터) */
 export interface SubscribedBlog {
   id: number;
@@ -226,11 +243,14 @@ export interface Category {
   name: string;
   /** 다이어리 소개 */
   description: string;
-  /** PRIVATE면 주인만 보고, 그 안의 글도 주인만 본다 */
+  /** PRIVATE면 주인만 보고, 그 안의 글도 주인만 본다. SUBSCRIBERS면 블로그나 이 다이어리의 구독자와 주인만 */
   visibility: Visibility;
   postCount: number;
   isDefault: boolean;
   colorIndex: number;
+  /** 다이어리 구독자 수 */
+  subscriberCount: number;
+  subscribedByMe: boolean;
 }
 
 export interface BlogTag {

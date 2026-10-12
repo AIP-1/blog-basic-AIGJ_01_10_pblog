@@ -5,7 +5,7 @@ import { updateCategory } from '../api/endpoints';
 import { useConfig } from '../api/queries';
 import type { Category, Visibility } from '../api/types';
 import { CATEGORY_COLORS } from '../lib/format';
-import { CATEGORY } from '../messages';
+import { CATEGORY, SUB_VIS } from '../messages';
 import { DiaryCover } from './BlogShell';
 import { Modal } from './Modal';
 import { FieldError, FormMessage } from './Status';
@@ -64,7 +64,7 @@ export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClos
     <Modal title="다이어리 설정" onClose={onClose}>
       <form className="form diary-settings" onSubmit={onSubmit} noValidate>
         <div className="diary-settings__preview">
-          <DiaryCover colorIndex={colorIndex} size="lg" locked={visibility === 'PRIVATE'} />
+          <DiaryCover colorIndex={colorIndex} size="lg" visibility={visibility} />
         </div>
         <div className="field">
           <label htmlFor={ids.name} className="field__label">
@@ -108,15 +108,29 @@ export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClos
           <label className="radio">
             <input type="radio" name="diary-visibility" checked={visibility === 'PUBLIC'} onChange={() => setVisibility('PUBLIC')} />
             <span className="radio__text">
-              공개 <small className="muted">누구나 이 다이어리의 공개 글을 볼 수 있습니다</small>
+              공개 <small className="muted">{SUB_VIS.diaryVisHint.PUBLIC}</small>
+            </span>
+          </label>
+          <label className="radio">
+            <input
+              type="radio"
+              name="diary-visibility"
+              checked={visibility === 'SUBSCRIBERS'}
+              onChange={() => setVisibility('SUBSCRIBERS')}
+            />
+            <span className="radio__text">
+              {SUB_VIS.label} <small className="muted">{SUB_VIS.diaryVisHint.SUBSCRIBERS}</small>
             </span>
           </label>
           <label className="radio">
             <input type="radio" name="diary-visibility" checked={visibility === 'PRIVATE'} onChange={() => setVisibility('PRIVATE')} />
             <span className="radio__text">
-              비공개 <small className="muted">나만 봅니다. 안의 글이 공개여도 다른 사람에게 보이지 않습니다</small>
+              비공개 <small className="muted">{SUB_VIS.diaryVisHint.PRIVATE}</small>
             </span>
           </label>
+          {diary.subscriberCount > 0 && diary.visibility !== 'PRIVATE' && (
+            <p className="muted diary-settings__note">{SUB_VIS.subCountNote(diary.subscriberCount)}</p>
+          )}
         </fieldset>
         <FormMessage kind="error" message={formError} />
         <div className="form__actions">

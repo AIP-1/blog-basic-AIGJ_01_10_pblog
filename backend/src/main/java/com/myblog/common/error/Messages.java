@@ -81,6 +81,9 @@ public final class Messages {
     public static final String REPLY_PARENT_NOT_FOUND = "답글을 달 댓글을 찾을 수 없습니다";
     public static final String OWN_POST = "내 글에는 할 수 없습니다";
     public static final String OWN_BLOG = "내 블로그는 구독할 수 없습니다";
+    public static final String OWN_DIARY = "내 다이어리는 구독할 수 없습니다";
+    public static final String PRIVATE_DIARY = "비공개 다이어리는 구독할 수 없습니다";
+    public static final String SUBSCRIBERS_ONLY_DIARY = "블로그를 구독한 사람만 볼 수 있는 다이어리입니다";
     public static final String ALREADY_REPORTED = "이미 신고한 글입니다";
     public static final String REPORT_REASON_REQUIRED = "신고 사유를 골라 주세요";
     public static final String REPORT_DETAIL_TOO_LONG = "설명은 200자 이하로 입력해 주세요";

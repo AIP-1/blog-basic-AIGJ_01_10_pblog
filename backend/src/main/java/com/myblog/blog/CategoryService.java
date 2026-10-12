@@ -20,9 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class CategoryService {
     public record CategoryRow(long id, long blogId, String name, int sortOrder, boolean isDefault, int colorIndex) {}
 
-    /** 화면에서는 "다이어리". description = 소개, visibility = PUBLIC/PRIVATE (비공개면 주인만 본다) */
+    /**
+     * 화면에서는 "다이어리". description = 소개, visibility = PUBLIC/SUBSCRIBERS/PRIVATE
+     * (구독자만이면 블로그나 이 다이어리를 구독한 사람과 주인만, 비공개면 주인만 본다),
+     * subscriberCount = 다이어리 구독자 수, subscribedByMe = 보는 사람이 이 다이어리를 구독했는지
+     */
     public record CategoryView(long id, String name, String description, String visibility, long postCount,
-                               boolean isDefault, int colorIndex) {}
+                               boolean isDefault, int colorIndex, long subscriberCount, boolean subscribedByMe) {}
 
     /** 다이어리 설정. 보낸 칸만 바꾼다. */
     public record Update(String name, String description, Integer colorIndex, String visibility) {}
@@ -48,15 +52,21 @@ public class CategoryService {
 
     /**
      * 순서대로, 다이어리마다 글 개수 (CF-08-9). 주인은 비공개 글·비공개 다이어리까지,
-     * 방문자는 공개 다이어리와 그 안의 공개 글만 본다.
+     * 방문자는 공개 다이어리와 그 안의 공개 글만, 구독자는 구독자만 다이어리·글까지 본다 (글 수도 볼 수 있는 글만).
+     * 다이어리마다 구독자 수와 내가 구독했는지도 함께.
      */
-    public List<CategoryView> list(long blogId, boolean owner) {
+    public List<CategoryView> list(long blogId, boolean owner, Long viewer) {
         return jdbc.sql("SELECT c.id, c.name, c.description, c.visibility, c.is_default, c.color_index,"
-                        + " (SELECT count(*) FROM posts p WHERE p.category_id = c.id AND (? OR "
-                        + PostQueryService.PUBLIC_ONLY + ")) AS post_count"
-                        + " FROM categories c WHERE c.blog_id = ? AND (? OR c.visibility = 'PUBLIC')"
+                        + " (SELECT count(*) FROM posts p WHERE p.category_id = c.id AND "
+                        + PostQueryService.VISIBLE_TO + ") AS post_count,"
+                        + " " + SubscriptionService.DIARY_SUBSCRIBERS + " AS subscriber_count,"
+                        + " EXISTS (SELECT 1 FROM diary_subscriptions ms WHERE ms.category_id = c.id"
+                        + " AND ms.member_id = :viewer) AS subscribed_by_me"
+                        + " FROM categories c WHERE c.blog_id = :blog AND (:owner OR c.visibility = 'PUBLIC'"
+                        + " OR (c.visibility = 'SUBSCRIBERS' AND " + SubscriptionService.SUBSCRIBED_TO_DIARY + "))"
                         + " ORDER BY c.sort_order, c.id")
-                .params(owner, blogId, owner).query(CategoryView.class).list();
+                .param("owner", owner).param("viewer", viewer == null ? -1L : viewer).param("blog", blogId)
+                .query(CategoryView.class).list();
     }
 
     public CategoryRow get(long categoryId) {
@@ -137,10 +147,14 @@ public class CategoryService {
             jdbc.sql("UPDATE categories SET color_index = ? WHERE id = ?").params(req.colorIndex(), categoryId).update();
         }
         if (req.visibility() != null) {
-            if (!req.visibility().equals("PUBLIC") && !req.visibility().equals("PRIVATE")) {
+            if (!List.of("PUBLIC", "SUBSCRIBERS", "PRIVATE").contains(req.visibility())) {
                 throw ApiException.field("visibility", "공개 범위가 올바르지 않습니다");
             }
             jdbc.sql("UPDATE categories SET visibility = ? WHERE id = ?").params(req.visibility(), categoryId).update();
+            // 비공개로 바꾸면 그 다이어리의 구독은 해제한다 (비공개 다이어리는 구독할 수 없다)
+            if (req.visibility().equals("PRIVATE")) {
+                jdbc.sql("DELETE FROM diary_subscriptions WHERE category_id = ?").param(categoryId).update();
+            }
         }
     }
 
