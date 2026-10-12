@@ -10,6 +10,7 @@ import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.Messages;
 import com.myblog.image.ImageService;
+import com.myblog.shop.InkService;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +40,11 @@ public class PostCommandService {
     private final KoreanClock clock;
     private final DraftService drafts;
     private final TopicService topics;
+    private final InkService ink;
 
     public PostCommandService(JdbcClient jdbc, MyBlogProperties props, BlogService blogs, CategoryService categories,
                               PostQueryService queries, TagService tags, ImageService images, KoreanClock clock,
-                              DraftService drafts, TopicService topics) {
+                              DraftService drafts, TopicService topics, InkService ink) {
         this.jdbc = jdbc;
         this.props = props;
         this.blogs = blogs;
@@ -53,6 +55,7 @@ public class PostCommandService {
         this.clock = clock;
         this.drafts = drafts;
         this.topics = topics;
+        this.ink = ink;
     }
 
     private Valid validate(long blogId, Request req) {
@@ -124,6 +127,7 @@ public class PostCommandService {
         tags.replace(id, v.tags());
         images.attach(id, memberId, imageIds(req));
         drafts.deleteQuietly(memberId, req.draftId());
+        ink.rewardPost(memberId, id, v.visibility()); // 스티커 상점: 공개 글이면 잉크 (하루 한도)
         return id;
     }
 

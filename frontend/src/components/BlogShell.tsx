@@ -4,11 +4,13 @@ import { Link } from 'react-router';
 import { isNotFound } from '../api/client';
 import { getBlog, getBlogTags, getCategories } from '../api/endpoints';
 import { qk } from '../api/queries';
+import { useDiaryStickers, type DiarySticker } from '../api/shop';
 import type { BlogDetail, Category, Visibility } from '../api/types';
 import { categoryColor } from '../lib/format';
 import { SUBSCRIBE, SUB_VIS } from '../messages';
 import { NotFound } from './NotFound';
 import { ErrorBox, Loading } from './Status';
+import { CoverStickers } from './Sticker';
 import { SubscribeButton } from './SubscribeButton';
 import { useHighlightTopic } from './topicHighlight';
 
@@ -44,21 +46,24 @@ export function DiaryVisBadge({ visibility }: { visibility: Visibility }) {
   return null;
 }
 
-/** 다이어리 표지 (책 모양). 색은 다이어리의 표지 색. 공개가 아니면 자물쇠 (구독자만은 '구독자 공개') */
+/** 다이어리 표지 (책 모양). 색은 다이어리의 표지 색. 공개가 아니면 자물쇠 (구독자만은 '구독자 공개'), stickers는 상점에서 산 표지 스티커 */
 export function DiaryCover({
   colorIndex,
   size = 'md',
   locked,
   visibility,
+  stickers,
 }: {
   colorIndex: number;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   locked?: boolean;
   visibility?: Visibility;
+  stickers?: DiarySticker[];
 }) {
   const lock = locked || (visibility !== undefined && visibility !== 'PUBLIC');
   return (
     <span className={`cover cover--${size}`} style={{ ['--c' as string]: categoryColor(colorIndex) }} aria-hidden={!lock}>
+      <CoverStickers stickers={stickers} />
       {lock && (
         <span className="cover__lock" title={visibility === 'SUBSCRIBERS' ? SUB_VIS.badge : undefined}>
           <LockIcon label={visibility === 'SUBSCRIBERS' ? SUB_VIS.badge : undefined} />
@@ -77,6 +82,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
   const catQ = useQuery({ queryKey: qk.categories(blogId), queryFn: () => getCategories(blogId), enabled: blogQ.isSuccess });
   const tagQ = useQuery({ queryKey: qk.blogTags(blogId), queryFn: () => getBlogTags(blogId), enabled: blogQ.isSuccess });
   useHighlightTopic(blogQ.data?.topic?.code);
+  const coverStickers = useDiaryStickers((catQ.data ?? []).map((c) => c.id));
 
   if (blogQ.isPending) return <Loading />;
   if (isNotFound(blogQ.error)) return <NotFound what="블로그" />;
@@ -126,7 +132,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
                     aria-current={on ? 'page' : undefined}
                     title={c.description ? `${c.name} — ${c.description}` : c.name}
                   >
-                    <DiaryCover colorIndex={c.colorIndex} visibility={c.visibility} />
+                    <DiaryCover colorIndex={c.colorIndex} visibility={c.visibility} stickers={coverStickers[c.id]} />
                     <span className="book__name">{c.name}</span>
                     <span className="book__count">{c.postCount}</span>
                   </Link>

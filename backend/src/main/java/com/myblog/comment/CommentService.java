@@ -8,6 +8,7 @@ import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.Messages;
 import com.myblog.post.PostQueryService;
+import com.myblog.shop.InkService;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,15 +31,17 @@ public class CommentService {
     private final RedisGuard guard;
     private final MyBlogProperties.Comment rules;
     private final KoreanClock clock;
+    private final InkService ink;
 
     public CommentService(JdbcClient jdbc, PostQueryService posts, StringRedisTemplate redis, RedisGuard guard,
-                          MyBlogProperties props, KoreanClock clock) {
+                          MyBlogProperties props, KoreanClock clock, InkService ink) {
         this.jdbc = jdbc;
         this.posts = posts;
         this.redis = redis;
         this.guard = guard;
         this.rules = props.comment();
         this.clock = clock;
+        this.ink = ink;
     }
 
     private static final String SELECT = """
@@ -91,7 +94,7 @@ public class CommentService {
     }
 
     public Map<String, Object> create(long postId, long memberId, String rawBody, Long parentId) {
-        posts.requireVisible(postId, memberId);
+        var post = posts.requireVisible(postId, memberId);
         if (parentId != null) {
             // 같은 글의 원 댓글에만 답글을 단다 (답글의 답글은 안 됨)
             boolean ok = jdbc.sql("SELECT count(*) FROM comments WHERE id = ? AND post_id = ? AND parent_id IS NULL")
@@ -116,6 +119,7 @@ public class CommentService {
         jdbc.sql("INSERT INTO comments (post_id, parent_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)")
                 .params(postId, parentId, memberId, body, clock.nowOffset()).update(keys, "id");
         long id = keys.getKey().longValue();
+        ink.rewardComment(memberId, post.authorId(), id); // 스티커 상점: 다른 사람 글이면 잉크 (하루 한도)
         return view(jdbc.sql(SELECT + " WHERE cm.id = ?").param(id).query(CommentRow.class).single(), memberId);
     }
 

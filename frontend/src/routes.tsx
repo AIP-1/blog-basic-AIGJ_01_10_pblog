@@ -29,6 +29,7 @@ export const routes: RouteObject[] = [
       { path: '/password-reset', element: <PasswordResetPage /> },
       { path: '/subscriptions', lazy: async () => ({ Component: (await import('./pages/SubscriptionsPage')).SubscriptionsPage }) },
       { path: '/bookmarks', lazy: async () => ({ Component: (await import('./pages/BookmarksPage')).BookmarksPage }) },
+      { path: '/shop', lazy: async () => ({ Component: (await import('./pages/ShopPage')).ShopPage }) },
       { path: '/me', lazy: async () => ({ Component: (await import('./pages/MyPage')).MyPage }) },
       {
         path: '/manage',

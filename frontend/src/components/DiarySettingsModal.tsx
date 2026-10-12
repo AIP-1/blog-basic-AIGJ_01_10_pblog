@@ -3,15 +3,16 @@ import { useId, useState, type FormEvent } from 'react';
 import { errorMessage, isApiError } from '../api/client';
 import { updateCategory } from '../api/endpoints';
 import { useConfig } from '../api/queries';
+import { putDiaryStickers, useDiaryStickers, type DiarySticker } from '../api/shop';
 import type { Category, Visibility } from '../api/types';
 import { CATEGORY_COLORS } from '../lib/format';
 import { CATEGORY, SUB_VIS } from '../messages';
-import { DiaryCover } from './BlogShell';
+import { CoverStickerEditor } from './CoverStickerEditor';
 import { Modal } from './Modal';
 import { FieldError, FormMessage } from './Status';
 import { useToast } from './toastContext';
 
-/** 다이어리 설정: 이름 · 소개 · 표지 색 · 공개 범위 */
+/** 다이어리 설정: 이름 · 소개 · 표지 색 · 표지 스티커 · 공개 범위 */
 export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClose: () => void }) {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -24,6 +25,9 @@ export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClos
   const [errors, setErrors] = useState<{ name?: string; description?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // 표지 스티커: 건드리기 전(null)에는 저장된 것을 보여 주고, 바꿨을 때만 저장한다
+  const savedStickers = useDiaryStickers([diary.id])[diary.id];
+  const [stickers, setStickers] = useState<DiarySticker[] | null>(null);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,6 +49,10 @@ export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClos
         colorIndex,
         visibility,
       });
+      if (stickers !== null) {
+        await putDiaryStickers(diary.id, stickers);
+        void queryClient.invalidateQueries({ queryKey: ['diaryStickers'] });
+      }
       void queryClient.invalidateQueries({ queryKey: ['blog'] });
       void queryClient.invalidateQueries({ queryKey: ['manage'] });
       toast.show(CATEGORY.saved);
@@ -61,10 +69,15 @@ export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClos
   };
 
   return (
-    <Modal title="다이어리 설정" onClose={onClose}>
+    <Modal title="다이어리 설정" onClose={onClose} width="md">
       <form className="form diary-settings" onSubmit={onSubmit} noValidate>
         <div className="diary-settings__preview">
-          <DiaryCover colorIndex={colorIndex} size="lg" visibility={visibility} />
+          <CoverStickerEditor
+            colorIndex={colorIndex}
+            visibility={visibility}
+            value={stickers ?? savedStickers ?? []}
+            onChange={setStickers}
+          />
         </div>
         <div className="field">
           <label htmlFor={ids.name} className="field__label">

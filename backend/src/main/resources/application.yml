@@ -136,6 +136,14 @@ myblog:
   notice:
     owner-email: ${NOTICE_OWNER_EMAIL:}   # 공지를 쓰는 회원의 이메일. 비우면 공지사항이 비어 있다
     category-name: 공지                    # 그 회원 블로그에서 공지로 쓰는 다이어리 이름
+  shop:
+    checkin-ink: 10          # 하루 첫 출석 (한국 시간 자정에 바뀐다)
+    post-ink: 20             # 공개 글을 새로 올리면 (수정은 해당 없음, 지워도 한도에 남는다)
+    post-daily-max: 3        # 글로 받는 잉크는 하루 3번까지
+    comment-ink: 2           # 다른 사람 글에 댓글을 달면
+    comment-daily-max: 10    # 댓글로 받는 잉크는 하루 10번까지
+    stickers-per-diary: 3    # 다이어리 표지에 붙일 수 있는 스티커 수
+    history-size: 20         # 상점 화면의 잉크 내역 개수
   dashboard:
     popular-days: 7
     popular-size: 5

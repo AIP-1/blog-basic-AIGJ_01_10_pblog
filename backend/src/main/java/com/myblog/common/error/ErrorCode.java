@@ -54,7 +54,17 @@ public enum ErrorCode {
     TOO_MANY_TAGS(HttpStatus.BAD_REQUEST, Messages.TOO_MANY_TAGS),
     BOOKMARK_FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, Messages.BOOKMARK_FOLDER_NOT_FOUND),
     BOOKMARK_FOLDER_NAME_TAKEN(HttpStatus.CONFLICT, Messages.BOOKMARK_FOLDER_NAME_TAKEN),
-    QUERY_TOO_SHORT(HttpStatus.BAD_REQUEST, Messages.QUERY_TOO_SHORT);
+    QUERY_TOO_SHORT(HttpStatus.BAD_REQUEST, Messages.QUERY_TOO_SHORT),
+
+    // 스티커 상점
+    INSUFFICIENT_INK(HttpStatus.CONFLICT, Messages.INSUFFICIENT_INK),
+    ALREADY_OWNED(HttpStatus.CONFLICT, Messages.ALREADY_OWNED),
+    PACK_NOT_FOUND(HttpStatus.NOT_FOUND, Messages.PACK_NOT_FOUND),
+    CHALLENGE_NOT_FOUND(HttpStatus.NOT_FOUND, Messages.CHALLENGE_NOT_FOUND),
+    CHALLENGE_NOT_DONE(HttpStatus.CONFLICT, Messages.CHALLENGE_NOT_DONE),
+    ALREADY_CLAIMED(HttpStatus.CONFLICT, Messages.ALREADY_CLAIMED),
+    STICKER_NOT_OWNED(HttpStatus.BAD_REQUEST, Messages.STICKER_NOT_OWNED),
+    TOO_MANY_STICKERS(HttpStatus.BAD_REQUEST, Messages.tooManyStickers(3));
 
     private final HttpStatus status;
     private final String message;
