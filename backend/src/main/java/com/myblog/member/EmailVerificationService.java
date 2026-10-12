@@ -66,9 +66,9 @@ public class EmailVerificationService {
      * 인증번호를 보낸다. sendMail=false면(비밀번호 찾기에서 가입되지 않은 이메일) 번호를 저장하지 않지만
      * 제한 카운트는 똑같이 올려 계정 유무를 숨긴다 (CF-25-3).
      *
-     * @return 번호의 만료 시각
+     * @return 번호의 만료 시각과 보낸 번호(보내지 않았으면 null)
      */
-    public Instant send(Purpose purpose, String email, boolean sendMail) {
+    public Sent send(Purpose purpose, String email, boolean sendMail) {
         if (sendMail && !mail.isAvailable()) {
             throw new ApiException(ErrorCode.MAIL_SEND_FAILED);
         }
@@ -91,17 +91,20 @@ public class EmailVerificationService {
             // 새 번호를 받으면 이전 번호·틀린 횟수·인증됨 표시는 모두 무효 (CF-01-15, CF-01-19)
             redis.delete(java.util.List.of(key(purpose, email, "fails"), key(purpose, email, "verified"),
                     key(purpose, email, "confirmed")));
+            String code = null;
             if (sendMail) {
-                String code = generator.generate();
+                code = generator.generate();
                 ops.set(key(purpose, email, "code"), code, rules.codeTtl());
                 var m = purpose == Purpose.SIGNUP ? templates.signupCode(code) : templates.resetCode(code);
                 mail.send(email, m.subject(), m.body());
             } else {
                 redis.delete(key(purpose, email, "code"));
             }
-            return clock.now().plus(rules.codeTtl());
+            return new Sent(clock.now().plus(rules.codeTtl()), code);
         });
     }
+
+    public record Sent(Instant expiresAt, String code) {}
 
     /** 번호를 확인하고 인증됨 표시를 남긴다. 맞으면 번호는 바로 사라진다 (CF-01-15). */
     public Instant confirm(Purpose purpose, String email, String rawCode) {

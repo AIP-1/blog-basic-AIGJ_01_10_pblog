@@ -36,10 +36,12 @@ export function useEmailVerification(purpose: VerificationPurpose) {
     setSending(true);
     setMessage(null);
     try {
-      await requestVerification({ purpose, email, ...(nickname !== undefined ? { nickname } : {}) });
+      const res = await requestVerification({ purpose, email, ...(nickname !== undefined ? { nickname } : {}) });
       setSent(true);
       setCode('');
-      setMessage({ kind: 'ok', text: purpose === 'reset' ? AUTH.resetSent : AUTH.codeSent });
+      const text = purpose === 'reset' ? AUTH.resetSent : AUTH.codeSent;
+      // 메일 서버를 연결하기 전까지 서버가 번호를 함께 돌려준다
+      setMessage({ kind: 'ok', text: res?.devCode ? `${text} (임시 인증번호: ${res.devCode})` : text });
       return null;
     } catch (e) {
       if (isApiError(e) && FIELD_CODES[e.code]) {

@@ -30,7 +30,7 @@ export interface PasswordCheck {
 }
 
 /** CF-01-6: 입력 중 규칙 충족 여부 */
-export function checkPassword(pw: string, min = 8, max = 10): PasswordCheck {
+export function checkPassword(pw: string, min = 8, max = 64): PasswordCheck {
   return {
     length: pw.length >= min && pw.length <= max,
     letter: /[A-Za-z]/.test(pw),
@@ -40,12 +40,12 @@ export function checkPassword(pw: string, min = 8, max = 10): PasswordCheck {
   };
 }
 
-export function isValidPassword(pw: string, min = 8, max = 10): boolean {
+export function isValidPassword(pw: string, min = 8, max = 64): boolean {
   const c = checkPassword(pw, min, max);
   return c.length && c.letter && c.digit && c.special && c.allowedChars;
 }
 
-export function passwordError(pw: string, min = 8, max = 10): string | null {
+export function passwordError(pw: string, min = 8, max = 64): string | null {
   if (!pw) return AUTH.required;
   return isValidPassword(pw, min, max) ? null : AUTH.passwordRule;
 }

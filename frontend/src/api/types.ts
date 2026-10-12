@@ -87,6 +87,8 @@ export interface MeResponse {
 
 export interface VerificationResponse {
   expiresAt: ISODateString;
+  /** 메일 서버가 없을 때(mode=log)만 온다 */
+  devCode?: string;
 }
 
 export interface VerificationConfirmResponse {

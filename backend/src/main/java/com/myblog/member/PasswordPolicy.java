@@ -5,7 +5,7 @@ import com.myblog.common.error.ApiException;
 import com.myblog.common.error.Messages;
 import org.springframework.stereotype.Component;
 
-/** CF-01-4: 영문·숫자·허용 특수문자를 각각 1개 이상, 8~10자, 공백 불가. */
+/** CF-01-4: 영문·숫자·허용 특수문자를 각각 1개 이상, 8~64자, 공백 불가. */
 @Component
 public class PasswordPolicy {
     private final MyBlogProperties.Member rules;

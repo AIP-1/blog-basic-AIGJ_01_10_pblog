@@ -58,11 +58,13 @@ class AuthFlowIT extends IntegrationTest {
     void CF_01_15_16_17_codeRules() throws Exception {
         String email = "c@example.com";
         var send = Map.<String, Object>of("purpose", "signup", "email", email, "nickname", "코드");
-        mvc.perform(postJson("/api/auth/verifications", send)).andExpect(status().isAccepted());
+        var first = mvc.perform(postJson("/api/auth/verifications", send)).andExpect(status().isAccepted());
         // 1분에 한 번
         mvc.perform(postJson("/api/auth/verifications", send))
                 .andExpect(jsonPath("$.error.code").value("RESEND_TOO_SOON"));
         String code = mail.lastCode(email);
+        // 메일 서버가 없는 동안(mode=log)은 화면에 보여 줄 번호를 함께 돌려준다
+        first.andExpect(jsonPath("$.devCode").value(code));
         String wrong = code.equals("AAAAAA") ? "BBBBBB" : "AAAAAA";
         for (int i = 0; i < 4; i++) {
             mvc.perform(postJson("/api/auth/verifications/confirm", Map.of("purpose", "signup", "email", email,

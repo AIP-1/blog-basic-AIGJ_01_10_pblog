@@ -14,7 +14,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     nicknameMin: 2,
     nicknameMax: 10,
     passwordMin: 8,
-    passwordMax: 10,
+    passwordMax: 64,
     bioMax: 100,
     blogNameMax: 30,
     blogDescriptionMax: 200,
