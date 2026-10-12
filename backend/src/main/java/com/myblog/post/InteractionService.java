@@ -39,6 +39,24 @@ public class InteractionService {
                 .params(postId, memberId).query(Long.class).single() > 0;
     }
 
+    public boolean bookmarkedBy(long postId, Long memberId) {
+        return memberId != null && jdbc.sql("SELECT count(*) FROM bookmarks WHERE post_id = ? AND member_id = ?")
+                .params(postId, memberId).query(Long.class).single() > 0;
+    }
+
+    /** 책갈피: 누르면 저장, 다시 누르면 뺀다. 볼 수 있는 글이면 내 글도 된다. */
+    @Transactional
+    public Map<String, Object> toggleBookmark(long postId, long memberId) {
+        queries.requireVisible(postId, memberId);
+        int removed = jdbc.sql("DELETE FROM bookmarks WHERE post_id = ? AND member_id = ?")
+                .params(postId, memberId).update();
+        if (removed == 0) {
+            jdbc.sql("INSERT INTO bookmarks (member_id, post_id, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING")
+                    .params(memberId, postId, clock.nowOffset()).update();
+        }
+        return Map.of("bookmarked", removed == 0);
+    }
+
     /** 누르면 좋아요, 다시 누르면 취소. 자기 글은 불가. */
     @Transactional
     public Map<String, Object> toggleLike(long postId, long memberId) {

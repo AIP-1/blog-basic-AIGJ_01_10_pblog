@@ -8,6 +8,7 @@ import type { PostDetail } from '../api/types';
 import { useRequireLogin } from '../api/useRequireLogin';
 import { PostStats } from '../components/Cards';
 import { CommentSection } from '../components/CommentSection';
+import { BookmarkButton } from '../components/BookmarkButton';
 import { LikeButton } from '../components/LikeButton';
 import { MarkdownView } from '../components/MarkdownView';
 import { NotFound } from '../components/NotFound';
@@ -138,6 +139,7 @@ export function PostDetailPage() {
 
       <div className="post__reactions">
         <LikeButton post={post} />
+        <BookmarkButton post={post} />
       </div>
 
       <div className="post__tools">
