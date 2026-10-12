@@ -14,7 +14,10 @@ export function Layout() {
           <Outlet />
         </main>
         <footer className="site-footer">
-          <div className="container">© 사각</div>
+          <div className="container site-footer__inner">
+            <span className="site-footer__logo">© 사각</span>
+            <span>각자의 블로그에 생각을 끄적이는 곳</span>
+          </div>
         </footer>
         <AuthModal />
         <ScrollRestoration />

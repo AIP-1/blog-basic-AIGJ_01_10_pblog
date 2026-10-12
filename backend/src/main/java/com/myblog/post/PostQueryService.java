@@ -45,14 +45,18 @@ public class PostQueryService {
                           int categoryColorIndex,
                           String topicCode, String topicName, String title, String body, String visibility,
                           String coverKey, OffsetDateTime createdAt, OffsetDateTime contentUpdatedAt,
-                          long viewCount) {}
+                          long viewCount, String authorNickname, long likeCount, long commentCount) {}
 
     private static final String SELECT = """
             SELECT p.id, p.blog_id, b.name AS blog_name, p.author_id, p.category_id, c.name AS category_name,
                    c.color_index AS category_color_index,
                    t.code AS topic_code, t.name AS topic_name, p.title, p.body, p.visibility,
-                   pi.storage_key AS cover_key, p.created_at, p.content_updated_at, p.view_count
+                   pi.storage_key AS cover_key, p.created_at, p.content_updated_at, p.view_count,
+                   am.nickname AS author_nickname,
+                   (SELECT count(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+                   (SELECT count(*) FROM comments pc2 WHERE pc2.post_id = p.id) AS comment_count
             FROM posts p
+            JOIN members am ON am.id = p.author_id
             JOIN blogs b ON b.id = p.blog_id
             JOIN topics t ON t.id = b.topic_id
             JOIN categories c ON c.id = p.category_id
@@ -101,6 +105,9 @@ public class PostQueryService {
         m.put("visibility", p.visibility());
         m.put("coverImageUrl", p.coverKey() == null ? null : ImageService.url(p.coverKey()));
         m.put("viewCount", p.viewCount());
+        m.put("likeCount", p.likeCount());
+        m.put("commentCount", p.commentCount());
+        m.put("authorNickname", p.authorNickname());
         return m;
     }
 
@@ -265,6 +272,53 @@ public class PostQueryService {
     public PageResponse<Map<String, Object>> notices(String ownerEmail, String categoryName, Integer page) {
         return page(PUBLIC_ONLY + " AND c.name = :cat AND p.author_id IN (SELECT nm.id FROM members nm"
                 + " WHERE nm.email = :email)", Map.of("cat", categoryName, "email", ownerEmail), page);
+    }
+
+
+    /** 메인 '분야별 글': 공개 글을 주제로 거르고 최신순 또는 인기순으로 (데모 '분야별 글'). */
+    public PageResponse<Map<String, Object>> publicFeed(Long topicId, String sort, Integer page) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        String where = PUBLIC_ONLY;
+        if (topicId != null) {
+            where += " AND b.topic_id = :topic";
+            params.put("topic", topicId);
+        }
+        String order = "popular".equals(sort) ? " ORDER BY " + POPULARITY + " DESC, p.created_at DESC, p.id DESC" : ORDER;
+        return page(where, params, page, order);
+    }
+
+    /** 인기 글: since 이후에 올라온 공개 글을 인기 점수 순으로 (since가 null이면 전체 기간). */
+    public List<Map<String, Object>> popularPublic(OffsetDateTime since, int limit) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        String where = PUBLIC_ONLY;
+        if (since != null) {
+            where += " AND p.created_at >= :since";
+            params.put("since", since);
+        }
+        params.put("limit", limit);
+        return jdbc.sql(SELECT + " WHERE " + where + " ORDER BY " + POPULARITY + " DESC, p.created_at DESC, p.id DESC"
+                        + " LIMIT :limit").params(params)
+                .query(PostRow.class).list().stream().map(this::summary).toList();
+    }
+
+    /** 인기 다이어리: 공개 글이 있는 다이어리를 그 글들의 인기 점수 합계 순으로 (데모 '인기 다이어리'). */
+    public List<Map<String, Object>> popularDiaries(int limit) {
+        return jdbc.sql("SELECT c.id, c.name, c.color_index, b.id AS blog_id, b.name AS blog_name,"
+                        + " count(p.id) AS post_count, sum" + POPULARITY + " AS score"
+                        + " FROM categories c JOIN blogs b ON b.id = c.blog_id JOIN posts p ON p.category_id = c.id"
+                        + " WHERE " + PUBLIC_ONLY
+                        + " GROUP BY c.id, c.name, c.color_index, b.id, b.name"
+                        + " ORDER BY score DESC, post_count DESC, c.id LIMIT :limit")
+                .param("limit", limit)
+                .query((rs, i) -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", rs.getLong("id"));
+                    m.put("name", rs.getString("name"));
+                    m.put("colorIndex", rs.getInt("color_index"));
+                    m.put("blog", Map.of("id", rs.getLong("blog_id"), "name", rs.getString("blog_name")));
+                    m.put("postCount", rs.getLong("post_count"));
+                    return m;
+                }).list();
     }
 
 }

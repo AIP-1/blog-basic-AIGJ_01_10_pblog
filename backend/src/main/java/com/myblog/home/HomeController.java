@@ -46,7 +46,19 @@ public class HomeController {
         m.put("latestPosts", posts.latestPublic(rules.latest()));
         m.put("blogs", blogs.recent(null, rules.blogs()));
         m.put("notices", noticePage(1).items().stream().limit(rules.notices()).toList());
+        m.put("weeklyPopular", posts.popularPublic(clock.nowOffset().minusDays(rules.popularDays()), rules.weeklyPopular()));
+        m.put("popularPosts", posts.popularPublic(null, rules.recommendPool()));
+        m.put("popularDiaries", posts.popularDiaries(rules.popularDiaries()));
         return m;
+    }
+
+    /** 메인 '분야별 글': topic(주제 코드)이 없으면 전체, sort=popular면 인기순. */
+    @GetMapping("/api/posts")
+    public PageResponse<Map<String, Object>> feed(@RequestParam(required = false) String topic,
+                                                  @RequestParam(required = false) String sort,
+                                                  @RequestParam(required = false) Integer page) {
+        Long topicId = topic == null || topic.isBlank() ? null : topics.byCode(topic).id();
+        return posts.publicFeed(topicId, sort, page);
     }
 
     /** 공지사항: 공지 담당 회원(myblog.notice.owner-email) 블로그의 '공지' 다이어리 공개 글, 최신순. */

@@ -4,7 +4,7 @@ import type { MeResponse } from '../api/types';
 import { useAuth } from '../auth/context';
 import { isLoginRequiredPath } from '../lib/paths';
 
-/** 사용자 메뉴: 내 블로그 / 글쓰기 / 마이페이지 / 블로그 관리(새 댓글 수) / 로그아웃 */
+/** 사용자 메뉴: 이름·이메일 / 내 블로그 / 블로그 관리(새 댓글 수) / 내 정보 / 로그아웃 (데모 이름 메뉴) */
 export function UserMenu({ me }: { me: MeResponse }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -56,12 +56,13 @@ export function UserMenu({ me }: { me: MeResponse }) {
             {count}
           </span>
         )}
-        <span aria-hidden="true" className="usermenu__caret">
-          ▾
-        </span>
       </button>
       {open && (
         <ul className="usermenu__list" role="menu">
+          <li role="none" className="usermenu__who">
+            <b>{me.member.nickname}</b>
+            <span>{me.member.email}</span>
+          </li>
           {me.blog && (
             <li role="none">
               <Link role="menuitem" to={`/blogs/${me.blog.id}`} onClick={close}>
@@ -70,19 +71,14 @@ export function UserMenu({ me }: { me: MeResponse }) {
             </li>
           )}
           <li role="none">
-            <Link role="menuitem" to="/write" onClick={close}>
-              글쓰기
+            <Link role="menuitem" to="/manage" onClick={close}>
+              블로그 관리
+              {count > 0 && <span className="badge">{count}</span>}
             </Link>
           </li>
           <li role="none">
             <Link role="menuitem" to="/me" onClick={close}>
-              마이페이지
-            </Link>
-          </li>
-          <li role="none">
-            <Link role="menuitem" to="/manage" onClick={close}>
-              블로그 관리
-              {count > 0 && <span className="badge">{count}</span>}
+              내 정보
             </Link>
           </li>
           <li role="none">
