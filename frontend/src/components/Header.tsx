@@ -3,9 +3,10 @@ import { useMe } from '../api/queries';
 import { useAuth } from '../auth/context';
 import { NOTICE } from '../messages';
 import { SearchBox } from './SearchBox';
+import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 
-/** 맨 위 메뉴(한 줄): 로고 · 홈 · 내 블로그 · 공지사항 · 검색창 · 로그인/회원가입 또는 글쓰기/사용자 메뉴 (데모 topbar) */
+/** 맨 위 메뉴(한 줄): 로고 · 홈 · 내 블로그 · 공지사항 · 검색창 · 야간모드 · 로그인/회원가입 또는 글쓰기/사용자 메뉴 (데모 topbar) */
 export function Header() {
   const { data: me, isPending } = useMe();
   const { openLogin } = useAuth();
@@ -40,6 +41,7 @@ export function Header() {
           <SearchBox key={onSearch ? `q:${q}` : 'idle'} initialQuery={q} />
         </div>
         <div className="site-header__auth">
+          <ThemeToggle />
           {isPending ? null : me ? (
             <>
               <Link to="/write" className="btn btn--sm btn--primary site-header__write">

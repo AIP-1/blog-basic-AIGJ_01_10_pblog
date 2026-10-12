@@ -287,6 +287,12 @@
 .ad-slide:hover {
   color: var(--ad-fg);
 }
+/* 야간모드: 광고 바탕은 어둡게 눌러 주고 글자는 밝게 */
+:root[data-theme='dark'] .ad-slide,
+:root[data-theme='dark'] .ad-slide:hover {
+  background: color-mix(in srgb, var(--ad-bg) 14%, var(--surface-2));
+  color: color-mix(in srgb, var(--ad-fg) 25%, var(--text));
+}
 .ad-copy {
   display: flex;
   flex-direction: column;
@@ -319,8 +325,8 @@
   right: 12px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -333,8 +339,8 @@
   height: 34px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  color: #222;
+  background: var(--float-bg);
+  color: var(--float-ink);
   font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
@@ -365,13 +371,13 @@
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--ad-dot);
   cursor: pointer;
   transition: width 0.25s;
 }
 .ad-dots button.is-on {
   width: 20px;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--ad-dot-on);
 }
 
 /* 이번 주 인기 글: 6개 같은 크기 카드 */
@@ -425,8 +431,8 @@
   display: grid;
   place-items: center;
   border-radius: 6px;
-  background: rgba(17, 19, 24, 0.62);
-  color: #fff;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
   font-size: 0.72rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -720,8 +726,8 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--text-sub);
+  background: var(--float-bg);
+  color: var(--float-ink);
 }
 .cover--add {
   display: grid;
@@ -942,9 +948,9 @@
   cursor: pointer;
 }
 .seg-tabs button.is-on {
-  background: var(--surface);
+  background: var(--surface-raised);
   color: var(--text);
-  box-shadow: 0 1px 2px rgba(17, 19, 24, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 .tag-filter {
   display: flex;
