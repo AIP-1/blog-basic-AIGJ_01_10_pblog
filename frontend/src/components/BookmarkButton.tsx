@@ -1,42 +1,29 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { errorMessage } from '../api/client';
-import { toggleBookmark } from '../api/endpoints';
-import { qk } from '../api/queries';
+import { useState } from 'react';
 import type { PostDetail } from '../api/types';
 import { useRequireLogin } from '../api/useRequireLogin';
 import { BOOKMARK } from '../messages';
-import { useToast } from './toastContext';
+import { BookmarkDialog } from './BookmarkDialog';
 
-/** 책갈피 넣기/빼기. 글 아래 공유 버튼 옆에 있다. 내 책갈피(/bookmarks)에 모인다 */
+/** 책갈피 (데모 '저장'). 글 아래 공유 버튼 옆에 있고, 누르면 폴더를 고르는 창이 뜬다. 내 책갈피(/bookmarks)에 모인다 */
 export function BookmarkButton({ post }: { post: PostDetail }) {
-  const queryClient = useQueryClient();
   const requireLogin = useRequireLogin();
-  const toast = useToast();
+  const [open, setOpen] = useState(false);
   const on = !!post.bookmarkedByMe;
-  const mutation = useMutation({
-    mutationFn: () => toggleBookmark(post.id),
-    onSuccess: (res) => {
-      queryClient.setQueryData<PostDetail>(qk.post(post.id), (old) => (old ? { ...old, bookmarkedByMe: res.bookmarked } : old));
-      void queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-      toast.show(res.bookmarked ? BOOKMARK.added : BOOKMARK.removed);
-    },
-    onError: (e) => {
-      if ((e as { status?: number }).status !== 401) toast.show(errorMessage(e), 'error');
-    },
-  });
 
   return (
-    <button
-      type="button"
-      className={`tool-btn bookmark-btn${on ? ' is-on' : ''}`}
-      aria-pressed={on}
-      disabled={mutation.isPending}
-      onClick={() => requireLogin(() => mutation.mutateAsync())}
-    >
-      <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
-        <path d="M4 2h8v12l-4-3-4 3V2Z" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      </svg>
-      책갈피
-    </button>
+    <>
+      <button
+        type="button"
+        className={`tool-btn bookmark-btn${on ? ' is-on' : ''}`}
+        aria-pressed={on}
+        onClick={() => requireLogin(() => setOpen(true))}
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 3h12v18l-6-4-6 4Z" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+        {on ? BOOKMARK.buttonOn(post.bookmark?.folderName ?? BOOKMARK.none) : BOOKMARK.button}
+      </button>
+      {open && <BookmarkDialog post={post} onClose={() => setOpen(false)} />}
+    </>
   );
 }

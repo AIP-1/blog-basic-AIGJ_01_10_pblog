@@ -6,6 +6,10 @@ import type {
   BlogPostListItem,
   BlogPostSort,
   BlogTag,
+  BookmarkedPost,
+  BookmarkFolder,
+  BookmarkFolders,
+  BookmarkPlace,
   Category,
   Comment,
   DashboardResponse,
@@ -29,6 +33,8 @@ import type {
   SearchResponse,
   SearchType,
   SubscribedBlog,
+  SubscribedDiary,
+  SubscriptionKind,
   StatsResponse,
   Topic,
   TopicPageResponse,
@@ -157,14 +163,27 @@ export const createComment = (postId: number, body: string, parentId?: number) =
     body: parentId === undefined ? { body } : { body, parentId },
   });
 export const deleteComment = (id: number) => api<void>(`/api/comments/${id}`, { method: 'DELETE' });
-export const toggleBookmark = (postId: number) =>
-  api<{ bookmarked: boolean }>(`/api/posts/${postId}/bookmark`, { method: 'PUT' });
-export const getBookmarks = (page: number) => api<Page<PostSummary>>('/api/me/bookmarks', { query: { page } });
+/** 책갈피에 꽂거나, 이미 꽂은 글이면 폴더만 옮긴다 (folderId null = 미분류) */
+export const saveBookmark = (postId: number, folderId: number | null) =>
+  api<BookmarkPlace>(`/api/posts/${postId}/bookmark`, { method: 'PUT', body: { folderId } });
+export const removeBookmark = (postId: number) => api<void>(`/api/posts/${postId}/bookmark`, { method: 'DELETE' });
+/** folder: all · none(미분류) · 폴더 id */
+export const getBookmarks = (folder: string, page: number) =>
+  api<Page<BookmarkedPost>>('/api/me/bookmarks', { query: { folder, page } });
+export const getBookmarkFolders = () => api<BookmarkFolders>('/api/me/bookmark-folders');
+export const createBookmarkFolder = (name: string) =>
+  api<BookmarkFolder>('/api/me/bookmark-folders', { method: 'POST', body: { name } });
+export const renameBookmarkFolder = (id: number, name: string) =>
+  api<void>(`/api/me/bookmark-folders/${id}`, { method: 'PATCH', body: { name } });
+export const deleteBookmarkFolder = (id: number) => api<void>(`/api/me/bookmark-folders/${id}`, { method: 'DELETE' });
 export const toggleSubscribe = (blogId: number) =>
   api<{ subscribed: boolean; subscriberCount: number }>(`/api/blogs/${blogId}/subscribe`, { method: 'PUT' });
+export const toggleDiarySubscribe = (categoryId: number) =>
+  api<{ subscribed: boolean; subscriberCount: number }>(`/api/categories/${categoryId}/subscribe`, { method: 'PUT' });
 export const getSubscriptions = () => api<SubscribedBlog[]>('/api/me/subscriptions');
-export const getSubscriptionPosts = (page: number) =>
-  api<Page<PostSummary>>('/api/me/subscriptions/posts', { query: { page } });
+export const getDiarySubscriptions = () => api<SubscribedDiary[]>('/api/me/subscriptions/diaries');
+export const getSubscriptionPosts = (page: number, kind: SubscriptionKind = 'all') =>
+  api<Page<PostSummary>>('/api/me/subscriptions/posts', { query: { page, kind: kind === 'all' ? undefined : kind } });
 export const toggleLike = (postId: number) => api<LikeResponse>(`/api/posts/${postId}/like`, { method: 'PUT' });
 export const reportPost = (postId: number, body: { reason: ReportReason; detail?: string }) =>
   api<void>(`/api/posts/${postId}/reports`, { method: 'POST', body });

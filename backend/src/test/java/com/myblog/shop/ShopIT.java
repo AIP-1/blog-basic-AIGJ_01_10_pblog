@@ -286,4 +286,41 @@ class ShopIT extends IntegrationTest {
         mvc.perform(get("/api/diary-stickers").param("categoryIds", String.valueOf(cat)).session(a))
                 .andExpect(jsonPath("$.length()").value(0));
     }
+
+    @Test
+    void subscribersOnlyCoverStickersAndDiarySubscriptionChallenge() throws Exception {
+        long aId = signup("에이", "a@example.com");
+        MockHttpSession a = login("a@example.com", PASSWORD);
+        MockHttpSession b = member("비이", "b@example.com");
+        MockHttpSession c = member("씨이", "c@example.com");
+        long blog = blogIdOf(a);
+        long diary = read(mvc.perform(postJson("/api/blogs/" + blog + "/categories", Map.of("name", "구독자 일기")).session(a))
+                .andReturn()).get("id").asLong();
+        setBalance(aId, 100);
+        mvc.perform(post("/api/shop/packs/stationery/buy").with(csrf()).session(a)).andExpect(status().isOk());
+        mvc.perform(jsonRequest(put("/api/categories/" + diary + "/stickers"),
+                Map.of("stickers", List.of(Map.of("slot", "C", "code", "stat-tape", "rotation", 0)))).session(a))
+                .andExpect(status().isOk());
+
+        // 공개 다이어리일 때 비가 구독한다 (다이어리 구독도 '첫 구독'으로 친다)
+        mvc.perform(put("/api/categories/" + diary + "/subscribe").with(csrf()).session(b)).andExpect(status().isOk());
+        mvc.perform(get("/api/shop/challenges").session(b))
+                .andExpect(jsonPath("$[6].code").value("first-subscribe"))
+                .andExpect(jsonPath("$[6].completed").value(true));
+        mvc.perform(post("/api/shop/challenges/first-subscribe/claim").with(csrf()).session(b))
+                .andExpect(jsonPath("$.earned").value(20));
+
+        // 구독자만 다이어리: 구독자와 주인만 표지 스티커를 본다
+        mvc.perform(jsonRequest(patch("/api/categories/" + diary), Map.of("visibility", "SUBSCRIBERS")).session(a))
+                .andExpect(status().isOk());
+        String key = "$['" + diary + "'].length()";
+        mvc.perform(get("/api/diary-stickers").param("categoryIds", String.valueOf(diary)).session(b))
+                .andExpect(jsonPath(key).value(1));
+        mvc.perform(get("/api/diary-stickers").param("categoryIds", String.valueOf(diary)).session(a))
+                .andExpect(jsonPath(key).value(1));
+        mvc.perform(get("/api/diary-stickers").param("categoryIds", String.valueOf(diary)).session(c))
+                .andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get("/api/diary-stickers").param("categoryIds", String.valueOf(diary)))
+                .andExpect(jsonPath("$.length()").value(0));
+    }
 }

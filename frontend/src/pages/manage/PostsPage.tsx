@@ -4,15 +4,16 @@ import { errorMessage } from '../../api/client';
 import { deletePost, getCategories, getManagePosts } from '../../api/endpoints';
 import { qk } from '../../api/queries';
 import type { Visibility } from '../../api/types';
+import { VisBadge } from '../../components/Cards';
 import { Pagination } from '../../components/Pagination';
 import { Empty, ErrorBox, Loading } from '../../components/Status';
 import { useToast } from '../../components/toastContext';
 import { formatDate } from '../../lib/format';
-import { MANAGE, POST } from '../../messages';
+import { MANAGE, POST, SUB_VIS } from '../../messages';
 import { useManage } from './context';
 
 function toVisibility(v: string | null): Visibility | null {
-  return v === 'PUBLIC' || v === 'PRIVATE' ? v : null;
+  return v === 'PUBLIC' || v === 'SUBSCRIBERS' || v === 'PRIVATE' ? v : null;
 }
 
 /** 글 관리: 공개 여부·분류 거르기, 보기·수정·삭제 (BM-03) */
@@ -65,6 +66,7 @@ export function PostsPage() {
           <select className="input select" value={visibility ?? ''} onChange={(e) => update('visibility', e.target.value || null)}>
             <option value="">전체</option>
             <option value="PUBLIC">공개</option>
+            <option value="SUBSCRIBERS">{SUB_VIS.label}</option>
             <option value="PRIVATE">비공개</option>
           </select>
         </label>
@@ -123,7 +125,7 @@ export function PostsPage() {
                   <td data-label="다이어리">{p.category.name}</td>
                   <td data-label="작성일">{formatDate(p.createdAt)}</td>
                   <td data-label="공개">
-                    {p.visibility === 'PRIVATE' ? <span className="badge badge--muted">{POST.privateBadge}</span> : '공개'}
+                    {p.visibility === 'PUBLIC' ? '공개' : <VisBadge visibility={p.visibility} />}
                   </td>
                   <td data-label="조회" className="num">
                     {p.viewCount.toLocaleString()}

@@ -115,7 +115,8 @@ public class DraftService {
         }
         Long categoryId = ownCategory(memberId, req.categoryId());
         Long topicId = topics.idOf(req.topicCode()).orElse(null);
-        String visibility = "PRIVATE".equals(req.visibility()) ? "PRIVATE" : "PUBLIC";
+        String visibility = "SUBSCRIBERS".equals(req.visibility()) || "PRIVATE".equals(req.visibility())
+                ? req.visibility() : "PUBLIC";
         String[] tagArray = tags.normalize(req.tags()).toArray(String[]::new);
         Long[] imageIds = req.imageIds() == null ? new Long[0] : req.imageIds().stream().distinct().toArray(Long[]::new);
         OffsetDateTime now = clock.nowOffset();

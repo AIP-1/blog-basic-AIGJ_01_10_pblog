@@ -105,7 +105,7 @@ daily_stats (blogs, posts NULL 가능, date)     search_logs (keyword, time)
   "다이어리"라고 부른다. 비공개 다이어리는 주인만 보고, 그 안의 글은 글 자체가 공개여도 주인만 본다
   (`PostQueryService.OPEN_CATEGORY`가 공개 글 조건 `PUBLIC_ONLY`/`VISIBLE_TO`에 들어 있다).
 - 블로그 글 목록은 다이어리·태그로 거르고 최신순·인기순·오래된 순으로 정렬한다. 인기 점수 = 조회 ×1 + 좋아요 ×5
-  + 댓글 단 사람 ×3(글쓴이 본인 것은 빼고, 한 사람 댓글 여러 개는 한 명).
+  + 댓글 단 사람 ×3 + 책갈피 ×4(글쓴이 본인 것은 빼고, 한 사람 댓글 여러 개는 한 명).
 
 ## posts (글) — CF-05, CF-06, CF-09, CF-13
 

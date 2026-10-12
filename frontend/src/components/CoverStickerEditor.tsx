@@ -10,6 +10,7 @@ import {
   type DiarySticker,
   type StickerSlot,
 } from '../api/shop';
+import type { Visibility } from '../api/types';
 import { SHOP } from '../messages';
 import { DiaryCover } from './BlogShell';
 import { StickerImg } from './Sticker';
@@ -20,12 +21,12 @@ import { StickerImg } from './Sticker';
  */
 export function CoverStickerEditor({
   colorIndex,
-  locked,
+  visibility,
   value,
   onChange,
 }: {
   colorIndex: number;
-  locked: boolean;
+  visibility: Visibility;
   value: DiarySticker[];
   onChange: (next: DiarySticker[]) => void;
 }) {
@@ -58,7 +59,7 @@ export function CoverStickerEditor({
   return (
     <div className="cover-editor">
       <div className="cover-editor__stage">
-        <DiaryCover colorIndex={colorIndex} size="xl" locked={locked} stickers={value} />
+        <DiaryCover colorIndex={colorIndex} size="xl" visibility={visibility} stickers={value} />
         <div className="cover-editor__slots">
           {STICKER_SLOTS.map((s) => {
             const taken = value.some((v) => v.slot === s);

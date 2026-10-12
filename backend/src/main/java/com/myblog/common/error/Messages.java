@@ -81,6 +81,9 @@ public final class Messages {
     public static final String REPLY_PARENT_NOT_FOUND = "답글을 달 댓글을 찾을 수 없습니다";
     public static final String OWN_POST = "내 글에는 할 수 없습니다";
     public static final String OWN_BLOG = "내 블로그는 구독할 수 없습니다";
+    public static final String OWN_DIARY = "내 다이어리는 구독할 수 없습니다";
+    public static final String PRIVATE_DIARY = "비공개 다이어리는 구독할 수 없습니다";
+    public static final String SUBSCRIBERS_ONLY_DIARY = "블로그를 구독한 사람만 볼 수 있는 다이어리입니다";
     public static final String ALREADY_REPORTED = "이미 신고한 글입니다";
     public static final String REPORT_REASON_REQUIRED = "신고 사유를 골라 주세요";
     public static final String REPORT_DETAIL_TOO_LONG = "설명은 200자 이하로 입력해 주세요";
@@ -88,6 +91,11 @@ public final class Messages {
     public static final String TOO_MANY_IMAGES = "이미지는 글 하나에 10장까지 올릴 수 있습니다";
     public static final String TOO_MANY_TAGS = "태그는 5개까지 붙일 수 있습니다";
     public static final String TAG_RULE = "태그는 공백과 쉼표 없이 1~15자로 입력해 주세요";
+    public static final String BOOKMARK_FOLDER_NOT_FOUND = "존재하지 않는 폴더입니다";
+    public static final String BOOKMARK_FOLDER_NAME_REQUIRED = "폴더 이름을 입력해 주세요";
+    public static final String BOOKMARK_FOLDER_NAME_TOO_LONG = "폴더 이름은 20자 이하로 입력해 주세요";
+    public static final String BOOKMARK_FOLDER_NAME_RESERVED = "쓸 수 없는 이름입니다";
+    public static final String BOOKMARK_FOLDER_NAME_TAKEN = "같은 이름의 폴더가 이미 있습니다";
 
     public static String categoryDescriptionTooLong(int max) {
         return "다이어리 소개는 " + max + "자 이하로 입력해 주세요";

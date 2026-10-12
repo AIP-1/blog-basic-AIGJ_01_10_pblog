@@ -83,6 +83,11 @@ export function UserMenu({ me }: { me: MeResponse }) {
             </li>
           )}
           <li role="none">
+            <Link role="menuitem" to="/bookmarks" onClick={close}>
+              책갈피
+            </Link>
+          </li>
+          <li role="none">
             <Link role="menuitem" to="/manage" onClick={close}>
               블로그 관리
               {count > 0 && <span className="badge">{count}</span>}
@@ -95,11 +100,6 @@ export function UserMenu({ me }: { me: MeResponse }) {
                 <InkIcon size={12} />
                 {(ink?.balance ?? 0).toLocaleString()}
               </span>
-            </Link>
-          </li>
-          <li role="none">
-            <Link role="menuitem" to="/bookmarks" onClick={close}>
-              책갈피
             </Link>
           </li>
           <li role="none">

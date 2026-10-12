@@ -6,15 +6,16 @@ import { deletePosts, getBlogPosts, getPinnedPosts, movePosts } from '../api/end
 import { qk } from '../api/queries';
 import { useDiaryStickers } from '../api/shop';
 import type { BlogPostListItem, BlogPostSort, Category } from '../api/types';
-import { BlogShell, DiaryCover, LockIcon } from '../components/BlogShell';
+import { BlogShell, DiaryCover, DiaryVisBadge } from '../components/BlogShell';
 import { BlogIntro } from './BlogAboutPage';
-import { PostRow } from '../components/Cards';
+import { PostRow, VisBadge } from '../components/Cards';
 import { DiarySettingsModal } from '../components/DiarySettingsModal';
+import { DiarySubscribeButton } from '../components/SubscribeButton';
 import { Pagination } from '../components/Pagination';
 import { Empty, ErrorBox, FormMessage, Loading } from '../components/Status';
 import { useToast } from '../components/toastContext';
 import { categoryColor, formatDate } from '../lib/format';
-import { CATEGORY, EXPLORE, POST } from '../messages';
+import { CATEGORY, EXPLORE, POST, SUBSCRIBE, SUB_VIS } from '../messages';
 
 function toPage(v: string | null): number {
   const n = Number(v);
@@ -26,7 +27,7 @@ const SORTS: { key: BlogPostSort; label: string; hint?: string }[] = [
   {
     key: 'popular',
     label: '인기순',
-    hint: '조회 ×1 + 좋아요 ×5 + 댓글 단 사람 ×3',
+    hint: '조회 ×1 + 좋아요 ×5 + 댓글 단 사람 ×3 + 책갈피 ×4',
   },
   { key: 'oldest', label: '오래된 순' },
 ];
@@ -60,6 +61,7 @@ export function BlogPage() {
           <>
             {diary && (
               <DiaryHead
+                blogId={blog.id}
                 diary={diary}
                 isOwner={blog.isOwner}
                 editing={edit}
@@ -111,34 +113,45 @@ export function BlogPage() {
   );
 }
 
-/** 다이어리를 고르면 위에 보이는 머리: 표지 · 이름 · 소개 · 글 수, 주인에게는 쓰기 · 설정 */
+/**
+ * 다이어리를 고르면 위에 보이는 머리: 표지 · 이름 · 소개 · 글 수 · 구독자 수,
+ * 주인에게는 쓰기 · 설정 · 편집, 다른 사람에게는 다이어리 구독 버튼
+ */
 function DiaryHead({
+  blogId,
   diary,
   isOwner,
   editing,
   onEdit,
 }: {
+  blogId: number;
   diary: Category;
   isOwner: boolean;
   editing: boolean;
   onEdit: (on: boolean) => void;
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const locked = diary.visibility === 'PRIVATE';
+  const note = diary.visibility === 'PRIVATE' ? ` · ${CATEGORY.privateNote}` : diary.visibility === 'SUBSCRIBERS' ? ` · ${SUB_VIS.diaryNote}` : '';
   const coverStickers = useDiaryStickers([diary.id]);
   return (
     <section className="diary-head" style={{ ['--c' as string]: categoryColor(diary.colorIndex) }}>
-      <DiaryCover colorIndex={diary.colorIndex} size="lg" locked={locked} stickers={coverStickers[diary.id]} />
+      <DiaryCover colorIndex={diary.colorIndex} size="lg" visibility={diary.visibility} stickers={coverStickers[diary.id]} />
       <div className="diary-head__info">
         <h2>
           {diary.name}
-          {locked && <LockIcon />}
+          <DiaryVisBadge visibility={diary.visibility} />
         </h2>
         {diary.description && <p>{diary.description}</p>}
         <span className="muted">
-          글 {diary.postCount}개{locked ? ` · ${CATEGORY.privateNote}` : ''}
+          글 {diary.postCount}개 · {SUBSCRIBE.count(diary.subscriberCount ?? 0)}
+          {note}
         </span>
       </div>
+      {!isOwner && (
+        <div className="diary-head__actions">
+          <DiarySubscribeButton blogId={blogId} diary={diary} />
+        </div>
+      )}
       {isOwner && (
         <div className="diary-head__actions">
           {editing ? (
@@ -309,6 +322,7 @@ function DiaryEditList({
                 <span className="muted">
                   {formatDate(p.createdAt)}
                   {p.visibility === 'PRIVATE' && ` · ${POST.privateBadge}`}
+                  {p.visibility === 'SUBSCRIBERS' && ` · ${SUB_VIS.badge}`}
                 </span>
               </span>
             </label>
@@ -399,7 +413,7 @@ function BlogPostList({ blogId, isOwner, categoryId, title, tag, sort, page, onS
               post={p}
               blogId={Number(blogId)}
               showBlog={false}
-              badge={p.visibility === 'PRIVATE' ? <span className="badge badge--muted">{POST.privateBadge}</span> : undefined}
+              badge={<VisBadge visibility={p.visibility} />}
             />
           ))}
         </div>

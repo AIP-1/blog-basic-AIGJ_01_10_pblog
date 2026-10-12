@@ -2,6 +2,7 @@ package com.myblog.shop;
 
 import com.myblog.blog.BlogService;
 import com.myblog.blog.CategoryService;
+import com.myblog.blog.SubscriptionService;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.Messages;
@@ -41,7 +42,7 @@ public class DiaryStickerService {
 
     /**
      * 여러 다이어리의 표지 스티커를 한 번에: { 다이어리 번호: [{slot, code, rotation}] }.
-     * 비공개 다이어리는 주인에게만 준다.
+     * 다이어리를 볼 수 있는 사람에게만 준다: 공개는 누구나, 구독자만은 구독자와 주인, 비공개는 주인만.
      */
     public Map<String, List<Map<String, Object>>> of(List<Long> categoryIds, Long viewer) {
         Map<String, List<Map<String, Object>>> out = new LinkedHashMap<>();
@@ -49,11 +50,11 @@ public class DiaryStickerService {
             return out;
         }
         List<Long> ids = categoryIds.stream().distinct().limit(100).toList();
-        jdbc.sql("""
-                SELECT ds.category_id, ds.slot, ds.sticker_code, ds.rotation
-                FROM diary_stickers ds JOIN categories c ON c.id = ds.category_id JOIN blogs b ON b.id = c.blog_id
-                WHERE ds.category_id IN (:ids) AND (c.visibility = 'PUBLIC' OR b.owner_id = :viewer)
-                ORDER BY ds.category_id, ds.slot""")
+        jdbc.sql("SELECT ds.category_id, ds.slot, ds.sticker_code, ds.rotation"
+                        + " FROM diary_stickers ds JOIN categories c ON c.id = ds.category_id JOIN blogs b ON b.id = c.blog_id"
+                        + " WHERE ds.category_id IN (:ids) AND (c.visibility = 'PUBLIC' OR b.owner_id = :viewer"
+                        + " OR (c.visibility = 'SUBSCRIBERS' AND " + SubscriptionService.SUBSCRIBED_TO_DIARY + "))"
+                        + " ORDER BY ds.category_id, ds.slot")
                 .param("ids", ids).param("viewer", viewer == null ? -1L : viewer)
                 .query((rs, i) -> {
                     Map<String, Object> m = new LinkedHashMap<>();

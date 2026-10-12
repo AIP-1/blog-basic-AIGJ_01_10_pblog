@@ -92,7 +92,7 @@ public class ManageService {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("blog", blogId);
         String where = "p.blog_id = :blog";
-        if ("PUBLIC".equals(visibility) || "PRIVATE".equals(visibility)) {
+        if (visibility != null && List.of("PUBLIC", "SUBSCRIBERS", "PRIVATE").contains(visibility)) {
             where += " AND p.visibility = :vis";
             params.put("vis", visibility);
         }

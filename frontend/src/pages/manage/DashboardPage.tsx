@@ -3,9 +3,10 @@ import { Link } from 'react-router';
 import { getDashboard } from '../../api/endpoints';
 import { qk } from '../../api/queries';
 import type { CountTriple } from '../../api/types';
+import { VisBadge } from '../../components/Cards';
 import { ErrorBox, Loading } from '../../components/Status';
 import { formatDate } from '../../lib/format';
-import { MANAGE, POST } from '../../messages';
+import { MANAGE } from '../../messages';
 import { ViewsChart } from './charts';
 
 function StatCard({ label, value }: { label: string; value: CountTriple }) {
@@ -78,7 +79,7 @@ export function DashboardPage() {
                 <li key={p.id}>
                   <Link to={`/posts/${p.id}`}>
                     {p.title}
-                    {p.visibility === 'PRIVATE' && <span className="badge badge--muted">{POST.privateBadge}</span>}
+                    <VisBadge visibility={p.visibility} />
                   </Link>
                   <span className="muted">{formatDate(p.createdAt)}</span>
                 </li>

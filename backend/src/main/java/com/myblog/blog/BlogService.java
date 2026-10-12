@@ -85,9 +85,10 @@ public class BlogService {
 
     public Map<String, Object> summary(BlogRow b, Long viewerId) {
         boolean owner = viewerId != null && viewerId == b.ownerId();
+        // 글 수·마지막 글은 보는 사람이 볼 수 있는 글만 (주인은 전부, 구독자는 구독자만 글까지)
         var stats = jdbc.sql("SELECT count(*) AS cnt, max(p.created_at) AS last_at FROM posts p"
-                        + " WHERE p.blog_id = ? AND (? OR " + com.myblog.post.PostQueryService.PUBLIC_ONLY + ")")
-                .params(b.id(), owner)
+                        + " WHERE p.blog_id = :blog AND " + com.myblog.post.PostQueryService.VISIBLE_TO)
+                .param("blog", b.id()).param("viewer", viewerId == null ? -1L : viewerId)
                 .query((rs, i) -> new Object[] {rs.getLong("cnt"), rs.getObject("last_at", OffsetDateTime.class)})
                 .single();
         Map<String, Object> m = new LinkedHashMap<>();

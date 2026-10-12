@@ -5,9 +5,9 @@ import { isNotFound } from '../api/client';
 import { getBlog, getBlogTags, getCategories } from '../api/endpoints';
 import { qk } from '../api/queries';
 import { useDiaryStickers, type DiarySticker } from '../api/shop';
-import type { BlogDetail, Category } from '../api/types';
+import type { BlogDetail, Category, Visibility } from '../api/types';
 import { categoryColor } from '../lib/format';
-import { SUBSCRIBE } from '../messages';
+import { SUBSCRIBE, SUB_VIS } from '../messages';
 import { NotFound } from './NotFound';
 import { ErrorBox, Loading } from './Status';
 import { CoverStickers } from './Sticker';
@@ -33,24 +33,40 @@ export function LockIcon({ label = '비공개' }: { label?: string }) {
   );
 }
 
-/** 다이어리 표지 (책 모양). 색은 다이어리의 표지 색, stickers는 상점에서 산 표지 스티커 */
+/** 다이어리 공개 범위 표시: 비공개는 자물쇠, 구독자만은 '구독자 공개' 표 (데모 diaryVisBadge) */
+export function DiaryVisBadge({ visibility }: { visibility: Visibility }) {
+  if (visibility === 'PRIVATE') return <LockIcon />;
+  if (visibility === 'SUBSCRIBERS') {
+    return (
+      <span className="badge badge--sub" title={SUB_VIS.diaryHint}>
+        {SUB_VIS.badge}
+      </span>
+    );
+  }
+  return null;
+}
+
+/** 다이어리 표지 (책 모양). 색은 다이어리의 표지 색. 공개가 아니면 자물쇠 (구독자만은 '구독자 공개'), stickers는 상점에서 산 표지 스티커 */
 export function DiaryCover({
   colorIndex,
   size = 'md',
   locked,
+  visibility,
   stickers,
 }: {
   colorIndex: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   locked?: boolean;
+  visibility?: Visibility;
   stickers?: DiarySticker[];
 }) {
+  const lock = locked || (visibility !== undefined && visibility !== 'PUBLIC');
   return (
-    <span className={`cover cover--${size}`} style={{ ['--c' as string]: categoryColor(colorIndex) }} aria-hidden={!locked}>
+    <span className={`cover cover--${size}`} style={{ ['--c' as string]: categoryColor(colorIndex) }} aria-hidden={!lock}>
       <CoverStickers stickers={stickers} />
-      {locked && (
-        <span className="cover__lock">
-          <LockIcon />
+      {lock && (
+        <span className="cover__lock" title={visibility === 'SUBSCRIBERS' ? SUB_VIS.badge : undefined}>
+          <LockIcon label={visibility === 'SUBSCRIBERS' ? SUB_VIS.badge : undefined} />
         </span>
       )}
     </span>
@@ -102,7 +118,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
             <span className="avatar avatar--xs" aria-hidden="true">
               {blog.owner.nickname.slice(0, 1)}
             </span>
-            {blog.owner.nickname} · 다이어리 {categories.length}권 · 글 {total}개 · {SUBSCRIBE.count(blog.subscriberCount ?? 0)}
+            {blog.owner.nickname} · 다이어리 {categories.length}권 · 글 {total}개 · {SUBSCRIBE.blogCount(blog.subscriberCount ?? 0)}
           </p>
           <nav className="bookshelf" aria-label="다이어리 책장">
             <div className="bookshelf__books">
@@ -116,7 +132,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
                     aria-current={on ? 'page' : undefined}
                     title={c.description ? `${c.name} — ${c.description}` : c.name}
                   >
-                    <DiaryCover colorIndex={c.colorIndex} locked={c.visibility === 'PRIVATE'} stickers={coverStickers[c.id]} />
+                    <DiaryCover colorIndex={c.colorIndex} visibility={c.visibility} stickers={coverStickers[c.id]} />
                     <span className="book__name">{c.name}</span>
                     <span className="book__count">{c.postCount}</span>
                   </Link>
@@ -170,7 +186,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
                       <span className="diary-list__name">
                         <span className="dot" style={{ background: categoryColor(c.colorIndex) }} aria-hidden="true" />
                         {c.name}
-                        {c.visibility === 'PRIVATE' && <LockIcon />}
+                        <DiaryVisBadge visibility={c.visibility} />
                       </span>
                       <span className="diary-list__count">{c.postCount}</span>
                     </Link>

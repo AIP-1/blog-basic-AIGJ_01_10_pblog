@@ -85,7 +85,7 @@ public class PostCommandService {
                 : topics.idOf(req.topicCode())
                         .orElseThrow(() -> ApiException.field("topicCode", Messages.TOPIC_REQUIRED));
         String visibility = req.visibility() == null ? "PUBLIC" : req.visibility();
-        if (!visibility.equals("PUBLIC") && !visibility.equals("PRIVATE")) {
+        if (!List.of("PUBLIC", "SUBSCRIBERS", "PRIVATE").contains(visibility)) {
             throw ApiException.field("visibility", "공개 여부가 올바르지 않습니다");
         }
         return new Valid(title, body, category.id(), topicId, visibility, tags.normalize(req.tags()));

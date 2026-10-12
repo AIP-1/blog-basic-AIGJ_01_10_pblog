@@ -31,6 +31,7 @@ public class PostController {
     private final PostQueryService queries;
     private final PostCommandService commands;
     private final InteractionService interactions;
+    private final BookmarkService bookmarks;
     private final TagService tags;
     private final CommentService comments;
     private final BlogService blogs;
@@ -39,11 +40,12 @@ public class PostController {
     private final MyBlogProperties props;
 
     public PostController(PostQueryService queries, PostCommandService commands, InteractionService interactions,
-                          TagService tags, CommentService comments, BlogService blogs, ViewRecorder views,
-                          JdbcClient jdbc, MyBlogProperties props) {
+                          BookmarkService bookmarks, TagService tags, CommentService comments, BlogService blogs,
+                          ViewRecorder views, JdbcClient jdbc, MyBlogProperties props) {
         this.queries = queries;
         this.commands = commands;
         this.interactions = interactions;
+        this.bookmarks = bookmarks;
         this.tags = tags;
         this.comments = comments;
         this.blogs = blogs;
@@ -96,7 +98,9 @@ public class PostController {
         m.put("viewCount", p.viewCount());
         m.put("likeCount", interactions.likeCount(p.id()));
         m.put("likedByMe", interactions.likedBy(p.id(), viewer));
-        m.put("bookmarkedByMe", interactions.bookmarkedBy(p.id(), viewer));
+        var bookmark = bookmarks.of(p.id(), viewer);
+        m.put("bookmarkedByMe", bookmark != null);
+        m.put("bookmark", bookmark);
         m.put("commentCount", comments.count(p.id()));
         m.put("prev", n.get("prev").orElse(null));
         m.put("next", n.get("next").orElse(null));
@@ -182,18 +186,6 @@ public class PostController {
     @PutMapping("/api/posts/{id}/like")
     public Map<String, Object> like(@PathVariable long id, @AuthenticationPrincipal Long me) {
         return interactions.toggleLike(id, me);
-    }
-
-    @PutMapping("/api/posts/{id}/bookmark")
-    public Map<String, Object> bookmark(@PathVariable long id, @AuthenticationPrincipal Long me) {
-        return interactions.toggleBookmark(id, me);
-    }
-
-    /** 내 책갈피: 최근에 저장한 것부터. 지금 볼 수 없는 글은 빠진다. */
-    @GetMapping("/api/me/bookmarks")
-    public PageResponse<Map<String, Object>> bookmarks(@AuthenticationPrincipal Long me,
-                                                       @RequestParam(required = false) Integer page) {
-        return queries.bookmarks(me, page);
     }
 
     @PostMapping("/api/posts/{id}/reports")

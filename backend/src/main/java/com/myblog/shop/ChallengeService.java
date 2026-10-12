@@ -55,7 +55,10 @@ public class ChallengeService {
             case "diaries-3" -> count("""
                     SELECT count(*) FROM categories c JOIN blogs b ON b.id = c.blog_id
                     WHERE b.owner_id = ? AND NOT c.is_default""", memberId);
-            case "first-subscribe" -> count("SELECT count(*) FROM subscriptions WHERE member_id = ?", memberId);
+            // 블로그 구독이나 다이어리 구독 중 하나라도
+            case "first-subscribe" -> count("""
+                    SELECT (SELECT count(*) FROM subscriptions WHERE member_id = ?)
+                         + (SELECT count(*) FROM diary_subscriptions WHERE member_id = ?)""", memberId, memberId);
             case "first-bookmark" -> count("SELECT count(*) FROM bookmarks WHERE member_id = ?", memberId);
             case "bio" -> count("SELECT count(*) FROM members WHERE id = ? AND bio <> ''", memberId);
             case "streak-7" -> ink.longestStreak(memberId);
