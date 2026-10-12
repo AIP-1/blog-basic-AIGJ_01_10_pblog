@@ -119,7 +119,7 @@ myblog:
   trending:
     size: 10
     interval: 5s
-    window: 1h
+    window: 24h
     search-weight: 3
     view-weight: 1
     comment-weight: 5
