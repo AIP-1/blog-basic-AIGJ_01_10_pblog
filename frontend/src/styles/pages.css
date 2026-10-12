@@ -2545,8 +2545,3 @@ ol.rank-list li a {
   background: var(--surface-2);
   color: var(--text);
 }
-
-.pop-thumb .thumb__letter,
-.rec-thumb .thumb__letter {
-  font-size: 2.6rem;
-}
