@@ -74,7 +74,7 @@ export const POST = {
   titleTooLong: (max: number) => `제목은 ${max}자 이하로 입력해 주세요`,
   bodyTooLong: (max: number) => `본문은 ${max.toLocaleString()}자 이하로 입력해 주세요`,
   categoryRequired: '다이어리를 골라 주세요',
-  defaultCategory: '"미분류"는 삭제할 수 없습니다',
+  defaultCategory: '기본 다이어리는 삭제할 수 없습니다',
   categoryDeleteConfirm: '다이어리를 삭제할까요?',
   tagLimit: (max: number) => `태그는 ${max}개까지 붙일 수 있습니다`,
   tagRule: (max: number) => `태그는 공백과 쉼표 없이 1~${max}자로 입력해 주세요`,
