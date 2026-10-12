@@ -3,6 +3,8 @@ export function isLoginRequiredPath(pathname: string): boolean {
   return (
     pathname === '/write' ||
     pathname === '/me' ||
+    pathname === '/bookmarks' ||
+    pathname === '/subscriptions' ||
     pathname.startsWith('/manage') ||
     /^\/posts\/[^/]+\/edit$/.test(pathname)
   );
