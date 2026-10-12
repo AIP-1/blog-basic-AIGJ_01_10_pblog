@@ -3,15 +3,17 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { getBlog, getFeed, getHome } from '../api/endpoints';
 import { qk, useMe, useTopics } from '../api/queries';
+import { useDiaryStickers } from '../api/shop';
 import type { FeedSort, MeResponse, PopularDiary, PostSummary } from '../api/types';
 import { useAuth } from '../auth/context';
 import { AdSlider } from '../components/AdSlider';
+import { DiaryCover } from '../components/BlogShell';
 import { BlogCard, PostRow, PostStats, Thumb } from '../components/Cards';
 import { Pagination } from '../components/Pagination';
 import { Empty, ErrorBox, Loading } from '../components/Status';
 import { TopicIcon } from '../components/TopicIcon';
 import { TrendingList } from '../components/TrendingList';
-import { categoryColor, formatDate } from '../lib/format';
+import { formatDate } from '../lib/format';
 import { clearReads, isTrackingOff, readCount, recommend, setTrackingOff } from '../lib/readHistory';
 import { COMMON, HOME, NOTICE } from '../messages';
 
@@ -353,6 +355,7 @@ function MyAccountBox({ me }: { me: MeResponse }) {
 
 /** 인기 다이어리: 다이어리 표지 + 이름 + 블로그 · 글 수 */
 function PopularDiaries({ diaries }: { diaries: PopularDiary[] }) {
+  const coverStickers = useDiaryStickers(diaries.map((d) => d.id));
   if (diaries.length === 0) return null;
   return (
     <section className="box">
@@ -362,7 +365,7 @@ function PopularDiaries({ diaries }: { diaries: PopularDiary[] }) {
           <li key={d.id}>
             <Link to={`/blogs/${d.blog.id}?category=${d.id}`}>
               <span className="b-rank">{i + 1}</span>
-              <span className="cover cover--sm" style={{ ['--c' as string]: categoryColor(d.colorIndex) }} aria-hidden="true" />
+              <DiaryCover colorIndex={d.colorIndex} size="sm" stickers={coverStickers[d.id]} />
               <span className="bl-text">
                 <b>{d.name}</b>
                 <span>

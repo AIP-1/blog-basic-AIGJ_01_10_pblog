@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import { useInk } from '../api/shop';
 import type { MeResponse } from '../api/types';
 import { useAuth } from '../auth/context';
 import { isLoginRequiredPath } from '../lib/paths';
 import { setThemeChoice, useTheme, type ThemeChoice } from '../lib/theme';
+import { SHOP } from '../messages';
+import { InkIcon } from './Sticker';
 
 const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
   { value: 'system', label: '시스템' },
@@ -20,6 +23,7 @@ export function UserMenu({ me }: { me: MeResponse }) {
   const { pathname } = useLocation();
   const count = me.newCommentCount ?? 0;
   const { choice } = useTheme();
+  const ink = useInk().data;
 
   useEffect(() => {
     if (!open) return;
@@ -82,6 +86,15 @@ export function UserMenu({ me }: { me: MeResponse }) {
             <Link role="menuitem" to="/manage" onClick={close}>
               블로그 관리
               {count > 0 && <span className="badge">{count}</span>}
+            </Link>
+          </li>
+          <li role="none">
+            <Link role="menuitem" to="/shop" onClick={close} className="usermenu__ink">
+              {SHOP.title}
+              <span className="ink-amount">
+                <InkIcon size={12} />
+                {(ink?.balance ?? 0).toLocaleString()}
+              </span>
             </Link>
           </li>
           <li role="none">

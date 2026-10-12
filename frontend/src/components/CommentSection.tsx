@@ -122,6 +122,7 @@ export function CommentSection({ post }: { post: PostDetail }) {
     onSuccess: (_data, vars) => {
       if (vars.parentId !== undefined) setReplyTo(null);
       changeCount(1);
+      void queryClient.invalidateQueries({ queryKey: ['shop'] }); // 잉크 적립 알림 (InkWatcher)
     },
   });
 

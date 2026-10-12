@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { errorMessage } from '../api/client';
 import { deletePosts, getBlogPosts, getPinnedPosts, movePosts } from '../api/endpoints';
 import { qk } from '../api/queries';
+import { useDiaryStickers } from '../api/shop';
 import type { BlogPostListItem, BlogPostSort, Category } from '../api/types';
 import { BlogShell, DiaryCover, LockIcon } from '../components/BlogShell';
 import { BlogIntro } from './BlogAboutPage';
@@ -124,9 +125,10 @@ function DiaryHead({
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const locked = diary.visibility === 'PRIVATE';
+  const coverStickers = useDiaryStickers([diary.id]);
   return (
     <section className="diary-head" style={{ ['--c' as string]: categoryColor(diary.colorIndex) }}>
-      <DiaryCover colorIndex={diary.colorIndex} size="lg" locked={locked} />
+      <DiaryCover colorIndex={diary.colorIndex} size="lg" locked={locked} stickers={coverStickers[diary.id]} />
       <div className="diary-head__info">
         <h2>
           {diary.name}

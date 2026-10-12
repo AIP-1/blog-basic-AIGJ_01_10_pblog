@@ -1,7 +1,8 @@
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router';
 import { useMe } from '../api/queries';
 import { useAuth } from '../auth/context';
-import { NOTICE, SUBSCRIBE } from '../messages';
+import { NOTICE, SHOP, SUBSCRIBE } from '../messages';
+import { InkWatcher } from './InkWatcher';
 import { SearchBox } from './SearchBox';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
@@ -39,6 +40,9 @@ export function Header() {
           <NavLink to="/notices" className="mainnav__item">
             {NOTICE.title}
           </NavLink>
+          <NavLink to="/shop" className="mainnav__item">
+            {SHOP.nav}
+          </NavLink>
         </nav>
         <div className="site-header__search">
           <SearchBox key={onSearch ? `q:${q}` : 'idle'} initialQuery={q} />
@@ -51,6 +55,7 @@ export function Header() {
                 글쓰기
               </Link>
               <UserMenu me={me} />
+              <InkWatcher />
             </>
           ) : (
             <>

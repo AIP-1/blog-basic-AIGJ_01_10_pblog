@@ -433,6 +433,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
       void queryClient.invalidateQueries({ queryKey: qk.lastCategory });
       void queryClient.invalidateQueries({ queryKey: qk.home });
       void queryClient.invalidateQueries({ queryKey: qk.drafts });
+      void queryClient.invalidateQueries({ queryKey: ['shop'] }); // 잉크 적립 알림 (InkWatcher)
       allowNavigation();
       navigate(`/posts/${id}`, { replace: mode === 'edit' });
     } catch (err) {

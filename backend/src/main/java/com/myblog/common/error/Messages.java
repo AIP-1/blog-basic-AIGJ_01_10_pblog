@@ -100,4 +100,18 @@ public final class Messages {
     public static String categoryHasPosts(long count) {
         return CATEGORY_HAS_POSTS.replace("{N}", String.valueOf(count));
     }
+
+    // 스티커 상점
+    public static final String INSUFFICIENT_INK = "잉크가 부족해요";
+    public static final String ALREADY_OWNED = "이미 가진 스티커예요";
+    public static final String PACK_NOT_FOUND = "존재하지 않는 스티커 팩입니다";
+    public static final String CHALLENGE_NOT_FOUND = "존재하지 않는 도전과제입니다";
+    public static final String CHALLENGE_NOT_DONE = "아직 도전과제를 다 깨지 못했어요";
+    public static final String ALREADY_CLAIMED = "이미 보상을 받았어요";
+    public static final String STICKER_NOT_OWNED = "가진 스티커만 붙일 수 있어요";
+    public static final String STICKER_SLOT_INVALID = "스티커 자리를 다시 골라 주세요";
+
+    public static String tooManyStickers(int max) {
+        return "스티커는 다이어리마다 " + max + "개까지 붙일 수 있어요";
+    }
 }
