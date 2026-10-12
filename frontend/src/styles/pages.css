@@ -577,8 +577,11 @@
   transition: border-color 0.15s, background 0.15s, transform 0.15s;
 }
 .topic-tabs__icon {
-  font-size: 1.5rem;
-  line-height: 1;
+  flex: none;
+  color: var(--text-sub);
+}
+.topic-tabs button.is-on .topic-tabs__icon {
+  color: inherit;
 }
 .topic-tabs button:hover {
   border-color: var(--line-strong);
