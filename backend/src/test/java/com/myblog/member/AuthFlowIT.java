@@ -35,7 +35,7 @@ class AuthFlowIT extends IntegrationTest {
         assertThat(blog).isEqualTo("수연의 블로그");
         var cats = jdbc.sql("SELECT c.name FROM categories c JOIN blogs b ON b.id = c.blog_id WHERE b.owner_id = ? AND c.is_default")
                 .param(id).query(String.class).list();
-        assertThat(cats).containsExactly("미분류");
+        assertThat(cats).containsExactly("일기장");
     }
 
     @Test

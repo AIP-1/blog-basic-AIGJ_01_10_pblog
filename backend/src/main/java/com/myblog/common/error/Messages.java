@@ -63,7 +63,7 @@ public final class Messages {
     public static final String CATEGORY_NOT_FOUND = "존재하지 않는 다이어리입니다";
     public static final String CATEGORY_NAME_TAKEN = "이미 있는 다이어리입니다";
     public static final String CATEGORY_HAS_POSTS = "이 다이어리에 글이 {N}개 있어 삭제할 수 없습니다. 글을 다른 다이어리로 옮긴 뒤 삭제해 주세요";
-    public static final String DEFAULT_CATEGORY = "미분류는 삭제할 수 없습니다";
+    public static final String DEFAULT_CATEGORY = "기본 다이어리는 삭제할 수 없습니다";
     public static final String CATEGORY_NAME_REQUIRED = "다이어리 이름을 입력해 주세요";
     public static final String CATEGORY_NAME_TOO_LONG = "다이어리 이름은 20자 이하로 입력해 주세요";
     public static final String BLOG_NAME_REQUIRED = "블로그 이름을 입력해 주세요";

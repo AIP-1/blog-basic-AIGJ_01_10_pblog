@@ -223,7 +223,7 @@ public class PostCommandService {
         return n;
     }
 
-    /** 글쓰기 기본 분류: 마지막으로 쓴 글의 분류, 처음이면 "미분류" (CF-05-5). */
+    /** 글쓰기 기본 분류: 마지막으로 쓴 글의 분류, 처음이면 기본 다이어리 (CF-05-5). */
     public Map<String, Long> lastCategory(long memberId) {
         long blogId = blogs.requireOwnBlogId(memberId);
         Long id = jdbc.sql("""

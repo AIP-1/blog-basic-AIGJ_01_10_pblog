@@ -77,7 +77,7 @@ myblog:
     category-description-max: 100   # 다이어리 소개
     blog-tags: 12                    # 블로그 화면 왼쪽 태그 모음 개수
     default-topic: hobby
-    default-category-name: 미분류
+    default-category-name: 일기장
     color-count: 8
   draft:
     max-per-member: 20       # 임시저장 글은 회원별 20개까지

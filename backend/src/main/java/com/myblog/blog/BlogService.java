@@ -38,7 +38,7 @@ public class BlogService {
         this.clock = clock;
     }
 
-    /** 가입이 끝나면 "{닉네임}의 블로그"와 "미분류"를 만든다 (CF-03-2, CF-03-3). */
+    /** 가입이 끝나면 "{닉네임}의 블로그"와 "일기장"을 만든다 (CF-03-2, CF-03-3). */
     @Transactional
     public long createFor(long memberId, String nickname) {
         OffsetDateTime now = clock.nowOffset();

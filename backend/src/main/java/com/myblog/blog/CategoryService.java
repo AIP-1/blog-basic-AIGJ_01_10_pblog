@@ -177,7 +177,7 @@ public class CategoryService {
         });
     }
 
-    /** 글이 있거나 "미분류"면 지울 수 없다 (CF-08-6, CF-08-8). */
+    /** 글이 있거나 기본 다이어리면 지울 수 없다 (CF-08-6, CF-08-8). */
     @Transactional
     public void delete(long categoryId, long ownerBlogId) {
         CategoryRow c = requireOwned(categoryId, ownerBlogId);
