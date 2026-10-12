@@ -137,4 +137,4 @@ myblog:
   mail:
     mode: ${MYBLOG_MAIL_MODE:log}
     from: ${MAIL_FROM:no-reply@myblog.local}
-    service-name: MyBlog
+    service-name: 사각

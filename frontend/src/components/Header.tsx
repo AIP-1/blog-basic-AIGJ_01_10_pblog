@@ -17,8 +17,8 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="site-header__bar container">
-        <Link to="/" className="logo" aria-label="MyBlog 홈">
-          My<span>Blog</span>
+        <Link to="/" className="logo" aria-label="사각 홈">
+          사각
         </Link>
         <Link to="/" className="site-header__home">
           홈

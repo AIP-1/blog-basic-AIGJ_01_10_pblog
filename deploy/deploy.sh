@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 배포 서버에서 실행한다. GitHub Actions가 올려 준 이미지 파일을 불러와 MyBlog를 8390 포트로 다시 띄운다.
+# 배포 서버에서 실행한다. GitHub Actions가 올려 준 이미지 파일을 불러와 사각을 8390 포트로 다시 띄운다.
 #   사용: DB_ADDRESS=... DB_PORT=... DB_NAME=... DB_SCHEMA=... DB_USERNAME=... DB_PASSWORD=... \
 #         ./deploy.sh <이미지 파일(.tar.gz)> <이미지 태그>
 set -euo pipefail

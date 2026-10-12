@@ -60,9 +60,6 @@
 .logo:hover {
   color: var(--accent);
 }
-.logo span {
-  color: var(--text);
-}
 
 .site-header__home,
 .topic-nav__item {
