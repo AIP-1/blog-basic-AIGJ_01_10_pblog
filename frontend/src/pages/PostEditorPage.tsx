@@ -24,6 +24,7 @@ import { RequireLogin } from '../components/RequireLogin';
 import { ErrorBox, FieldError, FormMessage, Loading } from '../components/Status';
 import { ALLOWED_IMAGE_TYPES } from '../lib/config';
 import { formatDateTime } from '../lib/format';
+import { fromDisplay, photoToken, toDisplay } from '../lib/photoTokens';
 import { useUnsavedChangesPrompt } from '../lib/useUnsavedChangesPrompt';
 import { isValidTag, normalizeTag } from '../lib/validation';
 import { POST, SOCIAL, SUB_VIS } from '../messages';
@@ -317,15 +318,19 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
   };
 
   /* ---------- 이미지 ---------- */
-  const insertAtCursor = (snippet: string) => {
+  // 글쓰기 칸에는 사진 주소 대신 "[📷 사진 N]"이 보인다 (저장하는 본문은 마크다운 그대로)
+  const display = toDisplay(body, images);
+
+  /** 커서 자리에 사진 이름표를 넣는다. photos는 방금 올린 사진까지 포함한 목록 */
+  const insertAtCursor = (snippet: string, photos: UploadedImage[] = images) => {
     const el = bodyRef.current;
-    const start = el?.selectionStart ?? body.length;
-    const end = el?.selectionEnd ?? body.length;
-    const before = body.slice(0, start);
-    const after = body.slice(end);
+    const start = el?.selectionStart ?? display.length;
+    const end = el?.selectionEnd ?? display.length;
+    const before = display.slice(0, start);
+    const after = display.slice(end);
     const pre = before && !before.endsWith('\n') ? '\n' : '';
     const text = `${pre}${snippet}\n`;
-    setBody(before + text + after);
+    setBody(fromDisplay(before + text + after, photos));
     requestAnimationFrame(() => {
       if (!el) return;
       const pos = before.length + text.length;
@@ -350,8 +355,9 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
     setImageError(null);
     try {
       const img = await uploadImage(file);
-      setImages((list) => [...list, img]);
-      insertAtCursor(`![](${img.url})`);
+      const next = [...images, img];
+      setImages(next);
+      insertAtCursor(photoToken(next.length), next);
     } catch (err) {
       setImageError(errorMessage(err));
     } finally {
@@ -580,10 +586,10 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
             id={ids.body}
             ref={bodyRef}
             className="input textarea editor__body"
-            placeholder="본문 (필수) — 마크다운으로 써요. 사진은 '이미지 올리기'로 넣어요"
-            value={body}
+            placeholder="본문 (필수) — 마크다운으로 써요. 사진은 '이미지 올리기'로 넣으면 [📷 사진 1]처럼 보여요"
+            value={display}
             aria-invalid={!!errors.body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(e) => setBody(fromDisplay(e.target.value, images))}
           />
         </div>
       ) : (
@@ -595,23 +601,46 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
       <FormMessage kind="error" message={imageError} />
 
       {usedImages.length > 0 && (
-        <fieldset className="field cover-picker">
-          <legend className="field__label">
-            대표 사진 <span className="muted">({usedImages.length}/{limits.imagesPerPost})</span>
-          </legend>
-          <div className="cover-picker__list">
-            <label className={`cover-picker__item cover-picker__none${coverImageId === null ? ' is-selected' : ''}`}>
-              <input type="radio" name="cover" checked={coverImageId === null} onChange={() => setCoverImageId(null)} />
-              없음
-            </label>
-            {usedImages.map((img) => (
-              <label key={img.id} className={`cover-picker__item${coverImageId === img.id ? ' is-selected' : ''}`}>
-                <input type="radio" name="cover" checked={coverImageId === img.id} onChange={() => setCoverImageId(img.id)} />
-                <img src={img.url} alt="" />
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <div className="photo-strip">
+          <p className="photo-strip__head">
+            올린 사진 {usedImages.length}/{limits.imagesPerPost}
+            <span className="muted"> · 누르면 커서 자리에 다시 넣고, ★로 대표 사진을 골라요</span>
+          </p>
+          <ul className="photo-strip__list">
+            {usedImages.map((img) => {
+              const n = images.indexOf(img) + 1;
+              const isCover = coverImageId === img.id;
+              return (
+                <li key={img.id} className={`photo-strip__item${isCover ? ' is-cover' : ''}`}>
+                  <button type="button" className="photo-strip__img" title={`사진 ${n} 다시 넣기`} onClick={() => insertAtCursor(photoToken(n))}>
+                    <img src={img.url} alt={`사진 ${n}`} />
+                    <span className="photo-strip__label">사진 {n}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="photo-strip__star"
+                    aria-pressed={isCover}
+                    aria-label={isCover ? `사진 ${n} 대표 사진 빼기` : `사진 ${n}을 대표 사진으로`}
+                    onClick={() => setCoverImageId(isCover ? null : img.id)}
+                  >
+                    {isCover ? '★' : '☆'}
+                  </button>
+                  <button
+                    type="button"
+                    className="photo-strip__remove"
+                    aria-label={`사진 ${n} 빼기`}
+                    onClick={() => {
+                      setBody(fromDisplay(display.split(`${photoToken(n)}\n`).join('').split(photoToken(n)).join(''), images));
+                      if (isCover) setCoverImageId(null);
+                    }}
+                  >
+                    ×
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
 
       <div className="field">

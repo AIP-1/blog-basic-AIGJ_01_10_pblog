@@ -103,7 +103,7 @@ function PopularCards({ posts }: { posts: PostSummary[] }) {
         <li key={p.id}>
           <Link to={`/posts/${p.id}`}>
             <span className="pop-media">
-              <Thumb src={p.coverImageUrl} className="pop-thumb" />
+              <Thumb src={p.coverImageUrl} className="pop-thumb" title={p.title} colorIndex={p.category?.colorIndex} />
               <span className="pop-badge">{i + 1}</span>
             </span>
             <b className="pop-title">{p.title}</b>
@@ -142,7 +142,7 @@ function RecommendSection({ pool }: { pool: PostSummary[] }) {
           {items.map((p) => (
             <li key={p.id}>
               <Link to={`/posts/${p.id}`}>
-                <Thumb src={p.coverImageUrl} className="rec-thumb" />
+                <Thumb src={p.coverImageUrl} className="rec-thumb" title={p.title} colorIndex={p.category?.colorIndex} />
                 <span className="rec-reason">{p.reason}</span>
                 <b className="rec-title">{p.title}</b>
                 <span className="rec-meta">
