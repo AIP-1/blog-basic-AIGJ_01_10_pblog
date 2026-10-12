@@ -15,7 +15,7 @@ import {
   updatePost,
   uploadImage,
 } from '../api/endpoints';
-import { qk, useConfig, useMe } from '../api/queries';
+import { qk, useConfig, useMe, useTopics } from '../api/queries';
 import type { Category, DraftSaveRequest, MeResponse, PostSaveRequest, UploadedImage, Visibility } from '../api/types';
 import { MarkdownView } from '../components/MarkdownView';
 import { Modal } from '../components/Modal';
@@ -91,6 +91,7 @@ function CreateLoader({ me }: { me: MeResponse }) {
               title: d.title,
               body: d.body,
               categoryId: d.categoryId ?? defaultCat?.id ?? null,
+              topicCode: d.topicCode ?? me.blog?.topicCode ?? null,
               visibility: d.visibility,
               tags: d.tags,
               images: d.images,
@@ -100,6 +101,7 @@ function CreateLoader({ me }: { me: MeResponse }) {
               title: '',
               body: '',
               categoryId: defaultCat?.id ?? null,
+              topicCode: me.blog?.topicCode ?? null,
               visibility: 'PUBLIC',
               tags: [],
               images: [],
@@ -136,6 +138,7 @@ function EditLoader({ me, postId }: { me: MeResponse; postId: string }) {
         title: s.title,
         body: s.body,
         categoryId: s.categoryId,
+        topicCode: s.topicCode,
         visibility: s.visibility,
         tags: s.tags ?? [],
         images: s.images ?? [],
@@ -149,6 +152,7 @@ interface EditorInitial {
   title: string;
   body: string;
   categoryId: number | null;
+  topicCode: string | null;
   visibility: Visibility;
   tags: string[];
   images: UploadedImage[];
@@ -173,7 +177,8 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
   const queryClient = useQueryClient();
   const { limits, draftLimit, draftAutosaveSeconds } = useConfig();
   const blogName = useMe().data?.blog?.name ?? '';
-  const ids = { title: useId(), body: useId(), category: useId(), tag: useId(), file: useId() };
+  const topics = useTopics();
+  const ids = { title: useId(), body: useId(), category: useId(), topic: useId(), tag: useId(), file: useId() };
   const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -181,6 +186,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
   const [title, setTitle] = useState(initial.title);
   const [body, setBody] = useState(initial.body);
   const [categoryId, setCategoryId] = useState<number | null>(initial.categoryId);
+  const [topicCode, setTopicCode] = useState<string | null>(initial.topicCode);
   const [visibility, setVisibility] = useState<Visibility>(initial.visibility);
   const [tags, setTags] = useState<string[]>(initial.tags);
   const [tagInput, setTagInput] = useState('');
@@ -204,9 +210,16 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
   const drafts = useQuery({ queryKey: qk.drafts, queryFn: getDrafts, enabled: canDraft });
 
   // 마지막으로 저장한(또는 불러온) 내용. 이것과 다르면 "저장하지 않은 내용"이다
-  const snapshotOf = (v: { title: string; body: string; categoryId: number | null; visibility: Visibility; tags: string[]; coverImageId: number | null }) =>
-    JSON.stringify([v.title, v.body, v.categoryId, v.visibility, v.tags, v.coverImageId]);
-  const snapshot = snapshotOf({ title, body, categoryId, visibility, tags, coverImageId });
+  const snapshotOf = (v: {
+    title: string;
+    body: string;
+    categoryId: number | null;
+    topicCode: string | null;
+    visibility: Visibility;
+    tags: string[];
+    coverImageId: number | null;
+  }) => JSON.stringify([v.title, v.body, v.categoryId, v.topicCode, v.visibility, v.tags, v.coverImageId]);
+  const snapshot = snapshotOf({ title, body, categoryId, topicCode, visibility, tags, coverImageId });
   const [savedSnapshot, setSavedSnapshot] = useState(() => snapshotOf(initial));
 
   const dirty = snapshot !== savedSnapshot || tagInput.trim() !== '';
@@ -226,6 +239,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
       title,
       body,
       categoryId,
+      topicCode,
       visibility,
       tags,
       imageIds: usedIds,
@@ -394,6 +408,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
       title: title.trim(),
       body,
       categoryId: categoryId as number,
+      topicCode,
       visibility,
       tags: finalTags,
       imageIds,
@@ -470,6 +485,22 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
+            </option>
+          ))}
+        </select>
+        <label htmlFor={ids.topic} className="editor__meta-label">
+          분야
+        </label>
+        <select
+          id={ids.topic}
+          className="input select input--sm editor__topic"
+          value={topicCode ?? ''}
+          onChange={(e) => setTopicCode(e.target.value || null)}
+        >
+          {topicCode === null && <option value="">블로그 주제</option>}
+          {topics.map((t) => (
+            <option key={t.code} value={t.code}>
+              {t.name}
             </option>
           ))}
         </select>

@@ -53,4 +53,29 @@ class HomeFeedIT extends IntegrationTest {
                 .andExpect(jsonPath("$.viewCount").isNumber())
                 .andExpect(jsonPath("$.category.colorIndex").isNumber());
     }
+
+    /** 글마다 분야를 고른다. 비우면 블로그 주제, 주제 탭은 글의 분야로 거른다. */
+    @Test
+    void postTopic() throws Exception {
+        MockHttpSession a = member("에이", "a@example.com");
+        long blogId = blogIdOf(a);
+        long cat = defaultCategory(blogId);
+        var travel = new java.util.HashMap<String, Object>(Map.of("title", "여행 글", "body", "본문",
+                "categoryId", cat, "topicCode", "travel", "visibility", "PUBLIC"));
+        var r = mvc.perform(postJson("/api/blogs/" + blogId + "/posts", travel).session(a))
+                .andExpect(status().isCreated()).andReturn();
+        long id = Long.parseLong(r.getResponse().getContentAsString().replaceAll("\\D", ""));
+        writePost(a, "그냥 글", "본문", "PUBLIC");
+
+        mvc.perform(get("/api/posts").param("topic", "travel")).andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(id))
+                .andExpect(jsonPath("$.items[0].topic.code").value("travel"));
+        mvc.perform(get("/api/posts").param("topic", "hobby")).andExpect(jsonPath("$.totalItems").value(1));
+        mvc.perform(get("/api/posts/" + id + "/edit").session(a)).andExpect(jsonPath("$.topicCode").value("travel"));
+
+        travel.put("topicCode", "nope");
+        mvc.perform(postJson("/api/blogs/" + blogId + "/posts", travel).session(a))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.error.fields.topicCode").exists());
+        mvc.perform(get("/api/auth/me").session(a)).andExpect(jsonPath("$.blog.topicCode").value("hobby"));
+    }
 }

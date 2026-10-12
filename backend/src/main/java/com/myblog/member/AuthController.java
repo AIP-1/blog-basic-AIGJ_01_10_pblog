@@ -130,7 +130,7 @@ public class AuthController {
         var blogId = blogs.blogIdOf(memberId);
         body.put("blog", blogId.map(id -> {
             var b = blogs.get(id);
-            return Map.<String, Object>of("id", id, "name", b.name());
+            return Map.<String, Object>of("id", id, "name", b.name(), "topicCode", b.topicCode());
         }).orElse(null));
         body.put("newCommentCount", blogId.map(id -> newComments.count(id, memberId)).orElse(0L));
         return ResponseEntity.ok(body);

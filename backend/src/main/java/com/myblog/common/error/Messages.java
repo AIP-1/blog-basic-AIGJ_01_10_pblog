@@ -56,6 +56,7 @@ public final class Messages {
         return "임시저장은 " + max + "개까지 할 수 있습니다. 쓰지 않는 임시저장 글을 지워 주세요";
     }
     public static final String CATEGORY_REQUIRED = "다이어리를 선택해 주세요";
+    public static final String TOPIC_REQUIRED = "분야를 선택해 주세요";
     public static final String POST_NOT_FOUND = "존재하지 않는 글입니다";
     public static final String BLOG_NOT_FOUND = "존재하지 않는 블로그입니다";
     public static final String TOPIC_NOT_FOUND = "존재하지 않는 주제입니다";

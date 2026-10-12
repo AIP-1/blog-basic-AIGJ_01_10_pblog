@@ -43,14 +43,14 @@ public class PostQueryService {
 
     public record PostRow(long id, long blogId, String blogName, long authorId, long categoryId, String categoryName,
                           int categoryColorIndex,
-                          String topicCode, String topicName, String title, String body, String visibility,
+                          long topicId, String topicCode, String topicName, String title, String body, String visibility,
                           String coverKey, OffsetDateTime createdAt, OffsetDateTime contentUpdatedAt,
                           long viewCount, String authorNickname, long likeCount, long commentCount) {}
 
     private static final String SELECT = """
             SELECT p.id, p.blog_id, b.name AS blog_name, p.author_id, p.category_id, c.name AS category_name,
                    c.color_index AS category_color_index,
-                   t.code AS topic_code, t.name AS topic_name, p.title, p.body, p.visibility,
+                   p.topic_id, t.code AS topic_code, t.name AS topic_name, p.title, p.body, p.visibility,
                    pi.storage_key AS cover_key, p.created_at, p.content_updated_at, p.view_count,
                    am.nickname AS author_nickname,
                    (SELECT count(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
@@ -58,7 +58,7 @@ public class PostQueryService {
             FROM posts p
             JOIN members am ON am.id = p.author_id
             JOIN blogs b ON b.id = p.blog_id
-            JOIN topics t ON t.id = b.topic_id
+            JOIN topics t ON t.id = p.topic_id
             JOIN categories c ON c.id = p.category_id
             LEFT JOIN post_images pi ON pi.id = p.cover_image_id
             """;
@@ -97,7 +97,7 @@ public class PostQueryService {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", p.id());
         m.put("blog", Map.of("id", p.blogId(), "name", p.blogName()));
-        m.put("topic", Map.of("code", p.topicCode(), "name", p.topicName()));
+        m.put("topic", Map.of("id", p.topicId(), "code", p.topicCode(), "name", p.topicName()));
         m.put("category", Map.of("id", p.categoryId(), "name", p.categoryName(), "colorIndex", p.categoryColorIndex()));
         m.put("title", p.title());
         m.put("excerpt", ExcerptMaker.excerpt(p.body(), props.post().excerptLength()));
@@ -119,7 +119,7 @@ public class PostQueryService {
                                                    String order) {
         int size = props.post().pageSize();
         long total = jdbc.sql("SELECT count(*) FROM posts p JOIN blogs b ON b.id = p.blog_id "
-                        + "JOIN topics t ON t.id = b.topic_id JOIN categories c ON c.id = p.category_id WHERE " + where)
+                        + "JOIN topics t ON t.id = p.topic_id JOIN categories c ON c.id = p.category_id WHERE " + where)
                 .params(params).query(Long.class).single();
         return PageRequests.page(page, size, total, (limit, offset) -> {
             Map<String, Object> all = new LinkedHashMap<>(params);
@@ -231,12 +231,12 @@ public class PostQueryService {
     }
 
     public List<Map<String, Object>> latestPublicInTopic(long topicId, int limit) {
-        return top(PUBLIC_ONLY + " AND b.topic_id = :topic", Map.of("topic", topicId), limit);
+        return top(PUBLIC_ONLY + " AND p.topic_id = :topic", Map.of("topic", topicId), limit);
     }
 
     public long countPublicInTopic(long topicId) {
         return jdbc.sql("SELECT count(*) FROM posts p JOIN blogs b ON b.id = p.blog_id WHERE " + PUBLIC_ONLY
-                + " AND b.topic_id = :topic").param("topic", topicId).query(Long.class).single();
+                + " AND p.topic_id = :topic").param("topic", topicId).query(Long.class).single();
     }
 
     /** 오늘의 이슈: 대표 글을 최신순으로, 모자라면 최근 N일 조회수 많은 공개 글로 채운다 (research §12). */
@@ -280,7 +280,7 @@ public class PostQueryService {
         Map<String, Object> params = new LinkedHashMap<>();
         String where = PUBLIC_ONLY;
         if (topicId != null) {
-            where += " AND b.topic_id = :topic";
+            where += " AND p.topic_id = :topic";
             params.put("topic", topicId);
         }
         String order = "popular".equals(sort) ? " ORDER BY " + POPULARITY + " DESC, p.created_at DESC, p.id DESC" : ORDER;

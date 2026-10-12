@@ -83,7 +83,7 @@ public class PostController {
         m.put("id", p.id());
         m.put("blog", Map.of("id", blog.id(), "name", blog.name(), "description", blog.description(),
                 "owner", Map.of("nickname", blog.ownerNickname(), "bio", blog.ownerBio())));
-        m.put("topic", Map.of("code", p.topicCode(), "name", p.topicName()));
+        m.put("topic", Map.of("id", p.topicId(), "code", p.topicCode(), "name", p.topicName()));
         m.put("category", Map.of("id", p.categoryId(), "name", p.categoryName(),
                 "colorIndex", p.categoryColorIndex()));
         m.put("title", p.title());
@@ -144,6 +144,7 @@ public class PostController {
         m.put("title", p.title());
         m.put("body", p.body());
         m.put("categoryId", p.categoryId());
+        m.put("topicCode", p.topicCode());
         m.put("visibility", p.visibility());
         m.put("tags", tags.tagsOf(p.id()));
         m.put("images", jdbc.sql("SELECT id, storage_key FROM post_images WHERE post_id = ? ORDER BY id")
