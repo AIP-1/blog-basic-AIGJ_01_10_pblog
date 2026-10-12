@@ -15,7 +15,7 @@ import { useUnsavedChangesPrompt } from '../lib/useUnsavedChangesPrompt';
 import { isValidNickname, isValidPassword } from '../lib/validation';
 import { ACCOUNT, AUTH } from '../messages';
 
-/** 마이페이지: 내 정보 · 비밀번호 변경 · 내 블로그 바로가기 · 회원 탈퇴 (CF-15) */
+/** 내 정보: 프로필 · 비밀번호 변경 · 회원 탈퇴, 위에 내 블로그 · 블로그 관리 바로가기 (CF-15, 데모 '내 정보') */
 export function MyPage() {
   return <RequireLogin>{() => <MyPageLoader />}</RequireLogin>;
 }
@@ -41,6 +41,7 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
   const { doLogout } = useAuth();
   const { limits } = useConfig();
   const ids = {
+    email: useId(),
     nickname: useId(),
     bio: useId(),
     cur: useId(),
@@ -173,21 +174,28 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
 
   return (
     <div className="mypage">
-      <h1 className="page-title">마이페이지</h1>
+      <div className="page-head-row">
+        <h1 className="page-title">내 정보</h1>
+        <div className="page-head-row__actions">
+          <Link to={`/blogs/${profile.blogId}`} className="btn btn--sm btn--outline">
+            내 블로그
+          </Link>
+          <Link to="/manage" className="btn btn--sm btn--outline">
+            블로그 관리
+          </Link>
+        </div>
+      </div>
 
       <section className="card section-card">
         <h2 className="section-card__title">내 정보</h2>
         <form className="form" onSubmit={onSaveProfile} noValidate>
-          <dl className="info-list">
-            <div>
-              <dt>이메일</dt>
-              <dd>{profile.email}</dd>
-            </div>
-            <div>
-              <dt>가입일</dt>
-              <dd>{formatDate(profile.createdAt)}</dd>
-            </div>
-          </dl>
+          <div className="field">
+            <label htmlFor={ids.email} className="field__label">
+              이메일
+            </label>
+            <input id={ids.email} className="input" value={profile.email} disabled />
+            <p className="form__hint">로그인 아이디라 바꿀 수 없어요.</p>
+          </div>
           <div className="field">
             <label htmlFor={ids.nickname} className="field__label">
               닉네임
@@ -203,6 +211,9 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
               }}
             />
             <FieldError message={profileErrors.nickname} />
+            <p className="form__hint">
+              한글 · 영문 · 숫자 {limits.nicknameMin}~{limits.nicknameMax}자, 다른 회원과 겹칠 수 없어요.
+            </p>
           </div>
           <div className="field">
             <label htmlFor={ids.bio} className="field__label">
@@ -223,6 +234,7 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
               </span>
             </div>
           </div>
+          <p className="form__hint">가입일 {formatDate(profile.createdAt)}</p>
           <FormMessage kind={profileMsg?.kind ?? 'info'} message={profileMsg?.text} />
           <div className="form__actions">
             <button type="submit" className="btn btn--primary" disabled={!profileChanged || savingProfile}>
@@ -264,13 +276,6 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
             </button>
           </div>
         </form>
-      </section>
-
-      <section className="card section-card">
-        <h2 className="section-card__title">내 블로그</h2>
-        <Link to={`/blogs/${profile.blogId}`} className="btn btn--outline">
-          내 블로그로 가기
-        </Link>
       </section>
 
       <section className="card section-card section-card--danger">

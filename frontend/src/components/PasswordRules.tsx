@@ -13,13 +13,17 @@ export function PasswordRules({ value, min = 8, max = 64 }: { value: string; min
     <ul className="pw-rules" aria-label="비밀번호 규칙">
       {rules.map((r) => (
         <li key={r.key} className={r.ok ? 'is-ok' : ''} data-rule={r.key} data-ok={r.ok}>
-          <span aria-hidden="true">{r.ok ? '✓' : '·'}</span> {r.label}
+          <span aria-hidden="true">{r.ok ? '✓' : '○'}</span> {r.label}
           <span className="sr-only">{r.ok ? ' 충족' : ' 미충족'}</span>
         </li>
       ))}
-      {!c.allowedChars && value.length > 0 && (
+      {!c.allowedChars && value.length > 0 ? (
         <li className="is-bad" data-rule="chars">
           공백이나 쓸 수 없는 문자가 있습니다
+        </li>
+      ) : (
+        <li className={value.length > 0 ? 'is-ok' : ''} data-rule="chars">
+          <span aria-hidden="true">{value.length > 0 ? '✓' : '○'}</span> 공백 · 다른 기호 없음
         </li>
       )}
     </ul>

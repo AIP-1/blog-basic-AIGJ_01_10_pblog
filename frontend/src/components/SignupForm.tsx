@@ -5,7 +5,7 @@ import { useConfig } from '../api/queries';
 import { useEmailVerification } from '../auth/useEmailVerification';
 import { normalizeEmail, isValidEmail, isValidNickname, isValidPassword } from '../lib/validation';
 import { AUTH } from '../messages';
-import { EmailVerificationFields } from './EmailVerificationFields';
+import { EmailVerificationFields, SendCodeButton } from './EmailVerificationFields';
 import { PasswordRules } from './PasswordRules';
 import { FieldError, FormMessage } from './Status';
 
@@ -135,6 +135,7 @@ export function SignupForm({ onDone }: { onDone: (email: string) => void }) {
           ref={nicknameRef}
           className="input"
           autoComplete="nickname"
+          placeholder={`한글 · 영문 · 숫자 ${limits.nicknameMin}~${limits.nicknameMax}자`}
           value={nickname}
           maxLength={limits.nicknameMax + 5}
           aria-invalid={!!shownError('nickname')}
@@ -168,10 +169,12 @@ export function SignupForm({ onDone }: { onDone: (email: string) => void }) {
             }}
             onBlur={() => touch('email')}
           />
-          {v.verified && (
+          {v.verified ? (
             <button type="button" className="btn btn--ghost" onClick={() => v.cancel()}>
               이메일 변경
             </button>
+          ) : (
+            <SendCodeButton verification={v} canSend={canSend} onSend={() => void onSend()} className="btn btn--outline" />
           )}
         </div>
         <FieldError message={shownError('email')} />
@@ -182,6 +185,7 @@ export function SignupForm({ onDone }: { onDone: (email: string) => void }) {
         canSend={canSend}
         onSend={() => void onSend()}
         onConfirm={() => void v.confirm(normalizeEmail(email))}
+        hideSendButton
       />
 
       <div className="field">
@@ -232,6 +236,7 @@ export function SignupForm({ onDone }: { onDone: (email: string) => void }) {
       <button type="submit" className="btn btn--primary btn--block" disabled={!canSubmit}>
         {submitting ? '가입하는 중…' : '가입하기'}
       </button>
+      <p className="form__foot-note">{AUTH.signupFoot}</p>
     </form>
   );
 }

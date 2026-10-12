@@ -5,6 +5,7 @@
 
 /** 01-인증-인가 '안내 문구' */
 export const AUTH = {
+  signupFoot: '가입하면 내 블로그가 하나 생겨요.',
   emailInvalid: '이메일 형식이 올바르지 않습니다',
   emailTaken: '이미 가입된 이메일입니다',
   nicknameRule: '닉네임은 한글, 영문, 숫자로 2~10자여야 합니다',
@@ -35,7 +36,7 @@ export const AUTH = {
   codeRequired: '인증번호를 입력해 주세요',
   forgotPassword: '비밀번호를 잊으셨나요?',
   loginRequired: '로그인이 필요합니다',
-  resetWhileLoggedIn: '로그인한 상태에서는 마이페이지에서 비밀번호를 변경해 주세요',
+  resetWhileLoggedIn: '로그인한 상태에서는 내 정보에서 비밀번호를 변경해 주세요',
 } as const;
 
 /** 02-계정관리 '안내 문구' */

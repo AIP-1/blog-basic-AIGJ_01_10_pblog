@@ -24,7 +24,7 @@ describe('글쓰기 임시저장 (CF-05)', () => {
     fireEvent.click(await screen.findByRole('button', { name: '임시저장' }));
     expect(await screen.findByText('제목이나 본문을 입력하면 임시저장할 수 있습니다')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText('제목을 입력하세요'), { target: { value: '쓰다 만 글' } });
+    fireEvent.change(screen.getByPlaceholderText('제목 (필수)'), { target: { value: '쓰다 만 글' } });
     fireEvent.click(screen.getByRole('button', { name: '임시저장' }));
     expect(await screen.findByText('임시저장 15:42')).toBeInTheDocument();
     const post = fetchMock.mock.calls.find(([url, init]) => url === '/api/me/drafts' && init?.method === 'POST');
