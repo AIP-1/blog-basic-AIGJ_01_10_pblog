@@ -117,7 +117,8 @@ public class PostQueryService {
         m.put("excerpt", ExcerptMaker.excerpt(p.body(), props.post().excerptLength()));
         m.put("createdAt", p.createdAt());
         m.put("visibility", p.visibility());
-        m.put("coverImageUrl", p.coverKey() == null ? null : ImageService.url(p.coverKey()));
+        // 목록에서만: 대표 사진이 없으면 본문 첫 사진으로 미리보기 (글 안의 대표 사진 칸은 그대로 비워 둔다)
+        m.put("coverImageUrl", p.coverKey() == null ? ExcerptMaker.firstImage(p.body()) : ImageService.url(p.coverKey()));
         m.put("viewCount", p.viewCount());
         m.put("likeCount", p.likeCount());
         m.put("commentCount", p.commentCount());
