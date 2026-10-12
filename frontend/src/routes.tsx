@@ -27,6 +27,7 @@ export const routes: RouteObject[] = [
       { path: '/search', element: <SearchPage /> },
       { path: '/notices', element: <NoticesPage /> },
       { path: '/password-reset', element: <PasswordResetPage /> },
+      ...['/terms', '/privacy', '/rules'].map((path) => ({ path, lazy: async () => ({ Component: (await import('./pages/PolicyPage')).PolicyPage }) })),
       { path: '/subscriptions', lazy: async () => ({ Component: (await import('./pages/SubscriptionsPage')).SubscriptionsPage }) },
       { path: '/bookmarks', lazy: async () => ({ Component: (await import('./pages/BookmarksPage')).BookmarksPage }) },
       { path: '/me', lazy: async () => ({ Component: (await import('./pages/MyPage')).MyPage }) },
