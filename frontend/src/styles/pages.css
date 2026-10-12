@@ -1236,6 +1236,12 @@
   background: var(--surface-2);
   color: var(--text);
 }
+.tool-btn.is-on {
+  color: var(--accent);
+}
+.tool-btn:disabled {
+  opacity: 0.55;
+}
 .prevnext {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
