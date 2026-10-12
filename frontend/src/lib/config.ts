@@ -2,11 +2,25 @@ import type { AppConfig, Topic } from '../api/types';
 
 /** 서버 /api/config 가 없거나 칸이 빠졌을 때 쓰는 기본값 (원본 각 파일의 '기본값' 표). */
 export const DEFAULT_TOPICS: Topic[] = [
+  { code: 'daily', name: '일상', description: '' },
   { code: 'travel', name: '여행', description: '' },
   { code: 'food', name: '음식', description: '' },
   { code: 'hobby', name: '취미', description: '' },
   { code: 'exercise', name: '운동', description: '' },
   { code: 'dev', name: '개발', description: '' },
+  { code: 'book', name: '책', description: '' },
+  { code: 'movie', name: '영화·드라마', description: '' },
+  { code: 'music', name: '음악', description: '' },
+  { code: 'game', name: '게임', description: '' },
+  { code: 'pet', name: '반려동물', description: '' },
+  { code: 'study', name: '공부', description: '' },
+  { code: 'career', name: '취업·직장', description: '' },
+  { code: 'money', name: '경제·재테크', description: '' },
+  { code: 'fashion', name: '패션·뷰티', description: '' },
+  { code: 'home', name: '인테리어', description: '' },
+  { code: 'photo', name: '사진', description: '' },
+  { code: 'parent', name: '육아', description: '' },
+  { code: 'etc', name: '기타', description: '' },
 ];
 
 export const DEFAULT_CONFIG: AppConfig = {
