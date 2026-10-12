@@ -14,7 +14,7 @@ export function Layout() {
           <Outlet />
         </main>
         <footer className="site-footer">
-          <div className="container">© MyBlog</div>
+          <div className="container">© 사각</div>
         </footer>
         <AuthModal />
         <ScrollRestoration />
