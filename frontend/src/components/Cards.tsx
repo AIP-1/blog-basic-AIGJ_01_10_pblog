@@ -56,7 +56,7 @@ export function PostStats({ likes = 0, comments = 0 }: { likes?: number; comment
 
 /**
  * 사진 자리: 대표 사진이 있으면 사진, 없으면 연한 회색 줄노트.
- * 사진 없는 글도 목록에서 빈칸처럼 보이지 않게 한다.
+ * 인기 글·추천 글 카드처럼 사진 칸이 꼭 있어야 하는 곳에서 쓴다.
  */
 export function Thumb({ src, className = 'thumb' }: { src?: string | null; className?: string }) {
   if (src) {
@@ -143,9 +143,12 @@ export function PostRow({
           <PostStats likes={post.likeCount} comments={post.commentCount} />
         </div>
       </div>
-      <Link className="row__thumb" to={`/posts/${post.id}`} tabIndex={-1} aria-hidden="true">
-        <Thumb src={post.coverImageUrl} />
-      </Link>
+      {/* 가로 목록은 사진이 없으면 사진 칸을 비우지 않고 아예 뺀다 */}
+      {post.coverImageUrl && (
+        <Link className="row__thumb" to={`/posts/${post.id}`} tabIndex={-1} aria-hidden="true">
+          <Thumb src={post.coverImageUrl} />
+        </Link>
+      )}
     </article>
   );
 }
