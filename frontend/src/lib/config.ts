@@ -10,16 +10,7 @@ export const DEFAULT_TOPICS: Topic[] = [
   { code: 'dev', name: '개발', description: '' },
   { code: 'book', name: '책', description: '' },
   { code: 'movie', name: '영화·드라마', description: '' },
-  { code: 'music', name: '음악', description: '' },
-  { code: 'game', name: '게임', description: '' },
-  { code: 'pet', name: '반려동물', description: '' },
   { code: 'study', name: '공부', description: '' },
-  { code: 'career', name: '취업·직장', description: '' },
-  { code: 'money', name: '경제·재테크', description: '' },
-  { code: 'fashion', name: '패션·뷰티', description: '' },
-  { code: 'home', name: '인테리어', description: '' },
-  { code: 'photo', name: '사진', description: '' },
-  { code: 'parent', name: '육아', description: '' },
   { code: 'etc', name: '기타', description: '' },
 ];
 
