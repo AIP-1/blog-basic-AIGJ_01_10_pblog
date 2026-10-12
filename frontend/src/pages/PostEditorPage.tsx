@@ -15,7 +15,7 @@ import {
   updatePost,
   uploadImage,
 } from '../api/endpoints';
-import { qk, useConfig } from '../api/queries';
+import { qk, useConfig, useMe } from '../api/queries';
 import type { Category, DraftSaveRequest, MeResponse, PostSaveRequest, UploadedImage, Visibility } from '../api/types';
 import { MarkdownView } from '../components/MarkdownView';
 import { Modal } from '../components/Modal';
@@ -172,6 +172,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { limits, draftLimit, draftAutosaveSeconds } = useConfig();
+  const blogName = useMe().data?.blog?.name ?? '';
   const ids = { title: useId(), body: useId(), category: useId(), tag: useId(), file: useId() };
   const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -439,61 +440,48 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
   return (
     <form className="editor" onSubmit={onSubmit} noValidate>
       <div className="editor__head">
-        <h1 className="page-title">{mode === 'edit' ? '글 수정' : '글쓰기'}</h1>
-        <div className="editor__actions">
-          {canDraft && (
-            <>
-              <span className="muted editor__draft-state" aria-live="polite">
-                {draftState}
-              </span>
-              <button type="button" className="btn btn--ghost" onClick={() => setDraftsOpen(true)}>
-                임시저장 글 <b>{drafts.data?.items.length ?? 0}</b>
-              </button>
-              <button type="button" className="btn btn--outline" disabled={saving} onClick={() => void saveDraft(false)}>
-                임시저장
-              </button>
-            </>
-          )}
-          <button type="button" className="btn btn--ghost" onClick={() => navigate(-1)}>
-            취소
-          </button>
-          <button type="submit" className="btn btn--primary" disabled={saving || uploading}>
-            {saving ? '저장하는 중…' : '저장'}
-          </button>
-        </div>
+        <h1 className="page-title">
+          {mode === 'edit' ? '글 수정' : '글쓰기'}
+          {blogName && <span className="editor__blog">{blogName}</span>}
+        </h1>
+        {canDraft && (
+          <div className="editor__actions">
+            <span className="muted editor__draft-state" aria-live="polite">
+              {draftState}
+            </span>
+            <button type="button" className="text-btn editor__drafts" onClick={() => setDraftsOpen(true)}>
+              임시저장 글 <b>{drafts.data?.items.length ?? 0}</b>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="editor__meta">
-        <div className="field">
-          <label htmlFor={ids.category} className="field__label">
-            다이어리
-          </label>
-          <select
-            id={ids.category}
-            className="input select"
-            value={categoryId ?? ''}
-            onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
-          >
-            {categoryId === null && <option value="">다이어리 선택</option>}
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          <FieldError message={errors.categoryId} />
-        </div>
-        <fieldset className="field radio-group radio-group--inline">
-          <legend className="field__label">공개 여부</legend>
-          <label className="radio">
-            <input type="radio" name="visibility" checked={visibility === 'PUBLIC'} onChange={() => onVisibility('PUBLIC')} />
+        <label htmlFor={ids.category} className="editor__meta-label">
+          다이어리
+        </label>
+        <select
+          id={ids.category}
+          className="input select input--sm editor__cat"
+          value={categoryId ?? ''}
+          onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
+        >
+          {categoryId === null && <option value="">다이어리 선택</option>}
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <div className="seg-tabs editor__vis" role="radiogroup" aria-label="공개 여부">
+          <button type="button" role="radio" aria-checked={visibility === 'PUBLIC'} className={visibility === 'PUBLIC' ? 'is-on' : ''} onClick={() => onVisibility('PUBLIC')}>
             공개
-          </label>
-          <label className="radio">
-            <input type="radio" name="visibility" checked={visibility === 'PRIVATE'} onChange={() => onVisibility('PRIVATE')} />
+          </button>
+          <button type="button" role="radio" aria-checked={visibility === 'PRIVATE'} className={visibility === 'PRIVATE' ? 'is-on' : ''} onClick={() => onVisibility('PRIVATE')}>
             비공개
-          </label>
-        </fieldset>
+          </button>
+        </div>
+        <FieldError message={errors.categoryId} />
       </div>
 
       <div className="field">
@@ -503,8 +491,8 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
         <input
           id={ids.title}
           ref={titleRef}
-          className="input editor__title"
-          placeholder="제목을 입력하세요"
+          className="editor__title"
+          placeholder="제목 (필수)"
           value={title}
           maxLength={limits.postTitleMax + 20}
           aria-invalid={!!errors.title}
@@ -549,7 +537,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
             id={ids.body}
             ref={bodyRef}
             className="input textarea editor__body"
-            placeholder="본문을 마크다운으로 입력하세요"
+            placeholder="본문 (필수) — 마크다운으로 써요. 사진은 '이미지 올리기'로 넣어요"
             value={body}
             aria-invalid={!!errors.body}
             onChange={(e) => setBody(e.target.value)}
@@ -560,12 +548,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
           {body.trim() ? <MarkdownView source={body} /> : <p className="muted">미리 볼 내용이 없습니다</p>}
         </div>
       )}
-      <div className="field__foot">
-        <FieldError message={errors.body} />
-        <span className={`counter${body.length > limits.postBodyMax ? ' is-over' : ''}`}>
-          {body.length.toLocaleString()}/{limits.postBodyMax.toLocaleString()}
-        </span>
-      </div>
+      <FieldError message={errors.body} />
       <FormMessage kind="error" message={imageError} />
 
       {usedImages.length > 0 && (
@@ -589,10 +572,10 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
       )}
 
       <div className="field">
-        <label htmlFor={ids.tag} className="field__label">
-          태그 <span className="muted">({tags.length}/{limits.tagsPerPost})</span>
+        <label htmlFor={ids.tag} className="sr-only">
+          태그 ({tags.length}/{limits.tagsPerPost})
         </label>
-        <div className="tag-input">
+        <div className="tag-input editor__tags">
           {tags.map((t) => (
             <span key={t} className="tag tag--chip">
               #{t}
@@ -604,7 +587,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
           <input
             id={ids.tag}
             className="tag-input__field"
-            placeholder={tags.length >= limits.tagsPerPost ? '' : '태그 입력 후 Enter'}
+            placeholder={tags.length >= limits.tagsPerPost ? '' : `#태그 입력 후 Enter (최대 ${limits.tagsPerPost}개)`}
             value={tagInput}
             disabled={tags.length >= limits.tagsPerPost}
             onChange={(e) => {
@@ -651,8 +634,19 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
 
       <FormMessage kind="error" message={formError} />
       <div className="editor__bottom">
+        <span className={`editor__count${body.length > limits.postBodyMax ? ' is-over' : ''}`}>
+          {body.length.toLocaleString()}자 / {limits.postBodyMax.toLocaleString()}
+        </span>
+        <button type="button" className="btn btn--ghost" onClick={() => navigate(-1)}>
+          취소
+        </button>
+        {canDraft && (
+          <button type="button" className="btn btn--outline" disabled={saving} onClick={() => void saveDraft(false)}>
+            임시저장
+          </button>
+        )}
         <button type="submit" className="btn btn--primary" disabled={saving || uploading}>
-          {saving ? '저장하는 중…' : '저장'}
+          {saving ? '저장하는 중…' : mode === 'edit' ? '저장' : '올리기'}
         </button>
       </div>
     </form>

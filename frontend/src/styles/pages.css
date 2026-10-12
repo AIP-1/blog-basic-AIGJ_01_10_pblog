@@ -43,6 +43,10 @@
 .page-head-row .page-title {
   margin-bottom: 0;
 }
+.page-head-row__actions {
+  display: flex;
+  gap: 6px;
+}
 .section {
   margin-top: var(--gap-7);
 }
@@ -1417,7 +1421,7 @@
 
 /* ---------- 글쓰기 ---------- */
 .editor {
-  max-width: 860px;
+  max-width: 760px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1426,35 +1430,66 @@
 .editor__head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: var(--gap-3);
   flex-wrap: wrap;
 }
 .editor__head .page-title {
   margin-bottom: 0;
 }
-.editor__actions,
-.editor__bottom {
+.editor__blog {
+  margin-left: 10px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+.editor__actions {
   display: flex;
-  gap: var(--gap-2);
-  justify-content: flex-end;
+  align-items: center;
+  gap: var(--gap-3);
+}
+.editor__drafts {
+  font-size: 0.82rem;
+}
+.editor__drafts b {
+  color: var(--text);
 }
 .editor__meta {
-  display: grid;
-  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
-  gap: var(--gap-4);
-  align-items: start;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
 }
-@media (max-width: 560px) {
-  .editor__meta {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.editor__meta-label {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+.editor__cat {
+  width: auto;
+  min-width: 140px;
+}
+.editor__vis {
+  margin-left: 0;
+}
+.editor__meta .field__error {
+  flex-basis: 100%;
 }
 .editor__title {
+  width: 100%;
+  border: 0;
+  outline: none;
+  padding: 10px 0;
+  background: none;
   font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: -0.035em;
-  min-height: 56px;
+  color: var(--text);
+}
+.editor__title::placeholder {
+  color: var(--text-faint);
 }
 .editor__tabs {
   margin-bottom: 0;
@@ -1468,6 +1503,27 @@
   min-height: 420px;
   font-size: 1rem;
   line-height: 1.8;
+}
+.editor__tags {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+.editor__bottom {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+.editor__count {
+  margin-right: auto;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.editor__count.is-over {
+  color: var(--danger);
 }
 .editor__preview {
   min-height: 420px;

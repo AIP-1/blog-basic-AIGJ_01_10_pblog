@@ -21,7 +21,7 @@ export function PasswordResetPage() {
         <h1 className="page-title">비밀번호 찾기</h1>
         <p>{AUTH.resetWhileLoggedIn}</p>
         <Link to="/me" className="btn btn--primary">
-          마이페이지로
+          내 정보로
         </Link>
       </div>
     );
