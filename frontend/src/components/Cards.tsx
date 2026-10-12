@@ -3,23 +3,6 @@ import { Link } from 'react-router';
 import type { BlogRef, BlogSummary, CategoryRef, PostSummary } from '../api/types';
 import { categoryColor, formatDate, formatDateLong, formatRelative } from '../lib/format';
 
-/** 글 카드: 블로그 이름 · 작성일 · 제목 · 요약 */
-export function PostCard({ post, showBlog = true }: { post: PostSummary; showBlog?: boolean }) {
-  return (
-    <article className="post-card">
-      <Link to={`/posts/${post.id}`} className="post-card__link">
-        <div className="post-card__meta">
-          {showBlog && <span className="post-card__blog">{post.blog.name}</span>}
-          {post.category && <span className="post-card__cat">{post.category.name}</span>}
-          <time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time>
-        </div>
-        <h3 className="post-card__title">{post.title}</h3>
-        {post.excerpt && <p className="post-card__excerpt">{post.excerpt}</p>}
-      </Link>
-    </article>
-  );
-}
-
 /** 블로그 카드: 주인 첫 글자 · 주제 · 이름 · 주인 · 소개 · 글 개수 · 최근 글 날짜 (3.2) */
 export function BlogCard({ blog }: { blog: BlogSummary }) {
   return (

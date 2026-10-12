@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { search } from '../api/endpoints';
 import { qk, useConfig } from '../api/queries';
 import type { SearchResponse, SearchType } from '../api/types';
-import { BlogCard, PostCard } from '../components/Cards';
+import { BlogCard, PostRow } from '../components/Cards';
 import { Pagination } from '../components/Pagination';
 import { Empty, ErrorBox, Loading } from '../components/Status';
 import { TrendingList } from '../components/TrendingList';
@@ -11,7 +12,7 @@ import { validateQuery } from '../lib/validation';
 import { EXPLORE } from '../messages';
 
 const TYPES: { value: SearchType; label: string }[] = [
-  { value: 'all', label: '전체' },
+  { value: 'all', label: '모두' },
   { value: 'blog', label: '블로그' },
   { value: 'post', label: '글' },
 ];
@@ -47,35 +48,20 @@ export function SearchPage() {
   return (
     <div className="with-aside">
       <div className="search-results">
+        <SearchForm
+          key={`${rawQ}|${type}`}
+          initial={rawQ}
+          type={type}
+          maxLength={limits.searchMax}
+          onSubmit={(nq, t) => setParams(new URLSearchParams({ q: nq, type: t }))}
+        />
         {invalid ? (
-          <Empty>{invalid}</Empty>
+          <Empty>{rawQ.trim() ? invalid : EXPLORE.searchStart}</Empty>
         ) : (
           <>
-            <header className="page-head page-head--compact">
-              <h1 className="page-head__title">
-                ‘{q}’ 검색 결과
-              </h1>
-              {result.data && <p className="page-head__meta">{EXPLORE.searchTotal(result.data.total)}</p>}
-            </header>
-            <div className="tabs" role="tablist" aria-label="검색 대상">
-              {TYPES.map((t) => (
-                <button
-                  key={t.value}
-                  type="button"
-                  role="tab"
-                  aria-selected={type === t.value}
-                  className={`tabs__tab${type === t.value ? ' is-active' : ''}`}
-                  onClick={() => setTypePage(t.value)}
-                >
-                  {t.label}
-                  {result.data && t.value !== 'all' && (
-                    <span className="tabs__count">
-                      {t.value === 'blog' ? result.data.blogs.totalItems : result.data.posts.totalItems}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+            <p className="search-summary">
+              <b>‘{q}’</b> {TYPES.find((t) => t.value === type)?.label} · {result.data ? EXPLORE.searchTotal(result.data.total) : ''}
+            </p>
             {result.isPending ? (
               <Loading />
             ) : result.error ? (
@@ -150,9 +136,9 @@ function Results({
           {data.posts.items.length === 0 ? (
             <Empty>{EXPLORE.searchNoResult}</Empty>
           ) : (
-            <div className="post-rows">
+            <div className="row-list">
               {data.posts.items.map((p) => (
-                <PostCard key={p.id} post={p} />
+                <PostRow key={p.id} post={p} />
               ))}
             </div>
           )}
@@ -162,5 +148,53 @@ function Results({
         </section>
       )}
     </>
+  );
+}
+
+/** 검색 범위 · 검색어 · 검색 버튼 (데모 검색 화면 맨 위) */
+function SearchForm({
+  initial,
+  type,
+  maxLength,
+  onSubmit,
+}: {
+  initial: string;
+  type: SearchType;
+  maxLength: number;
+  onSubmit: (q: string, type: SearchType) => void;
+}) {
+  const [value, setValue] = useState(initial);
+  const [scope, setScope] = useState<SearchType>(type);
+  return (
+    <form
+      className="search-form"
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(value.trim(), scope);
+      }}
+    >
+      <div className="search-form__row">
+        <select className="input select search-form__scope" aria-label="검색 범위" value={scope} onChange={(e) => setScope(toType(e.target.value))}>
+          {TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+        <input
+          className="input search-form__q"
+          type="search"
+          aria-label="검색어"
+          value={value}
+          maxLength={maxLength + 20}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <button type="submit" className="btn btn--primary">
+          검색
+        </button>
+      </div>
+      <p className="search-form__hint">{EXPLORE.searchHint}</p>
+    </form>
   );
 }

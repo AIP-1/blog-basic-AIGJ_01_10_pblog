@@ -49,6 +49,8 @@ class HomeFeedIT extends IntegrationTest {
                 .andExpect(jsonPath("$.popularPosts.length()").value(3))
                 .andExpect(jsonPath("$.popularDiaries[0].blog.id").value(blogIdOf(a)))
                 .andExpect(jsonPath("$.popularDiaries[0].postCount").value(3));
-        mvc.perform(get("/api/posts/" + quiet)).andExpect(jsonPath("$.title").value("조용한 글"));
+        mvc.perform(get("/api/posts/" + quiet)).andExpect(jsonPath("$.title").value("조용한 글"))
+                .andExpect(jsonPath("$.viewCount").isNumber())
+                .andExpect(jsonPath("$.category.colorIndex").isNumber());
     }
 }

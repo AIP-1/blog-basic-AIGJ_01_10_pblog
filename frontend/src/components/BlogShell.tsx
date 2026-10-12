@@ -66,6 +66,8 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
 
   return (
     <div className="blog">
+      {/* 데모의 블로그 배너 자리 — 배너 사진 기능이 생기기 전까지는 회색 띠 */}
+      <div className="blog-banner blog-banner--empty" aria-hidden="true" />
       <header className="blog-head">
         <div className="blog-head__text">
           <h1 className="blog-head__name">

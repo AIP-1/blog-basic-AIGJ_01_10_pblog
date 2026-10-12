@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { isNotFound } from '../api/client';
 import { getTopicPage } from '../api/endpoints';
 import { qk } from '../api/queries';
-import { BlogCard, PostCard } from '../components/Cards';
+import { BlogCard, PostRow } from '../components/Cards';
 import { NotFound } from '../components/NotFound';
 import { Empty, ErrorBox, Loading } from '../components/Status';
 import { COMMON } from '../messages';
@@ -48,9 +48,9 @@ export function TopicPage() {
         {data.posts.length === 0 ? (
           <Empty>{COMMON.noPosts}</Empty>
         ) : (
-          <div className="post-rows">
+          <div className="row-list">
             {data.posts.slice(0, 9).map((p) => (
-              <PostCard key={p.id} post={p} />
+              <PostRow key={p.id} post={p} />
             ))}
           </div>
         )}
