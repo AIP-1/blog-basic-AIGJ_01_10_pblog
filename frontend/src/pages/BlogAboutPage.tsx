@@ -1,29 +1,51 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { Link, Navigate, useParams } from 'react-router';
 import { getBlogAbout } from '../api/endpoints';
 import { qk } from '../api/queries';
-import { BlogShell } from '../components/BlogShell';
-import { ErrorBox, Loading } from '../components/Status';
 
-/** 블로그 소개: 주인 이름 · 한 줄 소개 · 소개 글 (3.6) */
+/** 예전 소개 주소(/blogs/:id/about)는 소개가 함께 보이는 블로그 첫 화면으로 보낸다 */
 export function BlogAboutPage() {
   const { blogId = '' } = useParams();
-  return (
-    <BlogShell blogId={blogId} active={{ type: 'about' }}>
-      {() => <About blogId={blogId} />}
-    </BlogShell>
-  );
+  return <Navigate to={`/blogs/${blogId}`} replace />;
 }
 
-function About({ blogId }: { blogId: string }) {
-  const { data, isPending, error, refetch } = useQuery({ queryKey: qk.blogAbout(blogId), queryFn: () => getBlogAbout(blogId) });
-  if (isPending) return <Loading />;
-  if (error) return <ErrorBox error={error} onRetry={() => void refetch()} />;
+/** 블로그 첫 화면 위쪽 소개: 주인 이름 · 한 줄 소개 · 소개 글. 길면 접어 두고 "더보기"로 펼친다 (3.6) */
+export function BlogIntro({ blogId, isOwner }: { blogId: string; isOwner: boolean }) {
+  const { data } = useQuery({ queryKey: qk.blogAbout(blogId), queryFn: () => getBlogAbout(blogId) });
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = bodyRef.current;
+    if (el && !open) setOverflows(el.scrollHeight > el.clientHeight + 1);
+  }, [data?.about, open]);
+
+  if (!data) return null;
+  if (!data.about && !data.ownerBio) {
+    return isOwner ? (
+      <p className="intro intro--empty muted">
+        아직 소개 글이 없습니다. <Link to="/manage/settings">소개 글 쓰기</Link>
+      </p>
+    ) : null;
+  }
   return (
-    <section className="about card">
-      <h2 className="about__name">{data.ownerNickname}</h2>
-      {data.ownerBio && <p className="about__bio">{data.ownerBio}</p>}
-      <div className="about__body">{data.about ? data.about : <p className="muted">아직 소개 글이 없습니다</p>}</div>
+    <section className="intro card" aria-label="소개">
+      <h2 className="intro__name">{data.ownerNickname}</h2>
+      {data.ownerBio && <p className="intro__bio">{data.ownerBio}</p>}
+      {data.about && (
+        <>
+          <div ref={bodyRef} className={`intro__body${open ? ' is-open' : ''}`}>
+            {data.about}
+          </div>
+          {(overflows || open) && (
+            <button type="button" className="text-btn intro__more" aria-expanded={open} onClick={() => setOpen(!open)}>
+              {open ? '접기 ▴' : '더보기 ▾'}
+            </button>
+          )}
+        </>
+      )}
     </section>
   );
 }

@@ -12,8 +12,8 @@ import { useHighlightTopic } from './topicHighlight';
 
 interface BlogShellProps {
   blogId: string;
-  /** 'about' 이면 소개 화면. tag는 왼쪽 태그 모음에서 고른 것 */
-  active: { type: 'list'; categoryId: string | null; tag?: string | null } | { type: 'about' };
+  /** tag는 왼쪽 태그 모음에서 고른 것 */
+  active: { type: 'list'; categoryId: string | null; tag?: string | null };
   children: (ctx: { blog: BlogDetail; categories: Category[] }) => ReactNode;
 }
 
@@ -60,8 +60,8 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
   const categories = catQ.data ?? [];
   const tags = tagQ.data ?? [];
   const total = categories.reduce((sum, c) => sum + c.postCount, 0);
-  const currentCat = active.type === 'list' ? active.categoryId : undefined;
-  const currentTag = active.type === 'list' ? (active.tag ?? '') : '';
+  const currentCat = active.categoryId;
+  const currentTag = active.tag ?? '';
   const base = `/blogs/${blog.id}`;
 
   return (
@@ -86,10 +86,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
             <span className="avatar avatar--xs" aria-hidden="true">
               {blog.owner.nickname.slice(0, 1)}
             </span>
-            {blog.owner.nickname} · 다이어리 {categories.length}권 · 글 {total}개 ·{' '}
-            <Link to={`${base}/about`} className={active.type === 'about' ? 'is-current' : ''}>
-              소개
-            </Link>
+            {blog.owner.nickname} · 다이어리 {categories.length}권 · 글 {total}개
           </p>
           <nav className="bookshelf" aria-label="다이어리 책장">
             <div className="bookshelf__books">
