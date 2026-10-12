@@ -25,7 +25,7 @@ const SORTS: { key: BlogPostSort; label: string; hint?: string }[] = [
   {
     key: 'popular',
     label: '인기순',
-    hint: '조회 ×1 + 좋아요 ×5 + 댓글 단 사람 ×3',
+    hint: '조회 ×1 + 좋아요 ×5 + 댓글 단 사람 ×3 + 책갈피 ×4',
   },
   { key: 'oldest', label: '오래된 순' },
 ];

@@ -51,6 +51,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     searchMin: 2,
     searchMax: 50,
     withdrawKeepDays: 30,
+    bookmarkFolderNameMax: 20,
   },
   pageSize: 10,
   trendingIntervalSeconds: 5,

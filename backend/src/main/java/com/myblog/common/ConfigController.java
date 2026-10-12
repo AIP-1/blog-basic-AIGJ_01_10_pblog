@@ -1,6 +1,7 @@
 package com.myblog.common;
 
 import com.myblog.blog.TopicService;
+import com.myblog.post.BookmarkService;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +42,7 @@ public class ConfigController {
         limits.put("searchMin", props.search().minLength());
         limits.put("searchMax", props.search().maxLength());
         limits.put("withdrawKeepDays", props.member().withdrawKeep().toDays());
+        limits.put("bookmarkFolderNameMax", BookmarkService.FOLDER_NAME_MAX);
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("limits", limits);
         m.put("pageSize", props.post().pageSize());
