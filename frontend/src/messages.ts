@@ -175,7 +175,7 @@ export const HOME = {
   recommendUses: (n: number) => `추천에 이 브라우저에서 읽은 글 ${n}개를 써요.`,
   feedTitle: '분야별 글',
   feedEmpty: '이 분야에는 아직 공개 글이 없어요',
-  popularHint: '인기 점수 = 조회 + 좋아요 ×5 + 댓글 단 사람 ×3',
+  popularHint: '인기 점수 = 조회 + 좋아요 ×5 + 댓글 단 사람 ×3 + 책갈피 ×4',
   diariesTitle: '인기 다이어리',
   blogsTitle: '블로그 둘러보기',
 } as const;
@@ -183,10 +183,36 @@ export const HOME = {
 /** 공지사항 */
 export const BOOKMARK = {
   title: '책갈피',
-  desc: '다시 읽고 싶은 글을 모아 두는 곳이에요. 글 아래 책갈피 버튼으로 넣고 빼요.',
+  button: '책갈피',
+  /** 글 아래 버튼: 꽂아 둔 글이면 폴더 이름을 붙인다 */
+  buttonOn: (folder: string) => `책갈피 · ${folder}`,
+  pickTitle: '어디에 저장할까요?',
+  savedTitle: '책갈피',
+  none: '미분류',
+  all: '전체',
+  newFolderName: '새 폴더 이름',
+  addFolder: '+ 폴더',
+  remove: '책갈피 빼기',
+  cancel: '취소',
+  save: '책갈피',
+  move: '옮기기',
+  foldersLabel: '폴더',
+  newFolder: '+ 새 폴더',
+  newFolderTitle: '새 폴더',
+  renameFolder: '이름 바꾸기',
+  renameFolderTitle: '폴더 이름 바꾸기',
+  deleteFolder: '폴더 삭제',
+  folderName: '폴더 이름',
+  folderSave: '저장',
+  deleteFolderTitle: (name: string) => `‘${name}’ 폴더를 지울까요?`,
+  deleteFolderBody: (n: number) => `안에 있는 글 ${n}개는 미분류로 옮겨져요. 글이 지워지지는 않아요.`,
+  savedAgo: (ago: string) => `${ago}에 저장`,
+  folderSelect: '폴더',
+  moveLabel: '폴더 옮기기',
+  removeLabel: (title: string) => `‘${title}’ 책갈피 빼기`,
   empty: '아직 책갈피한 글이 없어요',
-  added: '책갈피에 넣었어요',
-  removed: '책갈피에서 뺐어요',
+  emptyFolder: '이 폴더에는 아직 글이 없어요',
+  emptyHint: '마음에 드는 글 아래의 ‘책갈피’를 눌러 보세요.',
 } as const;
 
 export const SUBSCRIBE = {

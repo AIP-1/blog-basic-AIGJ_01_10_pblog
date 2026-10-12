@@ -54,6 +54,8 @@ export interface AppConfig {
     searchMax: number;
     /** 탈퇴 후 복구할 수 있는 기간(일) */
     withdrawKeepDays: number;
+    /** 책갈피 폴더 이름 최대 글자 수 */
+    bookmarkFolderNameMax: number;
   };
   pageSize: number;
   trendingIntervalSeconds: number;
@@ -283,6 +285,8 @@ export interface PostDetail {
   likedByMe: boolean;
   /** 내 책갈피에 있는지 (로그인 안 했으면 false) */
   bookmarkedByMe?: boolean;
+  /** 꽂아 둔 폴더 (꽂지 않았으면 null, 미분류면 folderId null) */
+  bookmark?: BookmarkPlace | null;
   commentCount: number;
   /** ASSUMED: prev = 더 오래된 글, next = 더 최근 글 */
   prev: PostLink | null;
@@ -291,6 +295,32 @@ export interface PostDetail {
   isAuthor: boolean;
   /** 대표글로 고정됐는지 */
   pinned?: boolean;
+}
+
+/** 책갈피가 꽂힌 곳. folderId가 null이면 미분류 */
+export interface BookmarkPlace {
+  folderId: number | null;
+  folderName: string | null;
+}
+
+export interface BookmarkFolder {
+  id: number;
+  name: string;
+  createdAt: ISODateString;
+  count: number;
+}
+
+/** 책갈피 폴더 탭: 전체 · 미분류 개수와 폴더마다 개수 */
+export interface BookmarkFolders {
+  total: number;
+  none: number;
+  folders: BookmarkFolder[];
+}
+
+/** 내 책갈피 목록의 한 줄: 꽂은 시각과 폴더가 붙는다 */
+export interface BookmarkedPost extends PostSummary {
+  savedAt: ISODateString;
+  folderId: number | null;
 }
 
 export interface UploadedImage {

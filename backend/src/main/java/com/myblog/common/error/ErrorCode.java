@@ -49,6 +49,8 @@ public enum ErrorCode {
     TOO_MANY_IMAGES(HttpStatus.BAD_REQUEST, Messages.TOO_MANY_IMAGES),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다"),
     TOO_MANY_TAGS(HttpStatus.BAD_REQUEST, Messages.TOO_MANY_TAGS),
+    BOOKMARK_FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, Messages.BOOKMARK_FOLDER_NOT_FOUND),
+    BOOKMARK_FOLDER_NAME_TAKEN(HttpStatus.CONFLICT, Messages.BOOKMARK_FOLDER_NAME_TAKEN),
     QUERY_TOO_SHORT(HttpStatus.BAD_REQUEST, Messages.QUERY_TOO_SHORT);
 
     private final HttpStatus status;
