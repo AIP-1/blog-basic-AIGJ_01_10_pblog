@@ -55,20 +55,10 @@ export function PostStats({ likes = 0, comments = 0 }: { likes?: number; comment
 }
 
 /**
- * 사진 자리: 대표 사진이 있으면 사진, 없으면 다이어리 표지 색 종이에 제목 첫 글자.
+ * 사진 자리: 대표 사진이 있으면 사진, 없으면 연한 회색 줄노트.
  * 사진 없는 글도 목록에서 빈칸처럼 보이지 않게 한다.
  */
-export function Thumb({
-  src,
-  className = 'thumb',
-  title,
-  colorIndex,
-}: {
-  src?: string | null;
-  className?: string;
-  title?: string;
-  colorIndex?: number;
-}) {
+export function Thumb({ src, className = 'thumb' }: { src?: string | null; className?: string }) {
   if (src) {
     return (
       <span className={className}>
@@ -76,18 +66,7 @@ export function Thumb({
       </span>
     );
   }
-  const letter = Array.from(title?.trim() ?? '')[0];
-  return (
-    <span className={`${className} thumb--paper`} style={{ ['--c' as string]: categoryColor(colorIndex) }} aria-hidden="true">
-      {letter ? (
-        <span className="thumb__letter">{letter}</span>
-      ) : (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 20h4L19 9l-4-4L4 16v4Z" />
-        </svg>
-      )}
-    </span>
-  );
+  return <span className={`${className} thumb--paper`} aria-hidden="true" />;
 }
 
 /** 다이어리 이름표: 표지 색 점 + 이름 */
@@ -165,7 +144,7 @@ export function PostRow({
         </div>
       </div>
       <Link className="row__thumb" to={`/posts/${post.id}`} tabIndex={-1} aria-hidden="true">
-        <Thumb src={post.coverImageUrl} title={post.title} colorIndex={post.category?.colorIndex} />
+        <Thumb src={post.coverImageUrl} />
       </Link>
     </article>
   );
