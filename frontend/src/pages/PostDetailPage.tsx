@@ -195,7 +195,7 @@ export function PostDetailPage() {
         ) : (
           <span />
         )}
-        <Link to={categoryListUrl} className="btn btn--sm btn--outline prevnext__list">
+        <Link to="/" className="btn btn--sm btn--outline prevnext__list">
           목록으로
         </Link>
         {post.next ? (

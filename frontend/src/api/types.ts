@@ -77,6 +77,8 @@ export interface Member {
 export interface MyBlogRef {
   id: number;
   name: string;
+  /** 블로그 주제. 글쓰기 분야의 기본값 */
+  topicCode?: string;
 }
 
 export interface MeResponse {
@@ -291,6 +293,7 @@ export interface PostEditSource {
   title: string;
   body: string;
   categoryId: number;
+  topicCode: string;
   visibility: Visibility;
   tags: string[];
   images: UploadedImage[];
@@ -301,6 +304,8 @@ export interface PostSaveRequest {
   title: string;
   body: string;
   categoryId: number;
+  /** 분야. 비우면 블로그 주제 */
+  topicCode: string | null;
   visibility: Visibility;
   tags: string[];
   imageIds: number[];
@@ -328,6 +333,7 @@ export interface Draft {
   title: string;
   body: string;
   categoryId: number | null;
+  topicCode: string | null;
   visibility: Visibility;
   tags: string[];
   images: UploadedImage[];
@@ -339,6 +345,7 @@ export interface DraftSaveRequest {
   title: string;
   body: string;
   categoryId: number | null;
+  topicCode: string | null;
   visibility: Visibility;
   tags: string[];
   imageIds: number[];

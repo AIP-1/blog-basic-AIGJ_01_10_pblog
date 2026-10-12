@@ -3,6 +3,7 @@ package com.myblog.blog;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,12 @@ public class TopicService {
     public List<Topic> list() {
         return jdbc.sql("SELECT id, code, name, description FROM topics ORDER BY sort_order")
                 .query(Topic.class).list();
+    }
+
+    /** 글쓰기 분야: 코드로 찾는다. 없는 코드면 비어 있다. */
+    public Optional<Long> idOf(String code) {
+        return code == null ? Optional.empty()
+                : jdbc.sql("SELECT id FROM topics WHERE code = ?").param(code).query(Long.class).optional();
     }
 
     public Topic byCode(String code) {

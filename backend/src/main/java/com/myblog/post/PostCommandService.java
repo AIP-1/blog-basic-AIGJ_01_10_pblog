@@ -2,6 +2,7 @@ package com.myblog.post;
 
 import com.myblog.blog.BlogService;
 import com.myblog.blog.CategoryService;
+import com.myblog.blog.TopicService;
 import com.myblog.common.KoreanClock;
 import com.myblog.common.MyBlogProperties;
 import com.myblog.common.Texts;
@@ -21,10 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PostCommandService {
     /** draftId: 임시저장 글을 이어 써서 올리면, 올린 뒤 그 임시저장 글을 지운다 (새 글에만 쓴다). */
-    public record Request(String title, String body, Long categoryId, String visibility, List<String> tags,
-                          List<Long> imageIds, Long coverImageId, Long draftId) {}
+    /** topicCode(분야)를 비우면 블로그의 주제로 쓴다. */
+    public record Request(String title, String body, Long categoryId, String topicCode, String visibility,
+                          List<String> tags, List<Long> imageIds, Long coverImageId, Long draftId) {}
 
-    private record Valid(String title, String body, long categoryId, String visibility, List<String> tags) {}
+    private record Valid(String title, String body, long categoryId, long topicId, String visibility,
+                         List<String> tags) {}
 
     private final JdbcClient jdbc;
     private final MyBlogProperties props;
@@ -35,10 +38,11 @@ public class PostCommandService {
     private final ImageService images;
     private final KoreanClock clock;
     private final DraftService drafts;
+    private final TopicService topics;
 
     public PostCommandService(JdbcClient jdbc, MyBlogProperties props, BlogService blogs, CategoryService categories,
                               PostQueryService queries, TagService tags, ImageService images, KoreanClock clock,
-                              DraftService drafts) {
+                              DraftService drafts, TopicService topics) {
         this.jdbc = jdbc;
         this.props = props;
         this.blogs = blogs;
@@ -48,6 +52,7 @@ public class PostCommandService {
         this.images = images;
         this.clock = clock;
         this.drafts = drafts;
+        this.topics = topics;
     }
 
     private Valid validate(long blogId, Request req) {
@@ -72,11 +77,15 @@ public class PostCommandService {
         if (category.blogId() != blogId) {
             throw ApiException.field("categoryId", Messages.CATEGORY_REQUIRED);
         }
+        long topicId = req.topicCode() == null || req.topicCode().isBlank()
+                ? jdbc.sql("SELECT topic_id FROM blogs WHERE id = ?").param(blogId).query(Long.class).single()
+                : topics.idOf(req.topicCode())
+                        .orElseThrow(() -> ApiException.field("topicCode", Messages.TOPIC_REQUIRED));
         String visibility = req.visibility() == null ? "PUBLIC" : req.visibility();
         if (!visibility.equals("PUBLIC") && !visibility.equals("PRIVATE")) {
             throw ApiException.field("visibility", "공개 여부가 올바르지 않습니다");
         }
-        return new Valid(title, body, category.id(), visibility, tags.normalize(req.tags()));
+        return new Valid(title, body, category.id(), topicId, visibility, tags.normalize(req.tags()));
     }
 
     private Long cover(Request req, long memberId) {
@@ -105,9 +114,10 @@ public class PostCommandService {
         Long cover = cover(req, memberId);
         var keys = new GeneratedKeyHolder();
         jdbc.sql("""
-                INSERT INTO posts (blog_id, author_id, category_id, title, body, visibility, cover_image_id, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""")
-                .params(blogId, memberId, v.categoryId(), v.title(), v.body(), v.visibility(), cover,
+                INSERT INTO posts (blog_id, author_id, category_id, topic_id, title, body, visibility, cover_image_id,
+                                   created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""")
+                .params(blogId, memberId, v.categoryId(), v.topicId(), v.title(), v.body(), v.visibility(), cover,
                         clock.nowOffset())
                 .update(keys, "id");
         long id = keys.getKey().longValue();
@@ -117,20 +127,22 @@ public class PostCommandService {
         return id;
     }
 
-    /** 작성자만. 제목·본문·분류·공개 여부가 실제로 바뀐 때만 수정 시각을 갱신한다 (CF-05-13). */
+    /** 작성자만. 제목·본문·분류·분야·공개 여부가 실제로 바뀐 때만 수정 시각을 갱신한다 (CF-05-13). */
     @Transactional
     public void update(long postId, long memberId, Request req) {
         var p = queries.requireAuthor(postId, memberId);
         Valid v = validate(p.blogId(), req);
         Long cover = cover(req, memberId);
         boolean changed = !p.title().equals(v.title()) || !p.body().equals(v.body())
-                || p.categoryId() != v.categoryId() || !p.visibility().equals(v.visibility());
+                || p.categoryId() != v.categoryId() || p.topicId() != v.topicId()
+                || !p.visibility().equals(v.visibility());
         OffsetDateTime updatedAt = changed ? clock.nowOffset() : p.contentUpdatedAt();
         jdbc.sql("""
-                UPDATE posts SET title = ?, body = ?, category_id = ?, visibility = ?, cover_image_id = ?,
+                UPDATE posts SET title = ?, body = ?, category_id = ?, topic_id = ?, visibility = ?, cover_image_id = ?,
                                 content_updated_at = ?
                 WHERE id = ?""")
-                .params(v.title(), v.body(), v.categoryId(), v.visibility(), cover, updatedAt, postId).update();
+                .params(v.title(), v.body(), v.categoryId(), v.topicId(), v.visibility(), cover, updatedAt, postId)
+                .update();
         tags.replace(postId, v.tags());
         images.attach(postId, memberId, imageIds(req));
         // 본문에서 빠진 이미지는 연결만 풀린다. 24시간 정리 작업이 지운다.

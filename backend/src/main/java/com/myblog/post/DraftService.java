@@ -1,6 +1,7 @@
 package com.myblog.post;
 
 import com.myblog.blog.BlogService;
+import com.myblog.blog.TopicService;
 import com.myblog.common.KoreanClock;
 import com.myblog.common.MyBlogProperties;
 import com.myblog.common.Texts;
@@ -27,22 +28,24 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class DraftService {
-    public record Request(String title, String body, Long categoryId, String visibility, List<String> tags,
-                          List<Long> imageIds, Long coverImageId) {}
+    public record Request(String title, String body, Long categoryId, String topicCode, String visibility,
+                          List<String> tags, List<Long> imageIds, Long coverImageId) {}
 
     private final JdbcClient jdbc;
     private final BlogService blogs;
     private final TagService tags;
     private final MyBlogProperties props;
     private final KoreanClock clock;
+    private final TopicService topics;
 
     public DraftService(JdbcClient jdbc, BlogService blogs, TagService tags, MyBlogProperties props,
-                        KoreanClock clock) {
+                        KoreanClock clock, TopicService topics) {
         this.jdbc = jdbc;
         this.blogs = blogs;
         this.tags = tags;
         this.props = props;
         this.clock = clock;
+        this.topics = topics;
     }
 
     /** 최근에 저장한 것부터. 미리보기는 본문 앞부분. */
@@ -63,7 +66,9 @@ public class DraftService {
 
     /** 이어 쓰기. 사진은 아직 남아 있는 내 사진만 돌려준다. */
     public Map<String, Object> get(long memberId, long draftId) {
-        return jdbc.sql("SELECT * FROM drafts WHERE id = ? AND member_id = ?").params(draftId, memberId)
+        return jdbc.sql("""
+                        SELECT d.*, t.code AS topic_code FROM drafts d LEFT JOIN topics t ON t.id = d.topic_id
+                        WHERE d.id = ? AND d.member_id = ?""").params(draftId, memberId)
                 .query((rs, i) -> view(rs, memberId)).optional()
                 .orElseThrow(() -> new ApiException(ErrorCode.DRAFT_NOT_FOUND));
     }
@@ -75,6 +80,7 @@ public class DraftService {
         m.put("body", rs.getString("body"));
         long categoryId = rs.getLong("category_id");
         m.put("categoryId", rs.wasNull() ? null : categoryId);
+        m.put("topicCode", rs.getString("topic_code"));
         m.put("visibility", rs.getString("visibility"));
         m.put("tags", Arrays.asList((String[]) array(rs.getArray("tags"))));
         Long[] imageIds = (Long[]) array(rs.getArray("image_ids"));
@@ -108,6 +114,7 @@ public class DraftService {
             throw ApiException.field("body", Messages.BODY_TOO_LONG);
         }
         Long categoryId = ownCategory(memberId, req.categoryId());
+        Long topicId = topics.idOf(req.topicCode()).orElse(null);
         String visibility = "PRIVATE".equals(req.visibility()) ? "PRIVATE" : "PUBLIC";
         String[] tagArray = tags.normalize(req.tags()).toArray(String[]::new);
         Long[] imageIds = req.imageIds() == null ? new Long[0] : req.imageIds().stream().distinct().toArray(Long[]::new);
@@ -122,18 +129,18 @@ public class DraftService {
             }
             var keys = new GeneratedKeyHolder();
             jdbc.sql("""
-                    INSERT INTO drafts (member_id, category_id, title, body, visibility, tags, image_ids, cover_image_id,
-                                        created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
-                    .params(memberId, categoryId, title, body, visibility, tagArray, imageIds, req.coverImageId(), now, now)
+                    INSERT INTO drafts (member_id, category_id, topic_id, title, body, visibility, tags, image_ids,
+                                        cover_image_id, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
+                    .params(memberId, categoryId, topicId, title, body, visibility, tagArray, imageIds, req.coverImageId(), now, now)
                     .update(keys, "id");
             draftId = keys.getKey().longValue();
         } else {
             int n = jdbc.sql("""
-                    UPDATE drafts SET category_id = ?, title = ?, body = ?, visibility = ?, tags = ?, image_ids = ?,
+                    UPDATE drafts SET category_id = ?, topic_id = ?, title = ?, body = ?, visibility = ?, tags = ?, image_ids = ?,
                                       cover_image_id = ?, updated_at = ?
                     WHERE id = ? AND member_id = ?""")
-                    .params(categoryId, title, body, visibility, tagArray, imageIds, req.coverImageId(), now,
+                    .params(categoryId, topicId, title, body, visibility, tagArray, imageIds, req.coverImageId(), now,
                             draftId, memberId)
                     .update();
             if (n == 0) {
