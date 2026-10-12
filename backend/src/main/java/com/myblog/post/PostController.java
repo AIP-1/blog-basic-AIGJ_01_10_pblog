@@ -96,6 +96,7 @@ public class PostController {
         m.put("viewCount", p.viewCount());
         m.put("likeCount", interactions.likeCount(p.id()));
         m.put("likedByMe", interactions.likedBy(p.id(), viewer));
+        m.put("bookmarkedByMe", interactions.bookmarkedBy(p.id(), viewer));
         m.put("commentCount", comments.count(p.id()));
         m.put("prev", n.get("prev").orElse(null));
         m.put("next", n.get("next").orElse(null));
@@ -181,6 +182,18 @@ public class PostController {
     @PutMapping("/api/posts/{id}/like")
     public Map<String, Object> like(@PathVariable long id, @AuthenticationPrincipal Long me) {
         return interactions.toggleLike(id, me);
+    }
+
+    @PutMapping("/api/posts/{id}/bookmark")
+    public Map<String, Object> bookmark(@PathVariable long id, @AuthenticationPrincipal Long me) {
+        return interactions.toggleBookmark(id, me);
+    }
+
+    /** 내 책갈피: 최근에 저장한 것부터. 지금 볼 수 없는 글은 빠진다. */
+    @GetMapping("/api/me/bookmarks")
+    public PageResponse<Map<String, Object>> bookmarks(@AuthenticationPrincipal Long me,
+                                                       @RequestParam(required = false) Integer page) {
+        return queries.bookmarks(me, page);
     }
 
     @PostMapping("/api/posts/{id}/reports")

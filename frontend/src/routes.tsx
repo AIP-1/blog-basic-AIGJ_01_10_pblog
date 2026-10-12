@@ -27,6 +27,7 @@ export const routes: RouteObject[] = [
       { path: '/search', element: <SearchPage /> },
       { path: '/notices', element: <NoticesPage /> },
       { path: '/password-reset', element: <PasswordResetPage /> },
+      { path: '/bookmarks', lazy: async () => ({ Component: (await import('./pages/BookmarksPage')).BookmarksPage }) },
       { path: '/me', lazy: async () => ({ Component: (await import('./pages/MyPage')).MyPage }) },
       {
         path: '/manage',

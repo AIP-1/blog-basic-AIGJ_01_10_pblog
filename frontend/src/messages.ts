@@ -181,6 +181,14 @@ export const HOME = {
 } as const;
 
 /** 공지사항 */
+export const BOOKMARK = {
+  title: '책갈피',
+  desc: '다시 읽고 싶은 글을 모아 두는 곳이에요. 글 아래 책갈피 버튼으로 넣고 빼요.',
+  empty: '아직 책갈피한 글이 없어요',
+  added: '책갈피에 넣었어요',
+  removed: '책갈피에서 뺐어요',
+} as const;
+
 export const NOTICE = {
   title: '공지사항',
   desc: '서비스 소식과 버전별로 바뀐 점을 알려 드려요.',

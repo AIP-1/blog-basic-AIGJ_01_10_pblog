@@ -4,7 +4,7 @@ import type { MeResponse } from '../api/types';
 import { useAuth } from '../auth/context';
 import { isLoginRequiredPath } from '../lib/paths';
 
-/** 사용자 메뉴: 이름·이메일 / 내 블로그 / 블로그 관리(새 댓글 수) / 내 정보 / 로그아웃 (데모 이름 메뉴) */
+/** 사용자 메뉴: 이름·이메일 / 내 블로그 / 블로그 관리(새 댓글 수) / 책갈피 / 내 정보 / 로그아웃 (데모 이름 메뉴) */
 export function UserMenu({ me }: { me: MeResponse }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -74,6 +74,11 @@ export function UserMenu({ me }: { me: MeResponse }) {
             <Link role="menuitem" to="/manage" onClick={close}>
               블로그 관리
               {count > 0 && <span className="badge">{count}</span>}
+            </Link>
+          </li>
+          <li role="none">
+            <Link role="menuitem" to="/bookmarks" onClick={close}>
+              책갈피
             </Link>
           </li>
           <li role="none">

@@ -271,6 +271,8 @@ export interface PostDetail {
   viewCount?: number;
   likeCount: number;
   likedByMe: boolean;
+  /** 내 책갈피에 있는지 (로그인 안 했으면 false) */
+  bookmarkedByMe?: boolean;
   commentCount: number;
   /** ASSUMED: prev = 더 오래된 글, next = 더 최근 글 */
   prev: PostLink | null;

@@ -301,6 +301,14 @@ public class PostQueryService {
                 .query(PostRow.class).list().stream().map(this::summary).toList();
     }
 
+    /** 내 책갈피. 정렬은 책갈피에 넣은 시각 최신순. */
+    public PageResponse<Map<String, Object>> bookmarks(long me, Integer page) {
+        String where = "p.id IN (SELECT bm.post_id FROM bookmarks bm WHERE bm.member_id = :viewer) AND " + VISIBLE_TO;
+        String order = " ORDER BY (SELECT bm.created_at FROM bookmarks bm WHERE bm.member_id = :viewer"
+                + " AND bm.post_id = p.id) DESC, p.id DESC";
+        return page(where, Map.of("viewer", me), page, order);
+    }
+
     /** 인기 다이어리: 공개 글이 있는 다이어리를 그 글들의 인기 점수 합계 순으로 (데모 '인기 다이어리'). */
     public List<Map<String, Object>> popularDiaries(int limit) {
         return jdbc.sql("SELECT c.id, c.name, c.color_index, b.id AS blog_id, b.name AS blog_name,"
