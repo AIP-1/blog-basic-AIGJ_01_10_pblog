@@ -7,11 +7,10 @@ export const DEFAULT_TOPICS: Topic[] = [
   { code: 'food', name: '음식', description: '' },
   { code: 'hobby', name: '취미', description: '' },
   { code: 'exercise', name: '운동', description: '' },
-  { code: 'dev', name: '개발', description: '' },
-  { code: 'book', name: '책', description: '' },
-  { code: 'movie', name: '영화·드라마', description: '' },
+  { code: 'game', name: '게임', description: '' },
+  { code: 'culture', name: '문화', description: '' },
   { code: 'study', name: '공부', description: '' },
-  { code: 'etc', name: '기타', description: '' },
+  { code: 'money', name: '경제', description: '' },
 ];
 
 export const DEFAULT_CONFIG: AppConfig = {
