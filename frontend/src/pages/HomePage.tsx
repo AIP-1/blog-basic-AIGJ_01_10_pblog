@@ -347,7 +347,6 @@ function MyAccountBox({ me }: { me: MeResponse }) {
           {count > 0 && <span className="badge">{count}</span>}
         </Link>
         <Link to="/me">내 정보</Link>
-        <Link to="/notices">{NOTICE.title}</Link>
       </div>
     </section>
   );
