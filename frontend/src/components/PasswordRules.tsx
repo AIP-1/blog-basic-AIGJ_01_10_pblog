@@ -1,7 +1,7 @@
 import { checkPassword } from '../lib/validation';
 
 /** 비밀번호 입력 중 규칙 충족 표시 (CF-01-6) */
-export function PasswordRules({ value, min = 8, max = 10 }: { value: string; min?: number; max?: number }) {
+export function PasswordRules({ value, min = 8, max = 64 }: { value: string; min?: number; max?: number }) {
   const c = checkPassword(value, min, max);
   const rules: { key: string; label: string; ok: boolean }[] = [
     { key: 'length', label: `${min}~${max}자`, ok: c.length },

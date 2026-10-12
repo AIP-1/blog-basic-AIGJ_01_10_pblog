@@ -52,7 +52,7 @@ myblog:
     nickname-min: 2
     nickname-max: 10
     password-min: 8
-    password-max: 10
+    password-max: 64
     password-specials: "!@#$%^&*()_+-="
     bio-max: 100
     withdraw-keep: 30d   # 탈퇴 후 복구할 수 있는 기간. 지나면 블로그·글을 지우고 개인정보를 익명화한다

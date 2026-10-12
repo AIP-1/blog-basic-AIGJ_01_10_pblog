@@ -35,10 +35,12 @@ public class AuthController {
     private final MemberRepository members;
     private final BlogService blogs;
     private final NewCommentCounter newComments;
+    private final String mailMode;
 
     public AuthController(EmailVerificationService verification, SignupService signup, LoginService login,
                           PasswordResetService reset, MemberRepository members, BlogService blogs,
-                          NewCommentCounter newComments) {
+                          NewCommentCounter newComments, com.myblog.common.MyBlogProperties props) {
+        this.mailMode = props.mail().mode();
         this.verification = verification;
         this.signup = signup;
         this.login = login;
@@ -65,8 +67,14 @@ public class AuthController {
         } else {
             sendMail = members.existsActiveByEmail(email); // 가입 여부와 관계없이 같은 응답 (CF-25-3), 탈퇴 신청한 회원 제외
         }
-        var expiresAt = verification.send(purpose, email, sendMail);
-        return ResponseEntity.accepted().body(Map.of("expiresAt", expiresAt));
+        var sent = verification.send(purpose, email, sendMail);
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("expiresAt", sent.expiresAt());
+        // 메일 서버가 없는 동안(mode=log) 화면에 번호를 바로 보여 준다. 메일을 연결하면 사라진다.
+        if ("log".equals(mailMode) && sent.code() != null) {
+            body.put("devCode", sent.code());
+        }
+        return ResponseEntity.accepted().body(body);
     }
 
     @PostMapping("/api/auth/verifications/confirm")

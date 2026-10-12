@@ -9,7 +9,7 @@ public final class Messages {
     public static final String EMAIL_TAKEN = "이미 가입된 이메일입니다";
     public static final String NICKNAME_RULE = "닉네임은 한글, 영문, 숫자로 2~10자여야 합니다";
     public static final String NICKNAME_TAKEN = "이미 사용 중인 닉네임입니다";
-    public static final String PASSWORD_RULE = "비밀번호는 영문, 숫자, 특수문자를 포함해 8~10자로 입력해 주세요";
+    public static final String PASSWORD_RULE = "비밀번호는 영문, 숫자, 특수문자를 포함해 8~64자로 입력해 주세요";
     public static final String PASSWORD_CONFIRM_MISMATCH = "비밀번호가 일치하지 않습니다";
     public static final String CODE_SENT = "인증번호를 보냈습니다. 10분 안에 입력해 주세요";
     public static final String CODE_MISMATCH = "인증번호가 올바르지 않습니다";

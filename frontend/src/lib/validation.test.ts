@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { checkPassword, isValidNickname, isValidPassword, isValidTag, normalizeTag, validateQuery } from './validation';
 
 describe('입력 규칙', () => {
-  it('CF-01-4 비밀번호: 영문·숫자·특수문자 포함 8~10자, 공백 불가', () => {
+  it('CF-01-4 비밀번호: 영문·숫자·특수문자 포함 8~64자, 공백 불가', () => {
     expect(isValidPassword('abcd123!')).toBe(true);
     expect(isValidPassword('abcd1234')).toBe(false); // 특수문자 없음
     expect(isValidPassword('abc12!')).toBe(false); // 짧음
-    expect(isValidPassword('abcd12345!!')).toBe(false); // 11자
+    expect(isValidPassword('abcd12345!!')).toBe(true); // 11자
+    expect(isValidPassword('a1!' + 'x'.repeat(61))).toBe(true); // 64자
+    expect(isValidPassword('a1!' + 'x'.repeat(62))).toBe(false); // 65자
     expect(isValidPassword('abcd 123!')).toBe(false); // 공백
     expect(isValidPassword('abcd123~')).toBe(false); // 허용되지 않은 특수문자
     expect(checkPassword('ab1')).toEqual({ length: false, letter: true, digit: true, special: false, allowedChars: true });
