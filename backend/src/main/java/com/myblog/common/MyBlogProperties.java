@@ -25,7 +25,8 @@ public record MyBlogProperties(
         Home home,
         Dashboard dashboard,
         Mail mail,
-        Draft draft) {
+        Draft draft,
+        Notice notice) {
 
     /** CF-01-3, CF-01-4, CF-15-5 */
     public record Member(int nicknameMin, int nicknameMax, int passwordMin, int passwordMax,
@@ -78,7 +79,10 @@ public record MyBlogProperties(
                            int searchWeight, int viewWeight, int commentWeight) {}
 
     /** 요구사항.md 3.2, 3.3, research §12 */
-    public record Home(int featured, int latest, int popularDays, int topicPosts, int blogs) {}
+    public record Home(int featured, int latest, int popularDays, int topicPosts, int blogs, int notices) {}
+
+    /** 공지사항: 이 이메일 회원 블로그의 categoryName 다이어리 공개 글. ownerEmail이 비면 공지가 없다 */
+    public record Notice(String ownerEmail, String categoryName) {}
 
     /** BM-02 */
     public record Dashboard(int popularDays, int popularSize, int recentSize, int chartDays) {}

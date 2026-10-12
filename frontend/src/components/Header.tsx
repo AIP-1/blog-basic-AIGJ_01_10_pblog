@@ -1,9 +1,10 @@
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { Link, NavLink, useLocation, useSearchParams } from 'react-router';
 import { useMe } from '../api/queries';
 import { useAuth } from '../auth/context';
 import { SearchBox } from './SearchBox';
 import { TopicNav } from './TopicNav';
 import { UserMenu } from './UserMenu';
+import { NOTICE } from '../messages';
 
 /** 맨 위 메뉴(한 줄): 로고 · 홈 · 주제 메뉴 · 검색창 · 로그인/회원가입 또는 글쓰기/사용자 메뉴 (3.1) */
 export function Header() {
@@ -24,6 +25,9 @@ export function Header() {
           홈
         </Link>
         <TopicNav />
+        <NavLink to="/notices" className="site-header__home site-header__notice">
+          {NOTICE.title}
+        </NavLink>
         <div className="site-header__search">
           <SearchBox key={onSearch ? `q:${q}` : 'idle'} initialQuery={q} />
         </div>

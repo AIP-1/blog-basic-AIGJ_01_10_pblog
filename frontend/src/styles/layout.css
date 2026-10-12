@@ -79,6 +79,14 @@
   height: auto;
   margin-right: -20px;
 }
+.site-header__notice {
+  margin: 0 0 0 -20px;
+}
+.site-header__notice.active {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
 .site-header__home:hover,
 .topic-nav__item:hover {
   color: var(--text);

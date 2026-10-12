@@ -74,6 +74,8 @@ export const withdraw = (body: { password: string; acknowledged: true }) =>
 /* 주제·홈 */
 export const getTopics = () => api<Topic[]>('/api/topics');
 export const getHome = () => api<HomeResponse>('/api/home');
+/** 공지사항: 공지 담당 회원 블로그의 '공지' 다이어리 공개 글 */
+export const getNotices = (page: number) => api<Page<PostSummary>>('/api/notices', { query: { page } });
 export const getTopicPage = (code: string) => api<TopicPageResponse>(`/api/topics/${encodeURIComponent(code)}`);
 
 /* 블로그·분류 */
