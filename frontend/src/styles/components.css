@@ -1049,10 +1049,22 @@
   background: var(--surface-2);
   color: var(--line-strong);
 }
-.thumb--empty {
-  border: 1px dashed var(--line-strong);
-  background: var(--surface-2);
-  color: var(--line-strong);
+/* 사진 없는 글: 다이어리 표지 색으로 물든 줄 노트 위에 제목 첫 글자 */
+span.thumb--paper {
+  position: relative;
+  border: 0;
+  background-color: color-mix(in srgb, var(--c) 26%, var(--surface));
+  background-image:
+    linear-gradient(90deg, transparent 13px, color-mix(in srgb, var(--c) 55%, transparent) 13px, color-mix(in srgb, var(--c) 55%, transparent) 14px, transparent 14px),
+    repeating-linear-gradient(180deg, transparent 0 13px, color-mix(in srgb, var(--c) 28%, transparent) 13px 14px);
+  color: color-mix(in srgb, var(--c) 55%, var(--text));
+}
+.thumb__letter {
+  font-family: var(--font-serif, Georgia, 'Noto Serif KR', serif);
+  font-size: 1.9em;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.85;
 }
 .stat {
   display: inline-flex;
