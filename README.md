@@ -2,8 +2,7 @@
 
 여러 회원이 블로그를 하나씩 운영하는 티스토리형 서비스입니다.
 
-- 기능 설명서(무엇이 어떻게 동작하는지, CI·배포 설명 포함): [`docs/기능-설명서.md`](docs/기능-설명서.md)
-- 요구사항 원본과 가이드 문서: [home-my-blog/docs](https://github.com/home-my-blog/docs) 저장소 · 스펙: [`specs/001-blog-core/`](specs/001-blog-core/)
+- 문서는 모두 [home-my-blog/docs](https://github.com/home-my-blog/docs) 저장소에 있어요: 요구사항 원본, 가이드, [기능 설명서](https://github.com/home-my-blog/docs/blob/main/docs/가이드/07-기능-설명서.md), [동작 원리](https://github.com/home-my-blog/docs/blob/main/docs/가이드/08-블로그-동작-원리.md) · 스펙: [`specs/001-blog-core/`](specs/001-blog-core/)
 - 화면: `frontend/` (React + Vite + TypeScript)
 - 서버: `backend/` (Spring Boot 3.5, Java 21, PostgreSQL 16, Redis 7)
 
