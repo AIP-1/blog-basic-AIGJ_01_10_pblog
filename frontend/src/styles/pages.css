@@ -1079,23 +1079,37 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.about {
+.intro {
   display: flex;
   flex-direction: column;
-  gap: var(--gap-2);
+  gap: var(--gap-1);
+  margin-bottom: var(--gap-4);
 }
-.about__name {
-  font-size: 1.35rem;
-  letter-spacing: var(--tracking-tight);
+.intro--empty {
+  margin-bottom: var(--gap-4);
+  font-size: 0.9rem;
+}
+.intro__name {
+  font-size: 1.1rem;
   font-weight: 800;
 }
-.about__bio {
+.intro__bio {
   color: var(--text-sub);
 }
-.about__body {
-  margin-top: var(--gap-3);
+.intro__body {
+  margin-top: var(--gap-2);
   white-space: pre-wrap;
   line-height: 1.8;
+  max-height: calc(1.8em * 4);
+  overflow: hidden;
+}
+.intro__body.is-open {
+  max-height: none;
+}
+.intro__more {
+  align-self: flex-start;
+  font-size: 0.86rem;
+  color: var(--text-muted);
 }
 
 /* ---------- 글 상세 ---------- */

@@ -6,6 +6,7 @@ import { deletePosts, getBlogPosts, getPinnedPosts, movePosts } from '../api/end
 import { qk } from '../api/queries';
 import type { BlogPostListItem, BlogPostSort, Category } from '../api/types';
 import { BlogShell, DiaryCover, LockIcon } from '../components/BlogShell';
+import { BlogIntro } from './BlogAboutPage';
 import { PostRow } from '../components/Cards';
 import { DiarySettingsModal } from '../components/DiarySettingsModal';
 import { Pagination } from '../components/Pagination';
@@ -71,7 +72,12 @@ export function BlogPage() {
                 }}
               />
             )}
-            {!diary && !tag && page === 1 && <PinnedPosts blogId={blogId} isOwner={blog.isOwner} />}
+            {!diary && !tag && page === 1 && (
+              <>
+                <BlogIntro blogId={blogId} isOwner={blog.isOwner} />
+                <PinnedPosts blogId={blogId} isOwner={blog.isOwner} />
+              </>
+            )}
             {edit && diary ? (
               <DiaryEditList
                 blogId={blog.id}
