@@ -91,6 +91,11 @@ public final class Messages {
     public static final String TOO_MANY_IMAGES = "이미지는 글 하나에 10장까지 올릴 수 있습니다";
     public static final String TOO_MANY_TAGS = "태그는 5개까지 붙일 수 있습니다";
     public static final String TAG_RULE = "태그는 공백과 쉼표 없이 1~15자로 입력해 주세요";
+    public static final String BOOKMARK_FOLDER_NOT_FOUND = "존재하지 않는 폴더입니다";
+    public static final String BOOKMARK_FOLDER_NAME_REQUIRED = "폴더 이름을 입력해 주세요";
+    public static final String BOOKMARK_FOLDER_NAME_TOO_LONG = "폴더 이름은 20자 이하로 입력해 주세요";
+    public static final String BOOKMARK_FOLDER_NAME_RESERVED = "쓸 수 없는 이름입니다";
+    public static final String BOOKMARK_FOLDER_NAME_TAKEN = "같은 이름의 폴더가 이미 있습니다";
 
     public static String categoryDescriptionTooLong(int max) {
         return "다이어리 소개는 " + max + "자 이하로 입력해 주세요";

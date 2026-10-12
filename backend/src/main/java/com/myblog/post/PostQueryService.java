@@ -44,12 +44,16 @@ public class PostQueryService {
     /** :viewer가 볼 수 있는 글. 다른 클래스에서도 posts 별칭 p에 붙여 쓴다 (:viewer 이름 붙은 매개변수 필요). */
     public static final String VISIBLE_TO = "((p.visibility = 'PUBLIC' AND " + OPEN_CATEGORY + ") OR p.author_id = :viewer OR "
             + SUBSCRIBER_VISIBLE + ") AND " + ACTIVE_AUTHOR;
-    /** 인기 점수: 조회 ×1 + 좋아요 ×5 + 댓글 단 사람 ×3 (글쓴이 본인 것은 빼고, 한 사람 댓글 여러 개는 한 명) */
+    /**
+     * 인기 점수: 조회 ×1 + 좋아요 ×5 + 댓글 단 사람 ×3 + 책갈피 ×4
+     * (글쓴이 본인 것은 빼고, 한 사람 댓글 여러 개는 한 명)
+     */
     static final String POPULARITY = """
             (p.view_count
              + 5 * (SELECT count(*) FROM post_likes l WHERE l.post_id = p.id AND l.member_id <> p.author_id)
              + 3 * (SELECT count(DISTINCT cm.author_id) FROM comments cm
-                    WHERE cm.post_id = p.id AND cm.author_id <> p.author_id))""";
+                    WHERE cm.post_id = p.id AND cm.author_id <> p.author_id)
+             + 4 * (SELECT count(*) FROM bookmarks bk WHERE bk.post_id = p.id AND bk.member_id <> p.author_id))""";
 
     public record PostRow(long id, long blogId, String blogName, long authorId, long categoryId, String categoryName,
                           int categoryColorIndex,
@@ -311,12 +315,45 @@ public class PostQueryService {
                 .query(PostRow.class).list().stream().map(this::summary).toList();
     }
 
-    /** 내 책갈피. 정렬은 책갈피에 넣은 시각 최신순. */
-    public PageResponse<Map<String, Object>> bookmarks(long me, Integer page) {
-        String where = "p.id IN (SELECT bm.post_id FROM bookmarks bm WHERE bm.member_id = :viewer) AND " + VISIBLE_TO;
+    /**
+     * 내 책갈피. 정렬은 책갈피에 넣은 시각 최신순.
+     * folderId: null이면 전체, noneOnly면 미분류만. 글마다 꽂은 시각(savedAt)과 폴더(folderId)를 붙인다.
+     */
+    public PageResponse<Map<String, Object>> bookmarks(long me, Long folderId, boolean noneOnly, Integer page) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("viewer", me);
+        String folder = "";
+        if (noneOnly) {
+            folder = " AND bm.folder_id IS NULL";
+        } else if (folderId != null) {
+            folder = " AND bm.folder_id = :folder";
+            params.put("folder", folderId);
+        }
+        String where = "p.id IN (SELECT bm.post_id FROM bookmarks bm WHERE bm.member_id = :viewer" + folder + ") AND "
+                + VISIBLE_TO;
         String order = " ORDER BY (SELECT bm.created_at FROM bookmarks bm WHERE bm.member_id = :viewer"
                 + " AND bm.post_id = p.id) DESC, p.id DESC";
-        return page(where, Map.of("viewer", me), page, order);
+        var result = page(where, params, page, order);
+        if (result.items().isEmpty()) {
+            return result;
+        }
+        Map<Long, Map<String, Object>> saved = new LinkedHashMap<>();
+        jdbc.sql("SELECT post_id, created_at, folder_id FROM bookmarks WHERE member_id = :viewer AND post_id IN (:ids)")
+                .param("viewer", me)
+                .param("ids", result.items().stream().map(m -> m.get("id")).toList())
+                .query((rs, i) -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("savedAt", rs.getObject("created_at", OffsetDateTime.class));
+                    long f = rs.getLong("folder_id");
+                    m.put("folderId", rs.wasNull() ? null : f);
+                    saved.put(rs.getLong("post_id"), m);
+                    return m;
+                }).list();
+        return result.map(m -> {
+            Map<String, Object> out = new LinkedHashMap<>(m);
+            out.putAll(saved.getOrDefault((Long) m.get("id"), Map.of()));
+            return out;
+        });
     }
 
     /**

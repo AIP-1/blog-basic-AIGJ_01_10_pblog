@@ -13,21 +13,6 @@ export const DEFAULT_TOPICS: Topic[] = [
   { code: 'money', name: '경제', description: '' },
 ];
 
-/** 분야 탭에 붙는 그림 글자. 없는 분야는 기본 그림을 쓴다 */
-export const TOPIC_ICONS: Record<string, string> = {
-  daily: '☀️',
-  travel: '✈️',
-  food: '🍜',
-  hobby: '🎨',
-  exercise: '🏃',
-  game: '🎮',
-  culture: '🎬',
-  study: '📚',
-  money: '💰',
-};
-export const ALL_TOPICS_ICON = '✨';
-export const TOPIC_ICON_FALLBACK = '📝';
-
 export const DEFAULT_CONFIG: AppConfig = {
   limits: {
     nicknameMin: 2,
@@ -51,6 +36,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     searchMin: 2,
     searchMax: 50,
     withdrawKeepDays: 30,
+    bookmarkFolderNameMax: 20,
   },
   pageSize: 10,
   trendingIntervalSeconds: 5,

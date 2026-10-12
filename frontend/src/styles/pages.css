@@ -577,8 +577,11 @@
   transition: border-color 0.15s, background 0.15s, transform 0.15s;
 }
 .topic-tabs__icon {
-  font-size: 1.5rem;
-  line-height: 1;
+  flex: none;
+  color: var(--text-sub);
+}
+.topic-tabs button.is-on .topic-tabs__icon {
+  color: inherit;
 }
 .topic-tabs button:hover {
   border-color: var(--line-strong);
@@ -2303,4 +2306,197 @@ ol.rank-list li a {
   .blog-banner--empty {
     height: 96px;
   }
+}
+
+/* ---------- 책갈피 (데모 '저장' · '저장한 글') ---------- */
+/* 책갈피 창: 폴더 고르기 · 새 폴더 */
+.modal-text {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.modal-error {
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+.modal-actions__grow {
+  flex: 1;
+}
+.folder-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.folder-pick__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.folder-pick__item .muted {
+  margin-left: auto;
+  font-size: 0.78rem;
+}
+.new-folder {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.new-folder input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  outline: none;
+}
+.new-folder input:focus {
+  border-color: var(--text-sub);
+}
+
+/* 내 책갈피: 폴더 탭 · 꽂은 시각 · 폴더 옮기기 · 빼기 */
+.saved {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.saved__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.saved__head h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.saved__tools {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+.saved__tools .text-btn {
+  font-size: 0.84rem;
+}
+.saved__tools .saved__danger {
+  color: var(--danger);
+}
+.folder-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 14px 0 4px;
+}
+.folder-tabs a {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+.folder-tabs a:hover {
+  background: var(--surface-2);
+  color: var(--text-sub);
+}
+.folder-tabs a.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+.folder-tabs__n {
+  margin-left: 2px;
+  font-size: 0.74rem;
+  opacity: 0.7;
+}
+.folder-tabs__add {
+  padding: 5px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  background: none;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.folder-tabs__add:hover {
+  border-color: var(--text-sub);
+  color: var(--text);
+}
+.saved__empty {
+  gap: 0;
+}
+.saved__empty b {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.saved-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.saved-list > li {
+  position: relative;
+  padding-top: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.saved-list > li > .row {
+  padding-top: 6px;
+  padding-right: 36px;
+  border-bottom: 0;
+}
+.saved-list__when,
+.saved-list__folder {
+  font-size: 0.74rem;
+  color: var(--text-faint);
+}
+.saved-list__folder {
+  margin-left: 10px;
+}
+.saved-list__folder select {
+  padding: 1px 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.saved-list__remove {
+  position: absolute;
+  top: 10px;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: 1.1rem;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.saved-list__remove:hover {
+  background: var(--surface-2);
+  color: var(--text);
 }

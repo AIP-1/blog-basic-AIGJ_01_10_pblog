@@ -6,6 +6,10 @@ import type {
   BlogPostListItem,
   BlogPostSort,
   BlogTag,
+  BookmarkedPost,
+  BookmarkFolder,
+  BookmarkFolders,
+  BookmarkPlace,
   Category,
   Comment,
   DashboardResponse,
@@ -159,9 +163,19 @@ export const createComment = (postId: number, body: string, parentId?: number) =
     body: parentId === undefined ? { body } : { body, parentId },
   });
 export const deleteComment = (id: number) => api<void>(`/api/comments/${id}`, { method: 'DELETE' });
-export const toggleBookmark = (postId: number) =>
-  api<{ bookmarked: boolean }>(`/api/posts/${postId}/bookmark`, { method: 'PUT' });
-export const getBookmarks = (page: number) => api<Page<PostSummary>>('/api/me/bookmarks', { query: { page } });
+/** 책갈피에 꽂거나, 이미 꽂은 글이면 폴더만 옮긴다 (folderId null = 미분류) */
+export const saveBookmark = (postId: number, folderId: number | null) =>
+  api<BookmarkPlace>(`/api/posts/${postId}/bookmark`, { method: 'PUT', body: { folderId } });
+export const removeBookmark = (postId: number) => api<void>(`/api/posts/${postId}/bookmark`, { method: 'DELETE' });
+/** folder: all · none(미분류) · 폴더 id */
+export const getBookmarks = (folder: string, page: number) =>
+  api<Page<BookmarkedPost>>('/api/me/bookmarks', { query: { folder, page } });
+export const getBookmarkFolders = () => api<BookmarkFolders>('/api/me/bookmark-folders');
+export const createBookmarkFolder = (name: string) =>
+  api<BookmarkFolder>('/api/me/bookmark-folders', { method: 'POST', body: { name } });
+export const renameBookmarkFolder = (id: number, name: string) =>
+  api<void>(`/api/me/bookmark-folders/${id}`, { method: 'PATCH', body: { name } });
+export const deleteBookmarkFolder = (id: number) => api<void>(`/api/me/bookmark-folders/${id}`, { method: 'DELETE' });
 export const toggleSubscribe = (blogId: number) =>
   api<{ subscribed: boolean; subscriberCount: number }>(`/api/blogs/${blogId}/subscribe`, { method: 'PUT' });
 export const toggleDiarySubscribe = (categoryId: number) =>
