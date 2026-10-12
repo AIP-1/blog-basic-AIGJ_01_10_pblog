@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Link, Outlet, ScrollRestoration } from 'react-router';
-import { POLICIES } from '../lib/policies';
+import { Outlet, ScrollRestoration } from 'react-router';
 import { AuthModal } from './AuthModal';
 import { Header } from './Header';
 import { TopicHighlightContext } from './topicHighlight';
@@ -17,14 +16,6 @@ export function Layout() {
         <footer className="site-footer">
           <div className="container site-footer__inner">
             <span className="site-footer__logo">© 사각</span>
-            <nav className="site-footer__links" aria-label="약관과 정책">
-              {POLICIES.map((p) => (
-                <Link key={p.path} to={p.path} className={p.path === '/privacy' ? 'is-strong' : undefined}>
-                  {p.title}
-                </Link>
-              ))}
-              <Link to="/notices">공지사항</Link>
-            </nav>
             <span>각자의 블로그에 생각을 끄적이는 곳</span>
           </div>
         </footer>
