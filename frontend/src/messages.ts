@@ -157,6 +157,24 @@ export const CATEGORY = {
 } as const;
 
 /** 요구사항.md 3.3~3.5 및 공통 */
+/** 메인 */
+export const HOME = {
+  weeklyTitle: '이번 주 인기 글',
+  weeklyEmpty: '최근 7일 동안 올라온 공개 글이 없어요.',
+  recommendTitle: '추천 글',
+  recommendHint: '글을 읽으면 취향에 맞게 바뀌어요',
+  recommendBased: '읽은 글을 바탕으로 골랐어요',
+  recommendOff: '추천 기록을 꺼 두었어요 · 인기 글을 대신 보여 드려요',
+  recommendEmpty: '아직 추천할 글이 없어요.',
+  recommendOffNote: '추천 기록이 꺼져 있어요.',
+  recommendUses: (n: number) => `추천에 이 브라우저에서 읽은 글 ${n}개를 써요.`,
+  feedTitle: '분야별 글',
+  feedEmpty: '이 분야에는 아직 공개 글이 없어요',
+  popularHint: '인기 점수 = 조회 + 좋아요 ×5 + 댓글 단 사람 ×3',
+  diariesTitle: '인기 다이어리',
+  blogsTitle: '블로그 둘러보기',
+} as const;
+
 /** 공지사항 */
 export const NOTICE = {
   title: '공지사항',

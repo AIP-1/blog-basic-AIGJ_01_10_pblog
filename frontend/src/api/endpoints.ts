@@ -12,6 +12,7 @@ import type {
   Draft,
   DraftList,
   DraftSaveRequest,
+  FeedSort,
   HomeResponse,
   LikeResponse,
   ManageCommentItem,
@@ -74,6 +75,15 @@ export const withdraw = (body: { password: string; acknowledged: true }) =>
 /* 주제·홈 */
 export const getTopics = () => api<Topic[]>('/api/topics');
 export const getHome = () => api<HomeResponse>('/api/home');
+/** 메인 '분야별 글': 주제 코드(없으면 전체) · 최신순/인기순 */
+export const getFeed = (params: { topic?: string | null; sort?: FeedSort; page?: number }) =>
+  api<Page<PostSummary>>('/api/posts', {
+    query: {
+      topic: params.topic || undefined,
+      sort: params.sort && params.sort !== 'latest' ? params.sort : undefined,
+      page: params.page,
+    },
+  });
 /** 공지사항: 공지 담당 회원 블로그의 '공지' 다이어리 공개 글 */
 export const getNotices = (page: number) => api<Page<PostSummary>>('/api/notices', { query: { page } });
 export const getTopicPage = (code: string) => api<TopicPageResponse>(`/api/topics/${encodeURIComponent(code)}`);

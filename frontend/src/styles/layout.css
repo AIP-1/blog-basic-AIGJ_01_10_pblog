@@ -25,11 +25,17 @@
   font-size: var(--fs-xs);
   background: var(--surface-2);
 }
-.site-footer .container {
+.site-footer__inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+.site-footer__logo {
   font-weight: 800;
   color: var(--text);
   letter-spacing: var(--tracking-tight);
-  font-size: var(--fs-sm);
 }
 
 /* ---------- 맨 위 메뉴 (한 줄) ---------- */
@@ -61,11 +67,15 @@
   color: var(--accent);
 }
 
-.site-header__home,
-.topic-nav__item {
+.mainnav {
+  display: flex;
+  gap: 2px;
+  align-self: stretch;
+  margin-left: -8px;
+}
+.mainnav__item {
   display: flex;
   align-items: center;
-  height: 100%;
   padding: 0 10px;
   font-size: 0.92rem;
   font-weight: 500;
@@ -74,42 +84,10 @@
   margin-bottom: -1px;
   white-space: nowrap;
 }
-.site-header__home {
-  align-self: stretch;
-  height: auto;
-  margin-right: -20px;
-}
-.site-header__notice {
-  margin: 0 0 0 -20px;
-}
-.site-header__notice.active {
-  color: var(--text);
-  font-weight: 700;
-  border-bottom-color: var(--accent);
-}
-.site-header__home:hover,
-.topic-nav__item:hover {
+.mainnav__item:hover {
   color: var(--text);
 }
-
-.topic-nav {
-  align-self: stretch;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.topic-nav::-webkit-scrollbar {
-  display: none;
-}
-.topic-nav__list {
-  display: flex;
-  gap: 2px;
-  height: 100%;
-}
-.topic-nav__list li {
-  display: flex;
-}
-.topic-nav__item.is-current {
+.mainnav__item.active {
   color: var(--text);
   font-weight: 700;
   border-bottom-color: var(--accent);
@@ -177,26 +155,22 @@
     flex-wrap: wrap;
     gap: 8px 14px;
     padding-top: 10px;
-    padding-bottom: 0;
+    padding-bottom: 10px;
   }
   .site-header__auth {
     margin-left: auto;
   }
   .site-header__search {
-    order: 3;
+    order: 4;
     width: 100%;
     margin-left: 0;
   }
-  .site-header__home {
-    order: 4;
-    margin-right: -14px;
-    padding: 4px 8px 8px;
+  .mainnav {
+    order: 3;
+    align-self: auto;
+    margin-left: 0;
   }
-  .topic-nav {
-    order: 5;
-    flex: 1;
-  }
-  .topic-nav__item {
+  .mainnav__item {
     padding: 4px 8px 8px;
   }
   .site-header__search .searchbox {

@@ -150,7 +150,23 @@ export interface PostSummary {
   category?: CategoryRef | null;
   topic?: TopicRef | null;
   coverImageUrl?: string | null;
+  viewCount?: number;
+  likeCount?: number;
+  commentCount?: number;
+  /** 글쓴이(블로그 주인) 닉네임 — 목록의 작은 프로필 글자 */
+  authorNickname?: string;
 }
+
+/** 메인 '인기 다이어리' */
+export interface PopularDiary {
+  id: number;
+  name: string;
+  colorIndex: number;
+  blog: BlogRef;
+  postCount: number;
+}
+
+export type FeedSort = 'latest' | 'popular';
 
 export interface HomeResponse {
   featured: PostSummary[];
@@ -158,6 +174,11 @@ export interface HomeResponse {
   blogs: BlogSummary[];
   /** 최근 공지 몇 개 (없으면 빈 배열) */
   notices?: PostSummary[];
+  /** 최근 며칠 안에 올라온 글 인기순 (이번 주 인기 글) */
+  weeklyPopular?: PostSummary[];
+  /** 전체 기간 인기 글 — 추천 글 후보 */
+  popularPosts?: PostSummary[];
+  popularDiaries?: PopularDiary[];
 }
 
 export interface TopicPageResponse {
@@ -214,6 +235,10 @@ export interface BlogPostListItem {
   title: string;
   excerpt: string;
   visibility: Visibility;
+  coverImageUrl?: string | null;
+  viewCount?: number;
+  likeCount?: number;
+  commentCount?: number;
 }
 
 /* ---------- 글 ---------- */

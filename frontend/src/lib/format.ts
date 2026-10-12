@@ -29,6 +29,30 @@ export function formatDateTime(iso: string | null | undefined): string {
   return p ? `${p.year}.${p.month}.${p.day} ${p.hour}:${p.minute}` : '';
 }
 
+/** 방금 전 · N분 전 · N시간 전 · N일 전(5일까지), 그보다 오래면 2026.10.01 (데모 글 목록) */
+export function formatRelative(iso: string | null | undefined, now: number = Date.now(), maxDays = 5): string {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return '';
+  const sec = Math.max(0, (now - t) / 1000);
+  if (sec < 60) return '방금 전';
+  if (sec < 3600) return `${Math.floor(sec / 60)}분 전`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}시간 전`;
+  const days = Math.floor(sec / 86400);
+  return days <= maxDays ? `${days}일 전` : formatDate(iso);
+}
+
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+/** 2026년 10월 1일 수요일 14:03 (글 화면 · 마우스를 올리면 보이는 전체 날짜) */
+export function formatDateLong(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const p = parts(iso, true);
+  if (!p) return '';
+  const dow = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' }).format(new Date(iso));
+  const idx = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(dow);
+  return `${p.year}년 ${Number(p.month)}월 ${Number(p.day)}일 ${DOW[idx] ?? ''}요일 ${p.hour}:${p.minute}`;
+}
+
 /** 14:03:05 */
 export function formatTime(iso: string | null | undefined): string {
   if (!iso) return '';

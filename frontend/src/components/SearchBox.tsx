@@ -47,7 +47,7 @@ export function SearchBox({ initialQuery = '' }: { initialQuery?: string }) {
           type="search"
           className="searchbox__input"
           aria-label="검색어"
-          placeholder="검색어를 입력하세요"
+          placeholder="공개 글 검색"
           value={value}
           maxLength={limits.searchMax + 20}
           onChange={(e) => {

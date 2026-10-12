@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { errorMessage, isNotFound } from '../api/client';
 import { deletePost, getPost, togglePin } from '../api/endpoints';
@@ -16,6 +16,7 @@ import { TagList } from '../components/TagList';
 import { useToast } from '../components/toastContext';
 import { useHighlightTopic } from '../components/topicHighlight';
 import { categoryColor, formatDate, formatDateTime } from '../lib/format';
+import { recordRead } from '../lib/readHistory';
 import { CATEGORY, POST } from '../messages';
 
 /** 글 상세 (3.5, CF-09, CF-18~21) */
@@ -33,6 +34,11 @@ export function PostDetailPage() {
     staleTime: 60_000,
   });
   useHighlightTopic(post?.topic?.code);
+
+  // 메인 추천 글에 쓰는 '읽은 글' 기록 (이 브라우저에만, 내 글은 빼고)
+  useEffect(() => {
+    if (post && !post.isAuthor) recordRead({ id: post.id, blogId: post.blog.id, categoryName: post.category.name });
+  }, [post]);
 
   const remove = useMutation({
     mutationFn: (id: number) => deletePost(id),
