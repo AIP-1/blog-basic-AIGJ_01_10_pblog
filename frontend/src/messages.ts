@@ -189,6 +189,22 @@ export const BOOKMARK = {
   removed: '책갈피에서 뺐어요',
 } as const;
 
+export const SUBSCRIBE = {
+  nav: '구독',
+  title: '구독',
+  desc: '구독한 블로그에 올라온 새 글을 모아 보는 곳이에요. 블로그 위쪽 구독 버튼으로 구독하고 취소해요.',
+  blogsTitle: '구독한 블로그',
+  feedTitle: '새 글',
+  empty: '아직 구독한 블로그가 없어요',
+  feedEmpty: '구독한 블로그에 아직 공개 글이 없어요',
+  subscribe: '구독',
+  subscribed: '구독 중',
+  added: '구독했어요',
+  removed: '구독을 취소했어요',
+  count: (n: number) => `구독자 ${n}명`,
+  ownBlog: '내 블로그는 구독할 수 없습니다',
+} as const;
+
 export const NOTICE = {
   title: '공지사항',
   desc: '서비스 소식과 버전별로 바뀐 점을 알려 드려요.',
@@ -232,6 +248,7 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   DEFAULT_CATEGORY: POST.defaultCategory,
   ALREADY_REPORTED: SOCIAL.alreadyReported,
   OWN_POST: SOCIAL.ownPost,
+  OWN_BLOG: SUBSCRIBE.ownBlog,
   INVALID_IMAGE: SOCIAL.imageRule,
   QUERY_TOO_SHORT: EXPLORE.searchTooShort,
   UNAUTHENTICATED: AUTH.loginRequired,

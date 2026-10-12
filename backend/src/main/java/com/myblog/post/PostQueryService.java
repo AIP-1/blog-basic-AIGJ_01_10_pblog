@@ -309,6 +309,12 @@ public class PostQueryService {
         return page(where, Map.of("viewer", me), page, order);
     }
 
+    /** 구독한 블로그의 새 글: 누구나 볼 수 있는 글만, 최신순. 내 글은 구독 대상이 아니라서 따로 넣지 않는다. */
+    public PageResponse<Map<String, Object>> subscriptionFeed(long me, Integer page) {
+        return page("p.blog_id IN (SELECT sb.blog_id FROM subscriptions sb WHERE sb.member_id = :me) AND " + PUBLIC_ONLY,
+                Map.of("me", me), page);
+    }
+
     /** 인기 다이어리: 공개 글이 있는 다이어리를 그 글들의 인기 점수 합계 순으로 (데모 '인기 다이어리'). */
     public List<Map<String, Object>> popularDiaries(int limit) {
         return jdbc.sql("SELECT c.id, c.name, c.color_index, b.id AS blog_id, b.name AS blog_name,"
