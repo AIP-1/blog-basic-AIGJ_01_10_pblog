@@ -7,7 +7,7 @@ import { useRequireLogin } from '../api/useRequireLogin';
 import { BOOKMARK } from '../messages';
 import { useToast } from './toastContext';
 
-/** 책갈피 넣기/빼기. 내 책갈피(/bookmarks)에 모인다 */
+/** 책갈피 넣기/빼기. 글 아래 공유 버튼 옆에 있다. 내 책갈피(/bookmarks)에 모인다 */
 export function BookmarkButton({ post }: { post: PostDetail }) {
   const queryClient = useQueryClient();
   const requireLogin = useRequireLogin();
@@ -28,12 +28,12 @@ export function BookmarkButton({ post }: { post: PostDetail }) {
   return (
     <button
       type="button"
-      className={`like-btn bookmark-btn${on ? ' is-on' : ''}`}
+      className={`tool-btn bookmark-btn${on ? ' is-on' : ''}`}
       aria-pressed={on}
       disabled={mutation.isPending}
       onClick={() => requireLogin(() => mutation.mutateAsync())}
     >
-      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
         <path d="M4 2h8v12l-4-3-4 3V2Z" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
       책갈피
