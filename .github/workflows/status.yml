@@ -1,0 +1,27 @@
+# 서버 상태 확인: 컨테이너가 떠 있는지, 서버 안에서 응답하는지, 바깥(GitHub 러너)에서 8390 포트로 들어가지는지 본다.
+name: status
+on:
+  workflow_dispatch:
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check inside the server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_ADDRESS }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_ID }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            D=docker; $D ps >/dev/null 2>&1 || D="sudo -n docker"
+            $D ps -a --filter name=myblog --format '{{.Names}} {{.Status}} {{.Ports}}'
+            echo "--- inside: $(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://localhost:8390/api/topics)"
+            $D logs --tail 20 myblog 2>&1 | tail -20
+      - name: Check from outside
+        env:
+          HOST: ${{ secrets.SSH_ADDRESS }}
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "http://$HOST:8390/api/topics" || true)
+          echo "outside: ${code:-timeout}"
