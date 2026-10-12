@@ -6,6 +6,7 @@ import { deletePost, getPost, togglePin } from '../api/endpoints';
 import { qk } from '../api/queries';
 import type { PostDetail } from '../api/types';
 import { useRequireLogin } from '../api/useRequireLogin';
+import { PostStats } from '../components/Cards';
 import { CommentSection } from '../components/CommentSection';
 import { LikeButton } from '../components/LikeButton';
 import { MarkdownView } from '../components/MarkdownView';
@@ -15,7 +16,7 @@ import { ErrorBox, Loading } from '../components/Status';
 import { TagList } from '../components/TagList';
 import { useToast } from '../components/toastContext';
 import { useHighlightTopic } from '../components/topicHighlight';
-import { categoryColor, formatDate, formatDateTime } from '../lib/format';
+import { categoryColor, formatDate, formatDateLong, formatDateTime } from '../lib/format';
 import { recordRead } from '../lib/readHistory';
 import { CATEGORY, POST } from '../messages';
 
@@ -68,71 +69,67 @@ export function PostDetailPage() {
   if (error) return <ErrorBox error={error} onRetry={() => void refetch()} />;
 
   const categoryListUrl = `/blogs/${post.blog.id}?category=${post.category.id}`;
+  // 공유: 휴대폰처럼 공유 창이 있으면 그걸, 없으면 주소를 복사한다
+  const share = async () => {
+    const url = `${window.location.origin}/posts/${post.id}`;
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ title: post.title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast.show(POST.linkCopied);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
+      window.prompt(POST.copyPrompt, url);
+    }
+  };
+  const author = post.blog.owner?.nickname ?? post.blog.ownerNickname ?? post.blog.name;
 
   return (
     <article className="post">
-      <nav className="breadcrumb" aria-label="현재 위치">
-        <Link to="/">홈</Link>
-        <span aria-hidden="true">›</span>
-        {post.topic && (
-          <>
-            <Link to={`/topics/${post.topic.code}`}>{post.topic.name}</Link>
-            <span aria-hidden="true">›</span>
-          </>
-        )}
-        <Link to={`/blogs/${post.blog.id}`}>{post.blog.name}</Link>
-        <span aria-hidden="true">›</span>
-        <Link to={categoryListUrl}>{post.category.name}</Link>
-      </nav>
+      <Link to={`/blogs/${post.blog.id}`} className="post__back-link">
+        ← {post.blog.name}
+      </Link>
 
       {post.coverImageUrl && <img className="post__cover" src={post.coverImageUrl} alt="" />}
 
       <header className="post__head">
-        <Link to={categoryListUrl} className="post__cat">
-          <span className="dot" style={{ background: categoryColor(post.category.colorIndex) }} aria-hidden="true" />
-          {post.category.name}
-        </Link>
+        <nav className="post__crumbs" aria-label="분야 · 다이어리">
+          {post.topic && (
+            <>
+              <Link to={`/topics/${post.topic.code}`} className="post__topic">
+                {post.topic.name}
+              </Link>
+              <span className="post__crumb-sep" aria-hidden="true">
+                ›
+              </span>
+            </>
+          )}
+          <Link to={categoryListUrl} className="diary-chip">
+            <span className="dot" style={{ background: categoryColor(post.category.colorIndex) }} aria-hidden="true" />
+            {post.category.name}
+          </Link>
+        </nav>
         <h1 className="post__title">
-          {post.title}
           {post.visibility === 'PRIVATE' && <span className="badge badge--muted">{POST.privateBadge}</span>}
+          {post.title}
         </h1>
-        <p className="post__meta">
-          <Link to={`/blogs/${post.blog.id}`}>{post.blog.name}</Link>
-          <span>
-            · 작성 <time dateTime={post.createdAt}>{formatDateTime(post.createdAt)}</time>
-          </span>
+        <p className="post__byline">
+          <Link to={`/blogs/${post.blog.id}`} className="post__author">
+            <span className="avatar avatar--xs" aria-hidden="true">
+              {author.slice(0, 1)}
+            </span>
+            <b>{author}</b>
+          </Link>
+          <time dateTime={post.createdAt}>{formatDateLong(post.createdAt)}</time>
           {post.contentUpdatedAt && (
-            <span>
-              · 수정 <time dateTime={post.contentUpdatedAt}>{formatDateTime(post.contentUpdatedAt)}</time>
+            <span title={formatDateLong(post.contentUpdatedAt)}>
+              수정 <time dateTime={post.contentUpdatedAt}>{formatDateTime(post.contentUpdatedAt)}</time>
             </span>
           )}
+          {post.viewCount !== undefined && <span>조회 {post.viewCount.toLocaleString()}</span>}
         </p>
-        {post.isAuthor && (
-          <div className="post__author-actions">
-            <button
-              type="button"
-              className={`btn btn--sm btn--ghost pin-btn${post.pinned ? ' is-on' : ''}`}
-              aria-pressed={!!post.pinned}
-              disabled={pin.isPending}
-              onClick={() => pin.mutate(post.id)}
-            >
-              📌 {post.pinned ? CATEGORY.unpin : CATEGORY.pin}
-            </button>
-            <Link to={`/posts/${post.id}/edit`} className="btn btn--sm btn--ghost">
-              수정
-            </Link>
-            <button
-              type="button"
-              className="btn btn--sm btn--ghost btn--danger-text"
-              disabled={remove.isPending}
-              onClick={() => {
-                if (window.confirm(POST.deleteConfirm)) remove.mutate(post.id);
-              }}
-            >
-              삭제
-            </button>
-          </div>
-        )}
       </header>
 
       <MarkdownView source={post.body} className="post__body" />
@@ -141,61 +138,102 @@ export function PostDetailPage() {
 
       <div className="post__reactions">
         <LikeButton post={post} />
-        {!post.isAuthor && (
-          <button type="button" className="link-btn" onClick={() => requireLogin(() => setReporting(true))}>
+      </div>
+
+      <div className="post__tools">
+        {!post.isAuthor ? (
+          <button type="button" className="text-btn post__report" onClick={() => requireLogin(() => setReporting(true))}>
             신고
           </button>
+        ) : (
+          <span className="post__tools-spacer" />
+        )}
+        <button type="button" className="tool-btn" onClick={() => void share()}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
+          </svg>
+          공유
+        </button>
+        {post.isAuthor && (
+          <>
+            <span className="post__tools-divider" aria-hidden="true" />
+            <button
+              type="button"
+              className={`btn btn--sm btn--outline pin-btn${post.pinned ? ' is-on' : ''}`}
+              aria-pressed={!!post.pinned}
+              disabled={pin.isPending}
+              onClick={() => pin.mutate(post.id)}
+            >
+              📌 {post.pinned ? CATEGORY.unpin : CATEGORY.pin}
+            </button>
+            <Link to={`/posts/${post.id}/edit`} className="btn btn--sm btn--outline">
+              수정
+            </Link>
+            <button
+              type="button"
+              className="btn btn--sm btn--outline btn--danger-text"
+              disabled={remove.isPending}
+              onClick={() => {
+                if (window.confirm(POST.deleteConfirm)) remove.mutate(post.id);
+              }}
+            >
+              삭제
+            </button>
+          </>
         )}
       </div>
 
       <nav className="prevnext" aria-label="이전 글 다음 글">
         {post.prev ? (
           <Link to={`/posts/${post.prev.id}`} className="prevnext__item prevnext__item--prev">
-            <span className="prevnext__label">← 이전 글</span>
+            <span className="prevnext__label">‹ 이전 글</span>
             <span className="prevnext__title">{post.prev.title}</span>
           </Link>
         ) : (
           <span />
         )}
-        {post.next && (
+        <Link to={categoryListUrl} className="btn btn--sm btn--outline prevnext__list">
+          목록으로
+        </Link>
+        {post.next ? (
           <Link to={`/posts/${post.next.id}`} className="prevnext__item prevnext__item--next">
-            <span className="prevnext__label">다음 글 →</span>
+            <span className="prevnext__label">다음 글 ›</span>
             <span className="prevnext__title">{post.next.title}</span>
           </Link>
+        ) : (
+          <span />
         )}
       </nav>
 
-      <section className="card blog-intro">
-        <div>
-          <p className="blog-intro__name">{post.blog.name}</p>
-          {post.blog.description && <p className="blog-intro__desc">{post.blog.description}</p>}
-        </div>
-        <Link to={`/blogs/${post.blog.id}`} className="btn btn--sm btn--outline">
-          블로그 보기
-        </Link>
-      </section>
-
       {post.otherPosts.length > 0 && (
-        <section className="section other-posts">
-          <h2 className="section__title">이 블로그의 다른 글</h2>
-          <ul className="other-posts__list">
-            {post.otherPosts.slice(0, 3).map((o) => (
+        <section className="other-box">
+          <header className="other-box__head">
+            <h2>
+              <span className="other-box__blog">{post.blog.name}</span>의 다른 글
+            </h2>
+            <Link to={`/blogs/${post.blog.id}`} className="other-box__more">
+              블로그 보기 →
+            </Link>
+          </header>
+          {post.blog.description && <p className="other-box__desc">{post.blog.description}</p>}
+          <ul className="other-box__list">
+            {post.otherPosts.map((o) => (
               <li key={o.id}>
                 <Link to={`/posts/${o.id}`}>
-                  <span className="other-posts__title">{o.title}</span>
-                  {o.createdAt && <time dateTime={o.createdAt}>{formatDate(o.createdAt)}</time>}
+                  <span className="other-box__title">{o.title}</span>
+                  <span className="other-box__meta">
+                    <PostStats likes={o.likeCount} comments={o.commentCount} />
+                    {o.createdAt && <time dateTime={o.createdAt}>{formatDate(o.createdAt)}</time>}
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
         </section>
       )}
-
-      <div className="post__back">
-        <Link to={categoryListUrl} className="btn btn--ghost">
-          ← 글 목록으로
-        </Link>
-      </div>
 
       <CommentSection post={post} />
 

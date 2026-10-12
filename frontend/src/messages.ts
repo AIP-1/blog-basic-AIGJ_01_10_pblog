@@ -53,6 +53,8 @@ export const ACCOUNT = {
 
 /** 03-코어-블로그-글 '안내 문구' */
 export const POST = {
+  linkCopied: '글 주소를 복사했어요',
+  copyPrompt: '글 주소를 복사해 주세요',
   titleRequired: '제목을 입력해 주세요',
   bodyRequired: '본문을 입력해 주세요',
   leaveConfirm: '저장하지 않은 내용이 있습니다. 나갈까요?',
@@ -82,6 +84,8 @@ export const POST = {
 
 /** 04-탐색 '안내 문구' */
 export const EXPLORE = {
+  searchStart: '찾을 단어를 넣어 주세요',
+  searchHint: '모든 블로그의 공개 글과 블로그 이름에서 찾아요. 여러 단어를 쓰면 모든 단어가 들어 있는 것만 보여 줘요.',
   emptyList: '글이 없습니다',
   searchTooShort: '검색어를 2자 이상 입력해 주세요',
   searchNoResult: '검색 결과가 없습니다',

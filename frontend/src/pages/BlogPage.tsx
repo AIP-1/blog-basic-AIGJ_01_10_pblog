@@ -6,6 +6,7 @@ import { deletePosts, getBlogPosts, getPinnedPosts, movePosts } from '../api/end
 import { qk } from '../api/queries';
 import type { BlogPostListItem, BlogPostSort, Category } from '../api/types';
 import { BlogShell, DiaryCover, LockIcon } from '../components/BlogShell';
+import { PostRow } from '../components/Cards';
 import { DiarySettingsModal } from '../components/DiarySettingsModal';
 import { Pagination } from '../components/Pagination';
 import { Empty, ErrorBox, FormMessage, Loading } from '../components/Status';
@@ -383,30 +384,17 @@ function BlogPostList({ blogId, isOwner, categoryId, title, tag, sort, page, onS
           )}
         </Empty>
       ) : (
-        <ul className="post-list">
+        <div className="row-list">
           {data.items.map((p) => (
-            <li key={p.id} className="post-list__item">
-              <Link to={`/posts/${p.id}`} className="post-list__link">
-                <div className="post-list__meta">
-                  <span className="post-list__cat">
-                    <span
-                      className="dot"
-                      style={{
-                        background: categoryColor(p.category.colorIndex),
-                      }}
-                      aria-hidden="true"
-                    />
-                    {p.category.name}
-                  </span>
-                  <time dateTime={p.createdAt}>{formatDate(p.createdAt)}</time>
-                  {p.visibility === 'PRIVATE' && <span className="badge badge--muted">{POST.privateBadge}</span>}
-                </div>
-                <h3 className="post-list__title">{p.title}</h3>
-                {p.excerpt && <p className="post-list__excerpt">{p.excerpt}</p>}
-              </Link>
-            </li>
+            <PostRow
+              key={p.id}
+              post={p}
+              blogId={Number(blogId)}
+              showBlog={false}
+              badge={p.visibility === 'PRIVATE' ? <span className="badge badge--muted">{POST.privateBadge}</span> : undefined}
+            />
           ))}
-        </ul>
+        </div>
       )}
       <Pagination page={data.page} totalPages={data.totalPages} onChange={onPage} />
     </section>

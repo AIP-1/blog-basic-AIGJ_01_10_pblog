@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'react-router';
 import { getTagPosts } from '../api/endpoints';
 import { qk } from '../api/queries';
-import { PostCard } from '../components/Cards';
+import { PostRow } from '../components/Cards';
 import { Pagination } from '../components/Pagination';
 import { Empty, ErrorBox, Loading } from '../components/Status';
 import { EXPLORE } from '../messages';
@@ -32,9 +32,9 @@ export function TagPostsPage() {
         <Empty>{EXPLORE.emptyList}</Empty>
       ) : (
         <>
-          <div className="post-rows">
+          <div className="row-list">
             {data.items.map((p) => (
-              <PostCard key={p.id} post={p} />
+              <PostRow key={p.id} post={p} />
             ))}
           </div>
           <Pagination page={data.page} totalPages={data.totalPages} onChange={(p) => setParams(p > 1 ? { page: String(p) } : {})} />

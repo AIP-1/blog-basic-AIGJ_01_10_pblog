@@ -248,12 +248,14 @@ export interface PostLink {
   id: number;
   title: string;
   createdAt?: ISODateString;
+  likeCount?: number;
+  commentCount?: number;
 }
 
 export interface PostDetail {
   id: number;
   /** ASSUMED: blog 에 description 포함(블로그 소개 카드) */
-  blog: BlogRef & { description?: string; ownerNickname?: string };
+  blog: BlogRef & { description?: string; ownerNickname?: string; owner?: { nickname: string; bio?: string } };
   topic: TopicRef;
   category: CategoryRef;
   title: string;
@@ -264,6 +266,7 @@ export interface PostDetail {
   coverImageUrl: string | null;
   /** ASSUMED: 태그 이름 배열 */
   tags: string[];
+  viewCount?: number;
   likeCount: number;
   likedByMe: boolean;
   commentCount: number;

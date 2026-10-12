@@ -84,7 +84,8 @@ public class PostController {
         m.put("blog", Map.of("id", blog.id(), "name", blog.name(), "description", blog.description(),
                 "owner", Map.of("nickname", blog.ownerNickname(), "bio", blog.ownerBio())));
         m.put("topic", Map.of("code", p.topicCode(), "name", p.topicName()));
-        m.put("category", Map.of("id", p.categoryId(), "name", p.categoryName()));
+        m.put("category", Map.of("id", p.categoryId(), "name", p.categoryName(),
+                "colorIndex", p.categoryColorIndex()));
         m.put("title", p.title());
         m.put("body", p.body());
         m.put("createdAt", p.createdAt());
@@ -92,6 +93,7 @@ public class PostController {
         m.put("visibility", p.visibility());
         m.put("coverImageUrl", p.coverKey() == null ? null : ImageService.url(p.coverKey()));
         m.put("tags", tags.tagsOf(p.id()));
+        m.put("viewCount", p.viewCount());
         m.put("likeCount", interactions.likeCount(p.id()));
         m.put("likedByMe", interactions.likedBy(p.id(), viewer));
         m.put("commentCount", comments.count(p.id()));
