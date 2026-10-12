@@ -2,6 +2,10 @@
 name: status
 on:
   workflow_dispatch:
+    inputs:
+      url:
+        description: 바깥에서 확인할 주소 (예 https://sagak.java21.net)
+        required: false
 
 jobs:
   status:
@@ -25,3 +29,11 @@ jobs:
         run: |
           code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "http://$HOST:8390/api/topics" || true)
           echo "outside: ${code:-timeout}"
+      - name: Check the public URL
+        if: ${{ inputs.url != '' }}
+        env:
+          URL: ${{ inputs.url }}
+        run: |
+          for p in / /api/topics "/api/search?q=a"; do
+            echo "$p -> $(curl -s -o /tmp/body -w '%{http_code} %{content_type}' --max-time 15 "$URL$p" || true) $(head -c 150 /tmp/body 2>/dev/null | tr '\n' ' ')"
+          done
