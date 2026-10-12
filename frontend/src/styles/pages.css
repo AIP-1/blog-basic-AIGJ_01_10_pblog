@@ -660,6 +660,46 @@
   display: flex;
   gap: var(--gap-2);
 }
+.subscribe-btn__count {
+  margin-left: 6px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+/* ---------- 구독 ---------- */
+.sub-blogs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-2);
+}
+.sub-blog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+.sub-blog:hover {
+  background: var(--surface-2);
+}
+.sub-blog__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sub-blog__name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sub-blog__meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
 .avatar--xs {
   width: 22px;
   height: 22px;

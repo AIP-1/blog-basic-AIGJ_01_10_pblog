@@ -28,6 +28,7 @@ import type {
   ReportReason,
   SearchResponse,
   SearchType,
+  SubscribedBlog,
   StatsResponse,
   Topic,
   TopicPageResponse,
@@ -159,6 +160,11 @@ export const deleteComment = (id: number) => api<void>(`/api/comments/${id}`, { 
 export const toggleBookmark = (postId: number) =>
   api<{ bookmarked: boolean }>(`/api/posts/${postId}/bookmark`, { method: 'PUT' });
 export const getBookmarks = (page: number) => api<Page<PostSummary>>('/api/me/bookmarks', { query: { page } });
+export const toggleSubscribe = (blogId: number) =>
+  api<{ subscribed: boolean; subscriberCount: number }>(`/api/blogs/${blogId}/subscribe`, { method: 'PUT' });
+export const getSubscriptions = () => api<SubscribedBlog[]>('/api/me/subscriptions');
+export const getSubscriptionPosts = (page: number) =>
+  api<Page<PostSummary>>('/api/me/subscriptions/posts', { query: { page } });
 export const toggleLike = (postId: number) => api<LikeResponse>(`/api/posts/${postId}/like`, { method: 'PUT' });
 export const reportPost = (postId: number, body: { reason: ReportReason; detail?: string }) =>
   api<void>(`/api/posts/${postId}/reports`, { method: 'POST', body });
