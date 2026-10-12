@@ -7,6 +7,7 @@ import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.Messages;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -89,7 +90,7 @@ public class BlogService {
                 .params(b.id(), owner)
                 .query((rs, i) -> new Object[] {rs.getLong("cnt"), rs.getObject("last_at", OffsetDateTime.class)})
                 .single();
-        var m = new java.util.LinkedHashMap<String, Object>();
+        Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", b.id());
         m.put("name", b.name());
         m.put("description", b.description());

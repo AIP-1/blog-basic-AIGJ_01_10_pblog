@@ -6,8 +6,10 @@ import { getBlog, getBlogTags, getCategories } from '../api/endpoints';
 import { qk } from '../api/queries';
 import type { BlogDetail, Category } from '../api/types';
 import { categoryColor } from '../lib/format';
+import { SUBSCRIBE } from '../messages';
 import { NotFound } from './NotFound';
 import { ErrorBox, Loading } from './Status';
+import { SubscribeButton } from './SubscribeButton';
 import { useHighlightTopic } from './topicHighlight';
 
 interface BlogShellProps {
@@ -86,7 +88,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
             <span className="avatar avatar--xs" aria-hidden="true">
               {blog.owner.nickname.slice(0, 1)}
             </span>
-            {blog.owner.nickname} · 다이어리 {categories.length}권 · 글 {total}개
+            {blog.owner.nickname} · 다이어리 {categories.length}권 · 글 {total}개 · {SUBSCRIBE.count(blog.subscriberCount ?? 0)}
           </p>
           <nav className="bookshelf" aria-label="다이어리 책장">
             <div className="bookshelf__books">
@@ -119,7 +121,7 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
             <div className="bookshelf__board" aria-hidden="true" />
           </nav>
         </div>
-        {blog.isOwner && (
+        {blog.isOwner ? (
           <div className="blog-head__actions">
             <Link to="/write" className="btn btn--sm btn--primary">
               글쓰기
@@ -127,6 +129,10 @@ export function BlogShell({ blogId, active, children }: BlogShellProps) {
             <Link to="/manage" className="btn btn--sm btn--ghost">
               블로그 관리
             </Link>
+          </div>
+        ) : (
+          <div className="blog-head__actions">
+            <SubscribeButton blog={blog} />
           </div>
         )}
       </header>

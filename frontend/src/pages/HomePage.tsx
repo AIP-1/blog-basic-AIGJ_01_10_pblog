@@ -10,6 +10,7 @@ import { BlogCard, PostRow, PostStats, Thumb } from '../components/Cards';
 import { Pagination } from '../components/Pagination';
 import { Empty, ErrorBox, Loading } from '../components/Status';
 import { TrendingList } from '../components/TrendingList';
+import { ALL_TOPICS_ICON, TOPIC_ICON_FALLBACK, TOPIC_ICONS } from '../lib/config';
 import { categoryColor, formatDate } from '../lib/format';
 import { clearReads, isTrackingOff, readCount, recommend, setTrackingOff } from '../lib/readHistory';
 import { COMMON, HOME, NOTICE } from '../messages';
@@ -244,6 +245,9 @@ function TopicFeed() {
       </header>
       <nav className="topic-tabs" aria-label="분야">
         <button type="button" className={!topic ? 'is-on' : ''} aria-pressed={!topic} onClick={() => setFeed({ topic: '' })}>
+          <span className="topic-tabs__icon" aria-hidden="true">
+            {ALL_TOPICS_ICON}
+          </span>
           전체
         </button>
         {topics.map((t) => (
@@ -254,6 +258,9 @@ function TopicFeed() {
             aria-pressed={t.code === topic}
             onClick={() => setFeed({ topic: t.code })}
           >
+            <span className="topic-tabs__icon" aria-hidden="true">
+              {TOPIC_ICONS[t.code] ?? TOPIC_ICON_FALLBACK}
+            </span>
             {t.name}
           </button>
         ))}

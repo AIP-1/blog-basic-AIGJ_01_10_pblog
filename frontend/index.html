@@ -7,6 +7,19 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <title>사각</title>
+    <script>
+      // 첫 화면 전에 밝기(야간모드)를 정한다 — src/lib/theme.ts 와 같은 키 (깜빡임 방지)
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem('sagak.theme');
+        } catch (e) {}
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

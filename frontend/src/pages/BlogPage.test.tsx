@@ -13,6 +13,8 @@ const blog = {
   postCount: 3,
   lastPostAt: null,
   isOwner: true,
+  subscriberCount: 3,
+  subscribedByMe: false,
 };
 const categories = [
   { id: 1, name: '일상', description: '하루하루', visibility: 'PUBLIC', postCount: 2, isDefault: true, colorIndex: 2 },
@@ -80,6 +82,21 @@ describe('블로그 화면 (데모 다이어리)', () => {
     renderAt('/blogs/1');
     expect(await screen.findByText('고정한 글')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: '대표글' })).toBeInTheDocument();
+  });
+
+  it('남의 블로그에는 구독 버튼과 구독자 수를 보여 준다', async () => {
+    mockFetch([
+      { path: '/api/auth/me', status: 204 },
+      { path: '/api/blogs/1', body: { ...blog, isOwner: false } },
+      { path: '/api/blogs/1/categories', body: categories.slice(0, 1) },
+      { path: '/api/blogs/1/tags', body: [] },
+      { path: '/api/blogs/1/pinned', body: [] },
+      { path: '/api/blogs/1/posts', body: page([]) },
+    ]);
+    renderAt('/blogs/1');
+    expect(await screen.findByRole('button', { name: '구독 3' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText(/구독자 3명/)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '블로그 관리' })).not.toBeInTheDocument();
   });
 
   it('다이어리 편집: 글을 골라 다른 다이어리로 옮긴다', async () => {

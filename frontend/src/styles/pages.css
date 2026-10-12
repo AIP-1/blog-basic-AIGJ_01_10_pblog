@@ -287,6 +287,12 @@
 .ad-slide:hover {
   color: var(--ad-fg);
 }
+/* 야간모드: 광고 바탕은 어둡게 눌러 주고 글자는 밝게 */
+:root[data-theme='dark'] .ad-slide,
+:root[data-theme='dark'] .ad-slide:hover {
+  background: color-mix(in srgb, var(--ad-bg) 14%, var(--surface-2));
+  color: color-mix(in srgb, var(--ad-fg) 25%, var(--text));
+}
 .ad-copy {
   display: flex;
   flex-direction: column;
@@ -319,8 +325,8 @@
   right: 12px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -333,8 +339,8 @@
   height: 34px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  color: #222;
+  background: var(--float-bg);
+  color: var(--float-ink);
   font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
@@ -365,13 +371,13 @@
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--ad-dot);
   cursor: pointer;
   transition: width 0.25s;
 }
 .ad-dots button.is-on {
   width: 20px;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--ad-dot-on);
 }
 
 /* 이번 주 인기 글: 6개 같은 크기 카드 */
@@ -425,8 +431,8 @@
   display: grid;
   place-items: center;
   border-radius: 6px;
-  background: rgba(17, 19, 24, 0.62);
-  color: #fff;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
   font-size: 0.72rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -546,31 +552,61 @@
 #latest {
   scroll-margin-top: 80px;
 }
+/* 분야 탭: 그림 글자가 위에 있는 네모 타일. 넓으면 한 줄에 꽉 차고, 좁으면 옆으로 민다 */
 .topic-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 14px 0 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 8px;
+  padding: 16px 0 6px;
 }
 .topic-tabs button {
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: none;
-  font-size: 0.82rem;
-  color: var(--text-sub);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px 10px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: var(--surface-2);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text);
   white-space: nowrap;
   letter-spacing: -0.02em;
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.topic-tabs__icon {
+  font-size: 1.5rem;
+  line-height: 1;
 }
 .topic-tabs button:hover {
-  background: var(--surface-2);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
 }
 .topic-tabs button.is-on {
-  background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
   font-weight: 700;
+}
+@media (max-width: 640px) {
+  .topic-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .topic-tabs button {
+    flex: 0 0 64px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topic-tabs button {
+    transition: none;
+  }
+  .topic-tabs button:hover {
+    transform: none;
+  }
 }
 .topic-feed .empty b {
   color: var(--text);
@@ -660,6 +696,46 @@
   display: flex;
   gap: var(--gap-2);
 }
+.subscribe-btn__count {
+  margin-left: 6px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+/* ---------- 구독 ---------- */
+.sub-blogs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-2);
+}
+.sub-blog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+.sub-blog:hover {
+  background: var(--surface-2);
+}
+.sub-blog__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sub-blog__name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sub-blog__meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
 .avatar--xs {
   width: 22px;
   height: 22px;
@@ -720,8 +796,8 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--text-sub);
+  background: var(--float-bg);
+  color: var(--float-ink);
 }
 .cover--add {
   display: grid;
@@ -942,9 +1018,9 @@
   cursor: pointer;
 }
 .seg-tabs button.is-on {
-  background: var(--surface);
+  background: var(--surface-raised);
   color: var(--text);
-  box-shadow: 0 1px 2px rgba(17, 19, 24, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 .tag-filter {
   display: flex;

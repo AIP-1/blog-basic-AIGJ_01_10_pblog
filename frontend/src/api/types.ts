@@ -202,6 +202,16 @@ export interface BlogDetail {
   postCount: number;
   lastPostAt: ISODateString | null;
   isOwner: boolean;
+  subscriberCount: number;
+  subscribedByMe: boolean;
+}
+
+/** 내가 구독한 블로그 (최근에 구독한 것부터) */
+export interface SubscribedBlog {
+  id: number;
+  name: string;
+  ownerNickname: string;
+  lastPostAt: ISODateString | null;
 }
 
 export interface BlogAbout {

@@ -1,5 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { formatShortDay } from '../../lib/format';
+import { useTheme } from '../../lib/theme';
 
 /** 그래프 색은 variables.css 의 토큰을 읽는다 (SVG 속성에는 var() 를 쓸 수 없어서). */
 function token(name: string, fallback: string): string {
@@ -19,7 +20,8 @@ function chartColors() {
   };
 }
 
-const tooltipStyle = (grid: string) => ({ borderRadius: 8, borderColor: grid, fontSize: 12 });
+// 말풍선은 HTML 이라 var() 를 바로 쓴다 (야간모드에서도 읽히게)
+const tooltipStyle = (grid: string) => ({ borderRadius: 8, borderColor: grid, fontSize: 12, background: 'var(--surface)', color: 'var(--text)' });
 const legendStyle = { fontSize: 12, paddingBottom: 8 };
 
 interface ViewsPoint {
@@ -30,6 +32,7 @@ interface ViewsPoint {
 
 /** 일별 조회수·방문자 선 그래프 (BM-02-2, BM-06-2) */
 export function ViewsChart({ data, height = 260 }: { data: ViewsPoint[]; height?: number }) {
+  useTheme(); // 야간모드가 바뀌면 다시 그려 토큰을 새로 읽는다
   const c = chartColors();
   return (
     <div className="chart" style={{ height }}>
@@ -50,6 +53,7 @@ export function ViewsChart({ data, height = 260 }: { data: ViewsPoint[]; height?
 
 /** 일별 댓글 수 막대 그래프 (BM-06-2) */
 export function CommentsChart({ data, height = 200 }: { data: { date: string; comments: number }[]; height?: number }) {
+  useTheme(); // 야간모드가 바뀌면 다시 그려 토큰을 새로 읽는다
   const c = chartColors();
   return (
     <div className="chart" style={{ height }}>

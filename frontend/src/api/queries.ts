@@ -10,6 +10,8 @@ export const qk = {
   home: ['home'] as const,
   notices: (page: number) => ['notices', page] as const,
   bookmarks: (page: number) => ['bookmarks', page] as const,
+  subscriptions: ['subscriptions'] as const,
+  subscriptionPosts: (page: number) => ['subscriptions', 'posts', page] as const,
   feed: (topic: string, sort: string, page: number) => ['feed', topic, sort, page] as const,
   topic: (code: string) => ['topic', code] as const,
   blog: (id: string | number) => ['blog', String(id)] as const,

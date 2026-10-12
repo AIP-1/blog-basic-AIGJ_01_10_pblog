@@ -3,8 +3,15 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import type { MeResponse } from '../api/types';
 import { useAuth } from '../auth/context';
 import { isLoginRequiredPath } from '../lib/paths';
+import { setThemeChoice, useTheme, type ThemeChoice } from '../lib/theme';
 
-/** 사용자 메뉴: 이름·이메일 / 내 블로그 / 블로그 관리(새 댓글 수) / 책갈피 / 내 정보 / 로그아웃 (데모 이름 메뉴) */
+const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
+  { value: 'system', label: '시스템' },
+  { value: 'light', label: '밝게' },
+  { value: 'dark', label: '어둡게' },
+];
+
+/** 사용자 메뉴: 이름·이메일 / 내 블로그 / 블로그 관리(새 댓글 수) / 책갈피 / 내 정보 / 화면 밝기 / 로그아웃 (데모 이름 메뉴) */
 export function UserMenu({ me }: { me: MeResponse }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -12,6 +19,7 @@ export function UserMenu({ me }: { me: MeResponse }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const count = me.newCommentCount ?? 0;
+  const { choice } = useTheme();
 
   useEffect(() => {
     if (!open) return;
@@ -85,6 +93,23 @@ export function UserMenu({ me }: { me: MeResponse }) {
             <Link role="menuitem" to="/me" onClick={close}>
               내 정보
             </Link>
+          </li>
+          <li role="none" className="usermenu__theme">
+            <span id="usermenu-theme">화면</span>
+            <div role="group" aria-labelledby="usermenu-theme">
+              {THEME_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={choice === o.value}
+                  className={choice === o.value ? 'is-on' : undefined}
+                  onClick={() => setThemeChoice(o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </li>
           <li role="none">
             <button type="button" role="menuitem" onClick={() => void onLogout()}>
