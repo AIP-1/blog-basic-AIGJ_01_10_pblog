@@ -12,6 +12,7 @@ public final class ExcerptMaker {
     private static final Pattern EMPHASIS = Pattern.compile("(\\*\\*|__|\\*|_|~~|`)");
     private static final Pattern RULE = Pattern.compile("(?m)^\\s*([-*_]\\s*){3,}$");
     private static final Pattern SPACES = Pattern.compile("\\s+");
+    private static final Pattern FIRST_IMAGE = Pattern.compile("!\\[[^\\]]*]\\((/api/images/[^)\\s]+|https?://[^)\\s]+)\\)");
 
     private ExcerptMaker() {}
 
@@ -28,5 +29,14 @@ public final class ExcerptMaker {
 
     public static String excerpt(String markdown, int max) {
         return Texts.cut(plain(markdown), max);
+    }
+
+    /** 대표 사진을 안 골랐을 때 목록 미리보기로 쓸 본문의 첫 사진 주소. 없으면 null */
+    public static String firstImage(String markdown) {
+        if (markdown == null) {
+            return null;
+        }
+        var m = FIRST_IMAGE.matcher(markdown);
+        return m.find() ? m.group(1) : null;
     }
 }

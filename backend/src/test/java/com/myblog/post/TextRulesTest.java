@@ -18,6 +18,13 @@ class TextRulesTest {
     }
 
     @Test
+    void listPreviewFallsBackToFirstPhotoInBody() {
+        assertThat(ExcerptMaker.firstImage("글\n![](/api/images/a.png)\n![](/api/images/b.png)")).isEqualTo("/api/images/a.png");
+        assertThat(ExcerptMaker.firstImage("사진 없는 글 [링크](https://x.com)")).isNull();
+        assertThat(ExcerptMaker.firstImage(null)).isNull();
+    }
+
+    @Test
     void CF_11_1_queryLength() {
         assertThatThrownBy(() -> KeywordQuery.parse(" 단 ", 2, 50)).isInstanceOf(ApiException.class);
         assertThatThrownBy(() -> KeywordQuery.parse("   ", 2, 50)).isInstanceOf(ApiException.class);
