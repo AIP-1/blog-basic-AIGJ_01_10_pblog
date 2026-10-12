@@ -260,4 +260,11 @@ public class PostQueryService {
                 .query((rs, i) -> Map.<String, Object>of("id", rs.getLong("id"), "title", rs.getString("title"),
                         "viewCount", rs.getLong("views"))).list();
     }
+
+    /** 공지사항: 공지 담당 회원 블로그의 '공지' 다이어리에 있는 공개 글, 최신순. */
+    public PageResponse<Map<String, Object>> notices(String ownerEmail, String categoryName, Integer page) {
+        return page(PUBLIC_ONLY + " AND c.name = :cat AND p.author_id IN (SELECT nm.id FROM members nm"
+                + " WHERE nm.email = :email)", Map.of("cat", categoryName, "email", ownerEmail), page);
+    }
+
 }

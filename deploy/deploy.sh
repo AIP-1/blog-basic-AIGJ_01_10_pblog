@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 배포 서버에서 실행한다. GitHub Actions가 올려 준 이미지 파일을 불러와 사각을 8390 포트로 다시 띄운다.
 #   사용: DB_ADDRESS=... DB_PORT=... DB_NAME=... DB_SCHEMA=... DB_USERNAME=... DB_PASSWORD=... \
-#         ./deploy.sh <이미지 파일(.tar.gz)> <이미지 태그>
+#         [NOTICE_OWNER_EMAIL=...] ./deploy.sh <이미지 파일(.tar.gz)> <이미지 태그>
 set -euo pipefail
 
 IMAGE_FILE="${1:?이미지 파일 경로를 주세요}"
@@ -60,6 +60,10 @@ SPRING_FLYWAY_SCHEMAS=${DB_SCHEMA}
 REDIS_HOST=${REDIS}
 REDIS_PORT=6379
 ENV
+  # 공지사항을 쓰는 회원 이메일 (선택). 값이 있을 때만 넣는다
+  if [[ -n "${NOTICE_OWNER_EMAIL:-}" ]]; then
+    echo "NOTICE_OWNER_EMAIL=${NOTICE_OWNER_EMAIL}" >> "${ENV_FILE}"
+  fi
 )
 
 echo "==> 앱 다시 띄우기: ${IMAGE} (포트 ${PORT})"

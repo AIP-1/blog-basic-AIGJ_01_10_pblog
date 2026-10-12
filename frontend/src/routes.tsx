@@ -5,6 +5,7 @@ import { BlogPage } from './pages/BlogPage';
 import { HomePage } from './pages/HomePage';
 import { ManageLayout } from './pages/manage/ManageLayout';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { NoticesPage } from './pages/NoticesPage';
 import { PasswordResetPage } from './pages/PasswordResetPage';
 import { SearchPage } from './pages/SearchPage';
 import { TagPostsPage } from './pages/TagPostsPage';
@@ -24,6 +25,7 @@ export const routes: RouteObject[] = [
       { path: '/write', lazy: async () => ({ Component: (await import('./pages/PostEditorPage')).PostEditorPage }) },
       { path: '/tags/:name', element: <TagPostsPage /> },
       { path: '/search', element: <SearchPage /> },
+      { path: '/notices', element: <NoticesPage /> },
       { path: '/password-reset', element: <PasswordResetPage /> },
       { path: '/me', lazy: async () => ({ Component: (await import('./pages/MyPage')).MyPage }) },
       {

@@ -129,6 +129,10 @@ myblog:
     popular-days: 7
     topic-posts: 9
     blogs: 6
+    notices: 3            # 메인 공지 띠에 보여 줄 공지 개수
+  notice:
+    owner-email: ${NOTICE_OWNER_EMAIL:}   # 공지를 쓰는 회원의 이메일. 비우면 공지사항이 비어 있다
+    category-name: 공지                    # 그 회원 블로그에서 공지로 쓰는 다이어리 이름
   dashboard:
     popular-days: 7
     popular-size: 5

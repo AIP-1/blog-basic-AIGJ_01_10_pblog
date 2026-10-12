@@ -156,6 +156,8 @@ export interface HomeResponse {
   featured: PostSummary[];
   latestPosts: PostSummary[];
   blogs: BlogSummary[];
+  /** 최근 공지 몇 개 (없으면 빈 배열) */
+  notices?: PostSummary[];
 }
 
 export interface TopicPageResponse {

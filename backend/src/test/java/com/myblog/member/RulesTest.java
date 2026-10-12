@@ -13,7 +13,7 @@ class RulesTest {
     static MyBlogProperties props() {
         var member = new MyBlogProperties.Member(2, 10, 8, 10, "!@#$%^&*()_+-=", 100, java.time.Duration.ofDays(30));
         return new MyBlogProperties(member, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
     }
 
     private final PasswordPolicy passwords = new PasswordPolicy(props());

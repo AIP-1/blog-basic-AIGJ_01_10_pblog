@@ -46,12 +46,14 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           IMAGE_TAG: ${{ github.sha }}
+          # 공지사항을 쓰는 회원 이메일 (저장소 변수, 선택)
+          NOTICE_OWNER_EMAIL: ${{ vars.NOTICE_OWNER_EMAIL }}
         with:
           host: ${{ secrets.SSH_ADDRESS }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
-          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_SCHEMA,DB_USERNAME,DB_PASSWORD,IMAGE_TAG
+          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_SCHEMA,DB_USERNAME,DB_PASSWORD,IMAGE_TAG,NOTICE_OWNER_EMAIL
           command_timeout: 15m
           script: |
             set -e

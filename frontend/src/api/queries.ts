@@ -8,6 +8,7 @@ export const qk = {
   topics: ['topics'] as const,
   trending: ['trending'] as const,
   home: ['home'] as const,
+  notices: (page: number) => ['notices', page] as const,
   topic: (code: string) => ['topic', code] as const,
   blog: (id: string | number) => ['blog', String(id)] as const,
   blogAbout: (id: string | number) => ['blog', String(id), 'about'] as const,

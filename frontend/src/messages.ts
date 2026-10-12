@@ -157,6 +157,14 @@ export const CATEGORY = {
 } as const;
 
 /** 요구사항.md 3.3~3.5 및 공통 */
+/** 공지사항 */
+export const NOTICE = {
+  title: '공지사항',
+  desc: '서비스 소식과 버전별로 바뀐 점을 알려 드려요.',
+  empty: '아직 공지사항이 없어요',
+  more: '전체 보기',
+} as const;
+
 export const COMMON = {
   notFound: (what: string) => `존재하지 않는 ${what}입니다`,
   noBlogs: '블로그가 없습니다',
