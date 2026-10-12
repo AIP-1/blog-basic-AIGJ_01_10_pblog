@@ -26,7 +26,7 @@ import { ALLOWED_IMAGE_TYPES } from '../lib/config';
 import { formatDateTime } from '../lib/format';
 import { useUnsavedChangesPrompt } from '../lib/useUnsavedChangesPrompt';
 import { isValidTag, normalizeTag } from '../lib/validation';
-import { POST, SOCIAL } from '../messages';
+import { POST, SOCIAL, SUB_VIS } from '../messages';
 
 export function PostEditorPage() {
   const { postId } = useParams();
@@ -362,7 +362,8 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
   /* ---------- 공개 여부 ---------- */
   const onVisibility = (next: Visibility) => {
     if (next === visibility) return;
-    if (visibility === 'PRIVATE' && next === 'PUBLIC' && !window.confirm(POST.toPublicConfirm)) return;
+    // 비공개 · 구독자만에서 공개로 바꿀 때 한 번 더 확인
+    if (visibility !== 'PUBLIC' && next === 'PUBLIC' && !window.confirm(POST.toPublicConfirm)) return;
     setVisibility(next);
   };
 
@@ -484,7 +485,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
           {categoryId === null && <option value="">다이어리 선택</option>}
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {`${c.name}${SUB_VIS.optionSuffix[c.visibility] ?? ''}`}
             </option>
           ))}
         </select>
@@ -507,6 +508,16 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
         <div className="seg-tabs editor__vis" role="radiogroup" aria-label="공개 여부">
           <button type="button" role="radio" aria-checked={visibility === 'PUBLIC'} className={visibility === 'PUBLIC' ? 'is-on' : ''} onClick={() => onVisibility('PUBLIC')}>
             공개
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={visibility === 'SUBSCRIBERS'}
+            className={visibility === 'SUBSCRIBERS' ? 'is-on' : ''}
+            title={SUB_VIS.editorHint}
+            onClick={() => onVisibility('SUBSCRIBERS')}
+          >
+            {SUB_VIS.label}
           </button>
           <button type="button" role="radio" aria-checked={visibility === 'PRIVATE'} className={visibility === 'PRIVATE' ? 'is-on' : ''} onClick={() => onVisibility('PRIVATE')}>
             비공개

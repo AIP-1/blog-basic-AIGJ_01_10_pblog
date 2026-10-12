@@ -699,45 +699,75 @@
   display: flex;
   gap: var(--gap-2);
 }
-.subscribe-btn__count {
-  margin-left: 6px;
-  font-weight: 500;
-  opacity: 0.75;
+/* 구독 버튼 (데모 .sub-btn): 빨강 테두리, 구독 중이면 회색 */
+.sub-btn {
+  padding: 0 18px;
+  font-weight: 700;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sub-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+.sub-btn.is-on,
+.sub-btn.is-on:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--text-muted);
 }
 
-/* ---------- 구독 ---------- */
-.sub-blogs {
+/* ---------- 구독 피드 (데모 #/feed) ---------- */
+.feed-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--gap-2);
+  gap: 5px;
+  padding: 14px 0 4px;
 }
-.sub-blog {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 100%;
-  padding: 8px 12px;
+.feed-tabs a {
+  padding: 5px 10px;
+  border-radius: 999px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
 }
-.sub-blog:hover {
+.feed-tabs a:hover {
   background: var(--surface-2);
 }
-.sub-blog__text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.sub-blog__name {
+.feed-tabs a.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
   font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.sub-blog__meta {
-  font-size: 0.76rem;
+.feed-tabs__n {
+  margin-left: 2px;
+  font-size: 0.74rem;
+  opacity: 0.7;
+}
+.feed .empty b {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+.feed .empty .btn {
+  margin-top: 10px;
+}
+.feed__hint {
+  margin: 6px 0 0;
   color: var(--text-muted);
+  font-size: 0.84rem;
+}
+.box-title .muted {
+  margin-left: 4px;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+.avatar--sm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.76rem;
 }
 .avatar--xs {
   width: 22px;
@@ -927,6 +957,9 @@
   gap: 8px;
   min-width: 0;
 }
+.diary-list__name .badge {
+  margin-left: 0;
+}
 .diary-list__count {
   font-size: 0.78rem;
   color: var(--text-faint);
@@ -1041,6 +1074,10 @@
 }
 
 /* 다이어리 설정 창 */
+.diary-settings__note {
+  margin: 6px 0 0;
+  font-size: 0.84rem;
+}
 .diary-settings__preview {
   display: flex;
   justify-content: center;

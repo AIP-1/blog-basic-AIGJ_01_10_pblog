@@ -6,7 +6,7 @@ import { deletePost, getPost, togglePin } from '../api/endpoints';
 import { qk } from '../api/queries';
 import type { PostDetail } from '../api/types';
 import { useRequireLogin } from '../api/useRequireLogin';
-import { PostStats } from '../components/Cards';
+import { PostStats, VisBadge } from '../components/Cards';
 import { CommentSection } from '../components/CommentSection';
 import { BookmarkButton } from '../components/BookmarkButton';
 import { LikeButton } from '../components/LikeButton';
@@ -113,7 +113,7 @@ export function PostDetailPage() {
           </Link>
         </nav>
         <h1 className="post__title">
-          {post.visibility === 'PRIVATE' && <span className="badge badge--muted">{POST.privateBadge}</span>}
+          <VisBadge visibility={post.visibility} />
           {post.title}
         </h1>
         <p className="post__byline">

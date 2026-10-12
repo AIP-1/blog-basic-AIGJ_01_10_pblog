@@ -13,7 +13,7 @@ import { TopicIcon } from '../components/TopicIcon';
 import { TrendingList } from '../components/TrendingList';
 import { categoryColor, formatDate } from '../lib/format';
 import { clearReads, isTrackingOff, readCount, recommend, setTrackingOff } from '../lib/readHistory';
-import { COMMON, HOME, NOTICE } from '../messages';
+import { COMMON, HOME, NOTICE, SUBSCRIBE } from '../messages';
 
 const RECOMMEND_COUNT = 4;
 
@@ -366,7 +366,7 @@ function PopularDiaries({ diaries }: { diaries: PopularDiary[] }) {
               <span className="bl-text">
                 <b>{d.name}</b>
                 <span>
-                  {d.blog.name} · 글 {d.postCount.toLocaleString()}개
+                  {d.blog.name} · {SUBSCRIBE.count(d.subscriberCount ?? 0)} · 글 {d.postCount.toLocaleString()}개
                 </span>
               </span>
             </Link>

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import type { BlogRef, BlogSummary, CategoryRef, PostSummary } from '../api/types';
+import type { BlogRef, BlogSummary, CategoryRef, PostSummary, Visibility } from '../api/types';
 import { categoryColor, formatDate, formatDateLong, formatRelative } from '../lib/format';
+import { POST, SUB_VIS } from '../messages';
 
 /** 블로그 카드: 주인 첫 글자 · 주제 · 이름 · 주인 · 소개 · 글 개수 · 최근 글 날짜 (3.2) */
 export function BlogCard({ blog }: { blog: BlogSummary }) {
@@ -81,6 +82,19 @@ export function DiaryChip({ blogId, category }: { blogId: number; category: Cate
       {category.name}
     </Link>
   );
+}
+
+/** 글 공개 범위 표시: 비공개 · 구독자 공개 (데모 visBadge). 공개면 없다 */
+export function VisBadge({ visibility }: { visibility?: Visibility }) {
+  if (visibility === 'PRIVATE') return <span className="badge badge--muted">{POST.privateBadge}</span>;
+  if (visibility === 'SUBSCRIBERS') {
+    return (
+      <span className="badge badge--sub" title={SUB_VIS.postHint}>
+        {SUB_VIS.badge}
+      </span>
+    );
+  }
+  return null;
 }
 
 /**

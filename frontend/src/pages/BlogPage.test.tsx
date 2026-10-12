@@ -94,9 +94,32 @@ describe('블로그 화면 (데모 다이어리)', () => {
       { path: '/api/blogs/1/posts', body: page([]) },
     ]);
     renderAt('/blogs/1');
-    expect(await screen.findByRole('button', { name: '구독 3' })).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByText(/구독자 3명/)).toBeInTheDocument();
+    const button = await screen.findByRole('button', { name: '+ 블로그 구독' });
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    expect(button).toHaveAttribute('title', '이 블로그의 모든 공개 다이어리를 받아 봐요');
+    expect(screen.getByText(/블로그 구독자 3명/)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '블로그 관리' })).not.toBeInTheDocument();
+  });
+
+  it('남의 다이어리 머리에는 다이어리 구독 버튼과 구독자 수, 구독자 공개 표시를 보여 준다', async () => {
+    mockFetch([
+      { path: '/api/auth/me', status: 204 },
+      { path: '/api/blogs/1', body: { ...blog, isOwner: false, subscribedByMe: true } },
+      {
+        path: '/api/blogs/1/categories',
+        body: [
+          { ...categories[0], subscriberCount: 0, subscribedByMe: false },
+          { id: 7, name: '구독자 방', description: '', visibility: 'SUBSCRIBERS', postCount: 2, isDefault: false, colorIndex: 1, subscriberCount: 5, subscribedByMe: true },
+        ],
+      },
+      { path: '/api/blogs/1/tags', body: [] },
+      { path: '/api/blogs/1/posts', body: page([]) },
+    ]);
+    renderAt('/blogs/1?category=7');
+    expect(await screen.findByRole('button', { name: '✓ 구독 중' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '✓ 블로그 구독 중' })).toBeInTheDocument();
+    expect(screen.getByText('글 2개 · 구독자 5명 · 구독자만 볼 수 있어요')).toBeInTheDocument();
+    expect(screen.getAllByText('구독자 공개').length).toBeGreaterThan(0);
   });
 
   it('다이어리 편집: 글을 골라 다른 다이어리로 옮긴다', async () => {

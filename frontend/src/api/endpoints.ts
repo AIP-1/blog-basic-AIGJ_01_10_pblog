@@ -33,6 +33,8 @@ import type {
   SearchResponse,
   SearchType,
   SubscribedBlog,
+  SubscribedDiary,
+  SubscriptionKind,
   StatsResponse,
   Topic,
   TopicPageResponse,
@@ -176,9 +178,12 @@ export const renameBookmarkFolder = (id: number, name: string) =>
 export const deleteBookmarkFolder = (id: number) => api<void>(`/api/me/bookmark-folders/${id}`, { method: 'DELETE' });
 export const toggleSubscribe = (blogId: number) =>
   api<{ subscribed: boolean; subscriberCount: number }>(`/api/blogs/${blogId}/subscribe`, { method: 'PUT' });
+export const toggleDiarySubscribe = (categoryId: number) =>
+  api<{ subscribed: boolean; subscriberCount: number }>(`/api/categories/${categoryId}/subscribe`, { method: 'PUT' });
 export const getSubscriptions = () => api<SubscribedBlog[]>('/api/me/subscriptions');
-export const getSubscriptionPosts = (page: number) =>
-  api<Page<PostSummary>>('/api/me/subscriptions/posts', { query: { page } });
+export const getDiarySubscriptions = () => api<SubscribedDiary[]>('/api/me/subscriptions/diaries');
+export const getSubscriptionPosts = (page: number, kind: SubscriptionKind = 'all') =>
+  api<Page<PostSummary>>('/api/me/subscriptions/posts', { query: { page, kind: kind === 'all' ? undefined : kind } });
 export const toggleLike = (postId: number) => api<LikeResponse>(`/api/posts/${postId}/like`, { method: 'PUT' });
 export const reportPost = (postId: number, body: { reason: ReportReason; detail?: string }) =>
   api<void>(`/api/posts/${postId}/reports`, { method: 'POST', body });

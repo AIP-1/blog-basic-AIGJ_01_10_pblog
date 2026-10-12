@@ -57,11 +57,21 @@ public class BlogController {
         return subscriptions.mine(me);
     }
 
-    /** 구독한 블로그의 새 글: 누구나 볼 수 있는 글만, 최신순 */
+    /** 내가 구독한 다이어리: 최근에 구독한 것부터 */
+    @GetMapping("/api/me/subscriptions/diaries")
+    public List<Map<String, Object>> myDiarySubscriptions(@AuthenticationPrincipal Long me) {
+        return subscriptions.mineDiaries(me);
+    }
+
+    /**
+     * 구독 피드: 공개 글과 구독자만 글, 최신순. kind = all(둘 다, 겹치는 글은 한 번) · diary(구독한 다이어리) ·
+     * blog(구독한 블로그)
+     */
     @GetMapping("/api/me/subscriptions/posts")
     public PageResponse<Map<String, Object>> subscriptionPosts(@AuthenticationPrincipal Long me,
+                                                               @RequestParam(required = false) String kind,
                                                                @RequestParam(required = false) Integer page) {
-        return posts.subscriptionFeed(me, page);
+        return posts.subscriptionFeed(me, kind, page);
     }
 
     @GetMapping("/api/blogs/{blogId}/about")
@@ -81,7 +91,7 @@ public class BlogController {
     public List<CategoryService.CategoryView> categories(@PathVariable long blogId,
                                                          @AuthenticationPrincipal Long viewer) {
         var b = blogs.get(blogId);
-        return categories.list(blogId, viewer != null && viewer == b.ownerId());
+        return categories.list(blogId, viewer != null && viewer == b.ownerId(), viewer);
     }
 
     @PostMapping("/api/blogs/{blogId}/categories")
@@ -104,6 +114,12 @@ public class BlogController {
                                      @RequestBody MoveRequest req) {
         categories.move(id, ownBlog(me), req.direction());
         return ResponseEntity.ok().build();
+    }
+
+    /** 다이어리 구독: 누르면 구독, 다시 누르면 취소. 내 다이어리·비공개 다이어리는 안 되고, 구독자만 다이어리는 블로그 구독자만. */
+    @PutMapping("/api/categories/{id}/subscribe")
+    public Map<String, Object> subscribeDiary(@PathVariable long id, @AuthenticationPrincipal Long me) {
+        return subscriptions.toggleDiary(id, me);
     }
 
     @DeleteMapping("/api/categories/{id}")

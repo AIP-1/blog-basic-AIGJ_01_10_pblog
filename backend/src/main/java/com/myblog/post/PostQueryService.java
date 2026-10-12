@@ -1,5 +1,6 @@
 package com.myblog.post;
 
+import com.myblog.blog.SubscriptionService;
 import com.myblog.common.MyBlogProperties;
 import com.myblog.common.PageRequests;
 import com.myblog.common.PageResponse;
@@ -18,22 +19,31 @@ import org.springframework.stereotype.Service;
 /**
  * 글 조회는 모두 여기를 거친다 (헌법 II, CF-13-4).
  * 공개 범위 조건은 아래 두 개뿐이다.
- * - PUBLIC_ONLY: 홈·주제·검색·태그·이전/다음·인기 글
- * - VISIBLE_TO: 글 상세, 내 블로그 목록 (공개 글 또는 내가 쓴 글)
+ * - PUBLIC_ONLY: 홈·주제·검색·태그·이전/다음·인기 글 (누구나 볼 수 있는 글만)
+ * - VISIBLE_TO: 글 상세, 블로그 목록, 구독 피드 (공개 글, 구독 중인 사람의 구독자만 글, 또는 내가 쓴 글)
  * 둘 다 탈퇴 신청한 회원의 글은 뺀다(보관 기간에는 아무에게도 보이지 않는다). 탈퇴 회원은 적어서
  * members의 부분 인덱스(deleted_at)로 그 목록을 바로 찾는다.
- * 비공개 다이어리(categories.visibility = 'PRIVATE')의 글은 글이 공개여도 주인만 본다.
+ * 다이어리 공개 범위: 비공개 다이어리(PRIVATE)의 글은 글이 공개여도 주인만 보고,
+ * 구독자만 다이어리(SUBSCRIBERS)의 글은 그 블로그나 다이어리를 구독한 사람과 주인만 본다.
+ * 구독자 = 그 블로그(subscriptions)나 그 다이어리(diary_subscriptions)를 구독한 사람.
  */
 @Service
 public class PostQueryService {
     public static final String ACTIVE_AUTHOR =
             "p.author_id NOT IN (SELECT wm.id FROM members wm WHERE wm.deleted_at IS NOT NULL)";
+    /** 공개 다이어리의 글 (구독자만·비공개 다이어리가 아님) */
     static final String OPEN_CATEGORY =
-            "p.category_id NOT IN (SELECT pc.id FROM categories pc WHERE pc.visibility = 'PRIVATE')";
+            "p.category_id NOT IN (SELECT pc.id FROM categories pc WHERE pc.visibility <> 'PUBLIC')";
     /** 누구나 볼 수 있는 글. 다른 클래스에서도 posts 별칭 p에 붙여 쓴다. */
     public static final String PUBLIC_ONLY = "p.visibility = 'PUBLIC' AND " + OPEN_CATEGORY + " AND " + ACTIVE_AUTHOR;
-    static final String VISIBLE_TO = "((p.visibility = 'PUBLIC' AND " + OPEN_CATEGORY + ") OR p.author_id = :viewer) AND "
-            + ACTIVE_AUTHOR;
+    /** :viewer가 구독자로서 볼 수 있는 글: 글과 다이어리가 비공개가 아니고, 그 블로그나 다이어리를 구독 중 */
+    static final String SUBSCRIBER_VISIBLE = "(p.visibility <> 'PRIVATE'"
+            + " AND p.category_id NOT IN (SELECT xc.id FROM categories xc WHERE xc.visibility = 'PRIVATE')"
+            + " AND (p.blog_id IN (SELECT vs.blog_id FROM subscriptions vs WHERE vs.member_id = :viewer)"
+            + " OR p.category_id IN (SELECT vd.category_id FROM diary_subscriptions vd WHERE vd.member_id = :viewer)))";
+    /** :viewer가 볼 수 있는 글. 다른 클래스에서도 posts 별칭 p에 붙여 쓴다 (:viewer 이름 붙은 매개변수 필요). */
+    public static final String VISIBLE_TO = "((p.visibility = 'PUBLIC' AND " + OPEN_CATEGORY + ") OR p.author_id = :viewer OR "
+            + SUBSCRIBER_VISIBLE + ") AND " + ACTIVE_AUTHOR;
     /**
      * 인기 점수: 조회 ×1 + 좋아요 ×5 + 댓글 단 사람 ×3 + 책갈피 ×4
      * (글쓴이 본인 것은 빼고, 한 사람 댓글 여러 개는 한 명)
@@ -346,20 +356,33 @@ public class PostQueryService {
         });
     }
 
-    /** 구독한 블로그의 새 글: 누구나 볼 수 있는 글만, 최신순. 내 글은 구독 대상이 아니라서 따로 넣지 않는다. */
-    public PageResponse<Map<String, Object>> subscriptionFeed(long me, Integer page) {
-        return page("p.blog_id IN (SELECT sb.blog_id FROM subscriptions sb WHERE sb.member_id = :me) AND " + PUBLIC_ONLY,
-                Map.of("me", me), page);
+    /**
+     * 구독 피드: 구독한 사람이 볼 수 있는 글(공개 글 + 구독자만 글), 최신순.
+     * kind = diary(구독한 다이어리의 글) · blog(구독한 블로그의 글) · 그 밖(둘 다, 한 글은 한 번만).
+     */
+    public PageResponse<Map<String, Object>> subscriptionFeed(long me, String kind, Integer page) {
+        String byBlog = "p.blog_id IN (SELECT sb.blog_id FROM subscriptions sb WHERE sb.member_id = :viewer)";
+        String byDiary = "p.category_id IN (SELECT sd.category_id FROM diary_subscriptions sd WHERE sd.member_id = :viewer)";
+        String pick = switch (kind == null ? "all" : kind) {
+            case "diary" -> byDiary;
+            case "blog" -> byBlog;
+            default -> "(" + byBlog + " OR " + byDiary + ")";
+        };
+        // 구독자만 글도 구독 피드에는 나온다. 내 블로그·다이어리는 구독할 수 없어서 내 글은 섞이지 않는다.
+        return page(pick + " AND " + VISIBLE_TO, Map.of("viewer", me), page);
     }
 
-    /** 인기 다이어리: 공개 글이 있는 다이어리를 그 글들의 인기 점수 합계 순으로 (데모 '인기 다이어리'). */
+    /**
+     * 인기 다이어리: 공개 글이 있는 다이어리를 구독자 수 → 그 글들의 인기 점수 합계 순으로 (데모 '인기 다이어리').
+     */
     public List<Map<String, Object>> popularDiaries(int limit) {
         return jdbc.sql("SELECT c.id, c.name, c.color_index, b.id AS blog_id, b.name AS blog_name,"
-                        + " count(p.id) AS post_count, sum" + POPULARITY + " AS score"
+                        + " count(p.id) AS post_count, sum" + POPULARITY + " AS score,"
+                        + " " + SubscriptionService.DIARY_SUBSCRIBERS + " AS subscriber_count"
                         + " FROM categories c JOIN blogs b ON b.id = c.blog_id JOIN posts p ON p.category_id = c.id"
                         + " WHERE " + PUBLIC_ONLY
                         + " GROUP BY c.id, c.name, c.color_index, b.id, b.name"
-                        + " ORDER BY score DESC, post_count DESC, c.id LIMIT :limit")
+                        + " ORDER BY subscriber_count DESC, score DESC, post_count DESC, c.id LIMIT :limit")
                 .param("limit", limit)
                 .query((rs, i) -> {
                     Map<String, Object> m = new LinkedHashMap<>();
@@ -368,6 +391,7 @@ public class PostQueryService {
                     m.put("colorIndex", rs.getInt("color_index"));
                     m.put("blog", Map.of("id", rs.getLong("blog_id"), "name", rs.getString("blog_name")));
                     m.put("postCount", rs.getLong("post_count"));
+                    m.put("subscriberCount", rs.getLong("subscriber_count"));
                     return m;
                 }).list();
     }

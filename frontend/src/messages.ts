@@ -215,20 +215,57 @@ export const BOOKMARK = {
   emptyHint: '마음에 드는 글 아래의 ‘책갈피’를 눌러 보세요.',
 } as const;
 
+/** 구독 (데모 '구독': 블로그 전체 또는 다이어리 한 권) */
 export const SUBSCRIBE = {
   nav: '구독',
   title: '구독',
-  desc: '구독한 블로그에 올라온 새 글을 모아 보는 곳이에요. 블로그 위쪽 구독 버튼으로 구독하고 취소해요.',
+  tabsLabel: '구독 종류',
+  tabs: { all: '전체', diary: '다이어리', blog: '블로그' },
+  feedTitle: { all: '구독한 다이어리 · 블로그의 새 글', diary: '구독한 다이어리의 새 글', blog: '구독한 블로그의 새 글' },
+  total: (n: number) => `${n.toLocaleString()}개`,
+  /** 구독한 것이 없을 때: '아직 구독한 ~가 없어요' */
+  emptyWhat: { all: '다이어리나 블로그', diary: '다이어리', blog: '블로그' },
+  empty: (what: string) => `아직 구독한 ${what}가 없어요`,
+  emptyHint: (what: string) => `마음에 드는 ${what}에서 ‘+ 구독’을 눌러 보세요.`,
+  browse: '글 둘러보기',
+  feedEmpty: '아직 공개 글이 없어요',
+  diariesTitle: '구독한 다이어리',
   blogsTitle: '구독한 블로그',
-  feedTitle: '새 글',
-  empty: '아직 구독한 블로그가 없어요',
-  feedEmpty: '구독한 블로그에 아직 공개 글이 없어요',
-  subscribe: '구독',
-  subscribed: '구독 중',
+  asideEmpty: '아직 없어요.',
+  allDiaries: '모든 공개 다이어리',
+  blogSubscribe: '+ 블로그 구독',
+  blogSubscribed: '✓ 블로그 구독 중',
+  blogHint: '이 블로그의 모든 공개 다이어리를 받아 봐요',
+  diarySubscribe: '+ 다이어리 구독',
+  diarySubscribed: '✓ 구독 중',
   added: '구독했어요',
   removed: '구독을 취소했어요',
-  count: (n: number) => `구독자 ${n}명`,
+  /** 블로그 머리: 블로그 구독자 수 */
+  blogCount: (n: number) => `블로그 구독자 ${n.toLocaleString()}명`,
+  count: (n: number) => `구독자 ${n.toLocaleString()}명`,
   ownBlog: '내 블로그는 구독할 수 없습니다',
+  ownDiary: '내 다이어리는 구독할 수 없습니다',
+  privateDiary: '비공개 다이어리는 구독할 수 없습니다',
+  subscribersOnlyDiary: '블로그를 구독한 사람만 볼 수 있는 다이어리예요.',
+} as const;
+
+/** 공개 범위 '구독자만'(일부공개): 그 블로그나 다이어리를 구독한 사람과 주인만 본다 */
+export const SUB_VIS = {
+  label: '구독자만',
+  badge: '구독자 공개',
+  postHint: '구독자만 볼 수 있어요',
+  editorHint: '이 블로그나 다이어리를 구독한 사람만',
+  diaryHint: '블로그나 이 다이어리를 구독한 사람만 볼 수 있어요',
+  diaryNote: '구독자만 볼 수 있어요',
+  /** 다이어리 설정 창의 공개 범위 설명 (데모 DIARY_VIS_HINT) */
+  diaryVisHint: {
+    PUBLIC: '누구나 읽고 구독할 수 있어요. 비공개로 쓴 글은 그대로 나만 봐요.',
+    SUBSCRIBERS: '내 블로그나 이 다이어리를 구독한 사람만 볼 수 있어요. 메인 · 검색 · 인기 글에는 나오지 않아요.',
+    PRIVATE: '나만 볼 수 있어요. 글을 공개로 써도 이 다이어리 안에서는 나만 봐요.',
+  },
+  subCountNote: (n: number) => `지금 구독자 ${n}명 — 비공개로 바꾸면 구독이 모두 해제돼요.`,
+  /** 글쓰기 다이어리 고르기에 붙는 표시 */
+  optionSuffix: { PUBLIC: '', SUBSCRIBERS: ' (구독자 공개)', PRIVATE: ' (비공개)' },
 } as const;
 
 export const NOTICE = {
@@ -275,6 +312,9 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   ALREADY_REPORTED: SOCIAL.alreadyReported,
   OWN_POST: SOCIAL.ownPost,
   OWN_BLOG: SUBSCRIBE.ownBlog,
+  OWN_DIARY: SUBSCRIBE.ownDiary,
+  PRIVATE_DIARY: SUBSCRIBE.privateDiary,
+  SUBSCRIBERS_ONLY_DIARY: SUBSCRIBE.subscribersOnlyDiary,
   INVALID_IMAGE: SOCIAL.imageRule,
   QUERY_TOO_SHORT: EXPLORE.searchTooShort,
   UNAUTHENTICATED: AUTH.loginRequired,
