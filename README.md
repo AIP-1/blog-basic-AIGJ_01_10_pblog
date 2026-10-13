@@ -31,7 +31,7 @@ cd frontend && npm run lint && npm run typecheck && npm test
 
 ## 이번 범위에서 뺀 것
 
-- 커뮤니티 게시판, 세션 표(`spring_session`). 로그인 세션은 서버 메모리에 있어 서버를 다시 켜면 다시 로그인합니다.
+- 커뮤니티 게시판, 세션 표(`spring_session`). 로그인 세션은 DB 대신 Redis에 둡니다(서버를 다시 켜도 로그인 유지).
 
 ## 배포
 
@@ -39,7 +39,11 @@ cd frontend && npm run lint && npm run typecheck && npm test
 
 1. 검사(`ci.yml`)를 먼저 돌리고, 통과하면 도커 이미지를 만듭니다(`Dockerfile`, 화면과 서버를 이미지 하나로).
 2. 이미지 파일과 `deploy/deploy.sh`를 SSH로 서버의 `~/myblog-deploy`에 올립니다.
-3. 서버에서 `deploy/deploy.sh`가 이미지를 불러와 Redis와 앱 컨테이너를 띄웁니다. 앱은 **8390** 포트입니다.
+3. 서버에서 `deploy/deploy.sh`가 **무중단(블루-그린)** 으로 바꿔 끼웁니다. 8390 포트는 nginx(`myblog-proxy`)가 받고,
+   뒤에서 `myblog-blue`/`myblog-green` 중 하나가 일합니다. 쉬는 쪽에 새 서버를 띄워 정상 응답을 확인한 뒤 nginx를 새 서버로 돌리고,
+   옛 서버는 하던 요청을 마치고 내려갑니다. 새 서버가 안 뜨면 새 서버만 지우고 사이트는 옛 서버로 그대로 둡니다.
+   로그인 세션은 Redis(Spring Session)에 있어서 배포해도 로그아웃되지 않습니다.
+   새 서버가 뜨는 동안 옛 서버도 같은 DB를 쓰므로, 컬럼 삭제·이름 변경 같은 DB 변경은 두 번의 배포로 나눠 합니다.
 
 필요한 저장소 시크릿: `SSH_ADDRESS`, `SSH_PORT`, `SSH_ID`, `SSH_PASSWORD`, `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_USERNAME`, `DB_PASSWORD`.
 선택 저장소 변수(Variables): `NOTICE_OWNER_EMAIL` — 공지사항을 쓰는 회원의 이메일. 그 회원 블로그의 **'공지'** 다이어리에 올린 공개 글이 `/notices`(공지사항)와 메인 공지 띠에 나옵니다. 비워 두면 공지사항은 빈 화면입니다.

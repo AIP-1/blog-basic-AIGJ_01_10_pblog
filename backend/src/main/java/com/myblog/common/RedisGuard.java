@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
 /**
  * Redis 장애를 다루는 두 방식.
  * required: 인증번호처럼 Redis 없이는 할 수 없는 일 → SERVICE_UNAVAILABLE.
- * optional: 조회수·연속 등록 방지처럼 건너뛰어도 되는 일 → 빈 값 (Redis가 꺼져도 로그인·글 읽기는 동작).
+ * optional: 조회수·연속 등록 방지처럼 건너뛰어도 되는 일 → 빈 값.
+ * 로그인 세션도 Redis에 있으므로(Spring Session) Redis가 꺼지면 로그인은 안 되고, 로그인 없이 글 읽기는 된다.
  */
 @Component
 public class RedisGuard {
