@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** 블로그 글 댓글 (CF-18). 답글은 한 단계만 단다. */
 @Service
@@ -93,6 +94,8 @@ public class CommentService {
         return jdbc.sql("SELECT count(*) FROM comments WHERE post_id = ?").param(postId).query(Long.class).single();
     }
 
+    /** 댓글과 잉크를 한 트랜잭션에 저장한다. 잉크 저장이 실패하면 댓글도 남지 않는다. */
+    @Transactional
     public Map<String, Object> create(long postId, long memberId, String rawBody, Long parentId) {
         var post = posts.requireVisible(postId, memberId);
         if (parentId != null) {

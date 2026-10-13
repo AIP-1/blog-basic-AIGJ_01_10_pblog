@@ -70,8 +70,9 @@ public class AuthController {
         var sent = verification.send(purpose, email, sendMail);
         Map<String, Object> body = new java.util.LinkedHashMap<>();
         body.put("expiresAt", sent.expiresAt());
-        // 메일 서버가 없는 동안(mode=log) 화면에 번호를 바로 보여 준다. 메일을 연결하면 사라진다.
-        if ("log".equals(mailMode) && sent.code() != null) {
+        // 메일 서버가 없는 동안(mode=log) 가입 인증번호만 화면에 바로 보여 준다. 메일을 연결하면 사라진다.
+        // 비밀번호 찾기 번호는 보여 주지 않는다. 보여 주면 남의 이메일로 비밀번호를 바꿀 수 있다.
+        if ("log".equals(mailMode) && purpose == Purpose.SIGNUP && sent.code() != null) {
             body.put("devCode", sent.code());
         }
         return ResponseEntity.accepted().body(body);

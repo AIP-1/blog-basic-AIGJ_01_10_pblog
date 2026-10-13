@@ -172,7 +172,12 @@ class AuthFlowIT extends IntegrationTest {
         var reset = Map.of("email", "su@example.com", "newPassword", newPw, "newPasswordConfirm", newPw);
         mvc.perform(postJson("/api/auth/password-reset", reset)).andExpect(jsonPath("$.error.code").value("NOT_VERIFIED"));
 
-        verify("reset", "su@example.com", null);
+        // 메일이 로그 모드여도 비밀번호 찾기 번호는 응답에 싣지 않는다 (남의 비밀번호를 바꿀 수 있으므로)
+        mvc.perform(postJson("/api/auth/verifications", Map.of("purpose", "reset", "email", "su@example.com")))
+                .andExpect(status().isAccepted()).andExpect(jsonPath("$.devCode").doesNotExist());
+        mvc.perform(postJson("/api/auth/verifications/confirm",
+                Map.of("purpose", "reset", "email", "su@example.com", "code", mail.lastCode("su@example.com"))))
+                .andExpect(status().isOk());
         mvc.perform(postJson("/api/auth/password-reset", reset)).andExpect(status().isOk());
         // 모든 기기 로그아웃 (CF-25-8)
         mvc.perform(get("/api/me").session(old)).andExpect(status().isUnauthorized());

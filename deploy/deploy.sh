@@ -9,7 +9,7 @@
 # 로그인 세션은 Redis에 있어서 서버가 바뀌어도 로그인이 유지된다.
 # 주의: 새 서버가 뜰 때 DB 구조(Flyway)가 바뀌는데 옛 서버도 잠깐 같은 DB를 쓴다. 컬럼을 지우거나 이름을 바꾸는 변경은 두 번에 나눠 배포한다.
 #   사용: DB_ADDRESS=... DB_PORT=... DB_NAME=... DB_SCHEMA=... DB_USERNAME=... DB_PASSWORD=... \
-#         [NOTICE_OWNER_EMAIL=...] ./deploy.sh <이미지 파일(.tar.gz)> <이미지 태그>
+#         [NOTICE_OWNER_EMAIL=...] [SMTP_HOST=... SMTP_PORT=... SMTP_USERNAME=... SMTP_PASSWORD=... MAIL_FROM=...] ./deploy.sh <이미지 파일(.tar.gz)> <이미지 태그>
 set -euo pipefail
 
 IMAGE_FILE="${1:?이미지 파일 경로를 주세요}"
@@ -73,10 +73,22 @@ DB_PASSWORD=${DB_PASSWORD}
 SPRING_FLYWAY_SCHEMAS=${DB_SCHEMA}
 REDIS_HOST=${REDIS}
 REDIS_PORT=6379
+SESSION_SECURE_COOKIE=true
 ENV
   # 공지사항을 쓰는 회원 이메일 (선택). 값이 있을 때만 넣는다
   if [[ -n "${NOTICE_OWNER_EMAIL:-}" ]]; then
     echo "NOTICE_OWNER_EMAIL=${NOTICE_OWNER_EMAIL}" >> "${ENV_FILE}"
+  fi
+  # 메일 서버 (선택). SMTP_HOST가 있을 때만 실제 메일을 보낸다. 없으면 로그 모드
+  if [[ -n "${SMTP_HOST:-}" ]]; then
+    {
+      echo "MYBLOG_MAIL_MODE=smtp"
+      echo "SMTP_HOST=${SMTP_HOST}"
+      echo "SMTP_PORT=${SMTP_PORT:-587}"
+      echo "SMTP_USERNAME=${SMTP_USERNAME:-}"
+      echo "SMTP_PASSWORD=${SMTP_PASSWORD:-}"
+      if [[ -n "${MAIL_FROM:-}" ]]; then echo "MAIL_FROM=${MAIL_FROM}"; fi
+    } >> "${ENV_FILE}"
   fi
 )
 
