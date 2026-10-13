@@ -2,6 +2,7 @@ package com.myblog.member;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +32,20 @@ class RedisSessionIT extends IntegrationTest {
         assertThat(redis.keys("myblog:session:sessions:*")).isNotEmpty();
         // 새 요청에는 서버 쪽 세션 객체 없이 쿠키만 보낸다: 다른 서버(새로 배포된 서버)가 받은 것과 같다
         mvc.perform(get("/api/me").cookie(c)).andExpect(status().isOk());
+
+        // 쓸 때마다 7일 늘려 다시 내려 준 쿠키(본문 없는 응답에 붙는다)로도 계속 로그인돼야 한다
+        long blogId = read(mvc.perform(get("/api/auth/me").cookie(c)).andReturn()).get("blog").get("id").asLong();
+        var r = mvc.perform(jsonRequest(patch("/api/blogs/" + blogId), Map.of("description", "안녕")).cookie(c))
+                .andExpect(status().isOk()).andReturn();
+        Cookie refreshed = refreshedCookie(r.getResponse().getHeaders("Set-Cookie"));
+        assertThat(refreshed).isNotNull();
+        mvc.perform(get("/api/me").cookie(refreshed)).andExpect(status().isOk());
+    }
+
+    private static Cookie refreshedCookie(java.util.List<String> setCookies) {
+        return setCookies.stream().filter(h -> h.startsWith("MYBLOG_SESSION="))
+                .map(h -> new Cookie("MYBLOG_SESSION", h.substring("MYBLOG_SESSION=".length(), h.indexOf(';'))))
+                .reduce((a, b) -> b).orElse(null);
     }
 
     @Test

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.session.DefaultCookieSerializerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -88,6 +89,15 @@ public class SecurityConfig {
     SessionRegistry sessionRegistry(ObjectProvider<FindByIndexNameSessionRepository<? extends Session>> sessions) {
         var repository = sessions.getIfAvailable();
         return repository != null ? new SpringSessionBackedSessionRegistry<>(repository) : new SessionRegistryImpl();
+    }
+
+    /**
+     * 세션 쿠키 값을 세션 번호 그대로 쓴다. Spring Session은 기본으로 base64로 바꿔 담는데,
+     * SessionCookieRefreshFilter가 쓸 때마다 다시 내려 주는 쿠키는 번호 그대로라 둘이 어긋나면 로그인이 풀린다.
+     */
+    @Bean
+    DefaultCookieSerializerCustomizer plainSessionCookie() {
+        return serializer -> serializer.setUseBase64Encoding(false);
     }
 
     @Bean
