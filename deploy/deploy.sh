@@ -9,7 +9,9 @@
 # 로그인 세션은 Redis에 있어서 서버가 바뀌어도 로그인이 유지된다.
 # 주의: 새 서버가 뜰 때 DB 구조(Flyway)가 바뀌는데 옛 서버도 잠깐 같은 DB를 쓴다. 컬럼을 지우거나 이름을 바꾸는 변경은 두 번에 나눠 배포한다.
 #   사용: DB_ADDRESS=... DB_PORT=... DB_NAME=... DB_SCHEMA=... DB_USERNAME=... DB_PASSWORD=... \
-#         [NOTICE_OWNER_EMAIL=...] [SMTP_HOST=... SMTP_PORT=... SMTP_USERNAME=... SMTP_PASSWORD=... MAIL_FROM=...] ./deploy.sh <이미지 파일(.tar.gz)> <이미지 태그>
+#         [NOTICE_OWNER_EMAIL=...] [SMTP_HOST=... SMTP_PORT=... SMTP_USERNAME=... SMTP_PASSWORD=... MAIL_FROM=...] \
+#         [SITE_URL=...] [KAKAO_CLIENT_ID=... KAKAO_CLIENT_SECRET=...] [GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...] \
+#         ./deploy.sh <이미지 파일(.tar.gz)> <이미지 태그>
 set -euo pipefail
 
 IMAGE_FILE="${1:?이미지 파일 경로를 주세요}"
@@ -74,6 +76,7 @@ SPRING_FLYWAY_SCHEMAS=${DB_SCHEMA}
 REDIS_HOST=${REDIS}
 REDIS_PORT=6379
 SESSION_SECURE_COOKIE=true
+SITE_URL=${SITE_URL:-https://sagak.java21.net}
 ENV
   # 공지사항을 쓰는 회원 이메일 (선택). 값이 있을 때만 넣는다
   if [[ -n "${NOTICE_OWNER_EMAIL:-}" ]]; then
@@ -88,6 +91,19 @@ ENV
       echo "SMTP_USERNAME=${SMTP_USERNAME:-}"
       echo "SMTP_PASSWORD=${SMTP_PASSWORD:-}"
       if [[ -n "${MAIL_FROM:-}" ]]; then echo "MAIL_FROM=${MAIL_FROM}"; fi
+    } >> "${ENV_FILE}"
+  fi
+  # 소셜 로그인 (선택). 키가 있는 제공자만 켜진다. 제공자가 돌려보낼 주소는 SITE_URL/login/oauth2/code/{kakao|google}
+  if [[ -n "${KAKAO_CLIENT_ID:-}" ]]; then
+    {
+      echo "KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}"
+      echo "KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET:-}"
+    } >> "${ENV_FILE}"
+  fi
+  if [[ -n "${GOOGLE_CLIENT_ID:-}" ]]; then
+    {
+      echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
+      echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}"
     } >> "${ENV_FILE}"
   fi
 )

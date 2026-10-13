@@ -39,6 +39,24 @@ export const AUTH = {
   resetWhileLoggedIn: '로그인한 상태에서는 내 정보에서 비밀번호를 변경해 주세요',
 } as const;
 
+/** 소셜 로그인 (카카오·구글) [추가] */
+export const SOCIAL_LOGIN = {
+  providerName: { kakao: '카카오', google: '구글' } as Record<string, string>,
+  start: (provider: string) => `${provider}로 시작하기`,
+  divider: '또는',
+  signupTitle: (provider: string) => `${provider}로 가입`,
+  signupIntro: '사각에서 쓸 닉네임을 정하면 가입이 끝나요. 내 블로그도 하나 생겨요.',
+  emailHint: '로그인에 쓴 계정의 이메일이에요. 비밀번호는 나중에 비밀번호 찾기로 정할 수 있어요.',
+  signupSubmit: '가입하기',
+  signupSubmitting: '가입하는 중…',
+  signupDone: '가입이 완료되었습니다. 환영해요!',
+  pendingMissing: '소셜 가입 정보가 없거나 만료되었습니다. 처음부터 다시 시도해 주세요',
+  backHome: '홈으로',
+  withdrawn: '탈퇴 신청한 계정입니다. 복구하려면 이메일과 비밀번호로 로그인해 주세요',
+  noEmail: '이메일 정보를 받지 못해 로그인할 수 없습니다. 이메일 제공에 동의하고 다시 시도해 주세요',
+  failed: '소셜 로그인에 실패했습니다. 잠시 뒤 다시 시도해 주세요',
+} as const;
+
 /** 02-계정관리 '안내 문구' */
 export const ACCOUNT = {
   saved: '저장했습니다',
@@ -357,6 +375,7 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   NOT_VERIFIED: AUTH.notVerified,
   VERIFICATION_EXPIRED: AUTH.verificationExpired,
   LOGIN_FAILED: AUTH.loginFailed,
+  SOCIAL_SIGNUP_NOT_FOUND: SOCIAL_LOGIN.pendingMissing,
   CURRENT_PASSWORD_MISMATCH: ACCOUNT.currentPasswordMismatch,
   SAME_AS_CURRENT: ACCOUNT.sameAsCurrent,
   ACKNOWLEDGE_REQUIRED: ACCOUNT.acknowledgeRequired,

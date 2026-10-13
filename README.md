@@ -169,6 +169,7 @@ flowchart LR
 
 필요한 저장소 시크릿: `SSH_ADDRESS`, `SSH_PORT`, `SSH_ID`, `SSH_PASSWORD`, `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_USERNAME`, `DB_PASSWORD`.
 선택 저장소 시크릿: `SMTP_HOST`, `SMTP_PORT`(기본 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM` — `SMTP_HOST`가 있으면 인증번호를 실제 메일로 보냅니다. 없으면 메일을 보내지 않고, 가입 인증번호만 화면에 보여 줍니다(비밀번호 찾기는 쓸 수 없음).
+선택 소셜 로그인: 시크릿 `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`과 저장소 변수 `SITE_URL`(기본 `https://sagak.java21.net`) — CLIENT_ID가 있는 제공자만 버튼이 보이고, 각 개발자 콘솔에 돌아올 주소 `<SITE_URL>/login/oauth2/code/kakao`(구글은 `/google`)를 등록합니다.
 선택 저장소 변수(Variables): `NOTICE_OWNER_EMAIL` — 공지사항을 쓰는 회원의 이메일. 그 회원 블로그의 **'공지'** 다이어리에 올린 공개 글이 `/notices`(공지사항)와 메인 공지 띠에 나옵니다. 비워 두면 공지사항은 빈 화면입니다.
 서버에는 docker가 설치돼 있고 SSH 계정이 docker를 쓸 수 있어야 합니다(`sudo usermod -aG docker <계정>`).
 업로드한 사진은 서버의 `~/myblog-data/images`에 남습니다. 수동 배포는 Actions 탭의 deploy에서 "Run workflow"로 합니다.

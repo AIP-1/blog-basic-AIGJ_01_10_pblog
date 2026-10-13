@@ -26,7 +26,8 @@ public record MyBlogProperties(
         Dashboard dashboard,
         Mail mail,
         Draft draft,
-        Notice notice) {
+        Notice notice,
+        Oauth oauth) {
 
     /** CF-01-3, CF-01-4, CF-15-5 */
     public record Member(int nicknameMin, int nicknameMax, int passwordMin, int passwordMax,
@@ -90,4 +91,16 @@ public record MyBlogProperties(
 
     /** research §4 */
     public record Mail(String mode, String from, String serviceName) {}
+
+    /**
+     * 소셜 로그인 (카카오·구글). client-id가 빈 제공자는 켜지 않는다. 하나도 없으면 소셜 로그인이 없다.
+     * redirectBase: 제공자가 로그인 뒤 돌려보낼 사이트 주소. 기본 {baseUrl}은 요청 주소로 정한다(HTTPS 프록시 뒤에서는 SITE_URL을 준다).
+     */
+    public record Oauth(String redirectBase, Provider kakao, Provider google) {
+        public record Provider(String clientId, String clientSecret) {
+            public boolean enabled() {
+                return clientId != null && !clientId.isBlank();
+            }
+        }
+    }
 }

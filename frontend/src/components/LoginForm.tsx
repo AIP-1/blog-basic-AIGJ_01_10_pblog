@@ -6,6 +6,7 @@ import { formatDateTime, minutesUntil } from '../lib/format';
 import { isValidEmail, normalizeEmail } from '../lib/validation';
 import { AUTH } from '../messages';
 import { FieldError, FormMessage } from './Status';
+import { SocialLoginButtons } from './SocialLoginButtons';
 
 interface LoginFormProps {
   initialEmail?: string;
@@ -112,6 +113,7 @@ export function LoginForm({ initialEmail = '', notice, onSuccess, onForgot }: Lo
       <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
         {submitting ? '로그인 중…' : '로그인'}
       </button>
+      <SocialLoginButtons />
       <p className="form__foot">
         <Link to="/password-reset" onClick={onForgot}>
           {AUTH.forgotPassword}

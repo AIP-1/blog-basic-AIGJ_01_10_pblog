@@ -157,6 +157,15 @@ myblog:
     popular-size: 5
     recent-size: 5
     chart-days: 30
+  oauth:
+    # 소셜 로그인. client-id가 비어 있는 제공자는 켜지 않는다 (둘 다 비면 소셜 로그인 버튼이 안 보인다)
+    redirect-base: ${SITE_URL:{baseUrl}}   # 돌아올 주소 = <redirect-base>/login/oauth2/code/{kakao|google}
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID:}
+      client-secret: ${KAKAO_CLIENT_SECRET:}
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
   mail:
     mode: ${MYBLOG_MAIL_MODE:log}
     from: ${MAIL_FROM:no-reply@myblog.local}

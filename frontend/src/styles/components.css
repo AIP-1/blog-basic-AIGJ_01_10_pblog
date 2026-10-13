@@ -1333,3 +1333,37 @@ a.tag:hover {
     justify-content: flex-end !important;
   }
 }
+
+/* ---------- 소셜 로그인 ---------- */
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+}
+.social-login__divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--text-sub);
+  font-size: var(--fs-sm);
+}
+.social-login__divider::before,
+.social-login__divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+.social-login__btn {
+  gap: 8px;
+  text-decoration: none;
+}
+.social-login__btn--kakao,
+.social-login__btn--kakao:hover:not(:disabled) {
+  background: #fee500;
+  border-color: #fee500;
+  color: rgba(0, 0, 0, 0.85);
+}
+.social-login__btn--kakao:hover {
+  opacity: 0.9;
+}

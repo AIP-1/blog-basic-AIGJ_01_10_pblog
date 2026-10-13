@@ -3,6 +3,7 @@ import { Link, Outlet, ScrollRestoration } from 'react-router';
 import { POLICIES } from '../lib/policies';
 import { AuthModal } from './AuthModal';
 import { Header } from './Header';
+import { SocialLoginNotice } from './SocialLoginNotice';
 import { TopicHighlightContext } from './topicHighlight';
 
 export function Layout() {
@@ -29,6 +30,7 @@ export function Layout() {
           </div>
         </footer>
         <AuthModal />
+        <SocialLoginNotice />
         <ScrollRestoration />
       </div>
     </TopicHighlightContext.Provider>
