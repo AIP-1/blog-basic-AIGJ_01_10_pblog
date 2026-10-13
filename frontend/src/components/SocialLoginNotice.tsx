@@ -3,13 +3,17 @@ import { useSearchParams } from 'react-router';
 import { SOCIAL_LOGIN } from '../messages';
 import { useToast } from './toastContext';
 
-const NOTICES: Record<string, string> = {
-  withdrawn: SOCIAL_LOGIN.withdrawn,
-  'no-email': SOCIAL_LOGIN.noEmail,
-  failed: SOCIAL_LOGIN.failed,
+const NOTICES: Record<string, { text: string; kind?: 'error' }> = {
+  withdrawn: { text: SOCIAL_LOGIN.withdrawn, kind: 'error' },
+  'no-email': { text: SOCIAL_LOGIN.noEmail, kind: 'error' },
+  failed: { text: SOCIAL_LOGIN.failed, kind: 'error' },
+  restored: { text: SOCIAL_LOGIN.restored },
 };
 
-/** 소셜 로그인이 로그인 없이 돌아오면(?social=withdrawn|no-email|failed) 안내를 띄우고 주소에서 지운다. */
+/**
+ * 소셜 로그인에서 돌아온 결과(?social=withdrawn|no-email|failed|restored)를 안내하고 주소에서 지운다.
+ * restored: 비밀번호 없는 소셜 가입 회원이 탈퇴 보관 기간에 다시 로그인해 복구된 경우.
+ */
 export function SocialLoginNotice() {
   const [params, setParams] = useSearchParams();
   const toast = useToast();
@@ -23,7 +27,7 @@ export function SocialLoginNotice() {
     }
     const message = NOTICES[social];
     // 개발 모드(StrictMode)에서 effect가 두 번 돌아도 안내는 한 번만
-    if (message && shown.current !== social) toast.show(message, 'error');
+    if (message && shown.current !== social) toast.show(message.text, message.kind);
     shown.current = social;
     setParams(
       (prev) => {
