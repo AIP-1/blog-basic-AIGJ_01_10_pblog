@@ -1,4 +1,7 @@
 spring:
+  # 대부분의 테스트는 MockHttpSession으로 로그인을 들고 다닌다. Redis 세션은 RedisSessionIT에서 따로 본다.
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
   datasource:
     url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/myblog_test}
     username: ${DB_USERNAME:postgres}
