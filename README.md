@@ -36,12 +36,16 @@
 | 배포 | Docker, GitHub Actions(CI/CD), nginx 블루-그린 무중단 배포 |
 | 협업 | Git Flow(main · develop · feature), PR 리뷰, CHANGELOG → GitHub Releases |
 
-```
-브라우저 ──▶ nginx(8390) ──▶ 사각 서버 (blue 또는 green)
-                               │  화면 파일(React 빌드)도 같이 내보냄
-                               ├─▶ PostgreSQL : 회원, 글, 댓글, 사진 정보 …
-                               ├─▶ Redis      : 로그인 세션, 인증번호, 조회수 중복 막기
-                               └─▶ 디스크      : 사진 파일 (/data/images)
+```mermaid
+flowchart LR
+  U["🧑 브라우저"] -->|"8390"| N["nginx<br/>myblog-proxy"]
+  subgraph S["서버 (도커)"]
+    N --> B["사각 서버 · blue<br/>Spring Boot + React 화면"]
+    N -.->|"배포 때 바꿔 끼움"| G["사각 서버 · green"]
+    B --> R[("Redis<br/>로그인 세션 · 인증번호<br/>조회수 중복 막기")]
+    B --> D[("디스크<br/>사진 파일")]
+  end
+  B --> P[("PostgreSQL<br/>회원 · 글 · 댓글 · 사진 정보")]
 ```
 
 ## 기술적 의사결정
@@ -139,6 +143,19 @@ cd frontend && npm run lint && npm run typecheck && npm test
 - 커뮤니티 게시판, 세션 표(`spring_session`). 로그인 세션은 DB 대신 Redis에 둡니다(서버를 다시 켜도 로그인 유지).
 
 ## 배포
+
+```mermaid
+flowchart LR
+  F["feature/* 브랜치"] -->|"PR"| DV["develop"]
+  DV -->|"배포 PR<br/>CHANGELOG 버전"| M["main"]
+  M --> CI["GitHub Actions<br/>검사(ci.yml)"]
+  CI --> IMG["도커 이미지 만들기"]
+  IMG -->|"SSH로 올리기"| SH["서버에서 deploy.sh"]
+  SH --> NEW["쉬는 쪽에 새 서버"]
+  NEW -->|"정상 응답 확인"| SW["nginx를 새 서버로"]
+  NEW -.->|"안 뜨면"| KEEP["옛 서버 그대로"]
+  M --> REL["GitHub Releases"]
+```
 
 `main`에 푸시되거나 PR이 합쳐지면 GitHub Actions(`.github/workflows/deploy.yml`)가 자동으로 배포합니다.
 
