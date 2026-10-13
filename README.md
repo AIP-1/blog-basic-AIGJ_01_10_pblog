@@ -18,9 +18,11 @@
 - **꾸미기**: 활동하면 잉크가 모이고, 잉크로 스티커를 사서 다이어리 표지를 꾸며요. 도전과제, 야간모드
 - **회원**: 이메일 인증 가입, 비밀번호 찾기, 탈퇴 후 30일 안에 복구
 
-| 메인 | 블로그와 다이어리 | 스티커 상점 |
-|---|---|---|
-| ![메인 화면](assets/readme/home.png) | ![블로그 화면](assets/readme/blog.png) | ![스티커 상점](assets/readme/shop.png) |
+| 메인 | 블로그와 다이어리 |
+|---|---|
+| ![메인 화면](assets/readme/home.png) | ![블로그 화면](assets/readme/blog.png) |
+| **구독** | **스티커 상점** |
+| ![구독 화면](assets/readme/subscriptions.png) | ![스티커 상점](assets/readme/shop.png) |
 
 <sub>예시 데이터를 넣은 로컬 환경에서 찍은 화면이에요.</sub>
 
