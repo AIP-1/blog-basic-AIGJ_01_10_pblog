@@ -3,6 +3,7 @@ package com.myblog.member;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,6 +41,8 @@ class SocialLoginIT extends IntegrationTest {
     WithdrawalCleaner cleaner;
     @Autowired
     KoreanClock clock;
+    @Autowired
+    MemberRepository members;
 
     @AfterEach
     void clearContext() {
@@ -186,6 +189,48 @@ class SocialLoginIT extends IntegrationTest {
         assertThat(complete(new SocialProfile(SocialProvider.GOOGLE, "g-1", "new@example.com", true, "x"), next))
                 .isEqualTo(SocialLoginService.HOME);
         assertThat(memberIdOf(next)).isEqualTo(id);
+    }
+
+    /** 소셜로 가입해 비밀번호가 없는 회원: 비밀번호 변경은 막고, 탈퇴는 확인 문구로, 복구는 소셜 로그인으로 한다. */
+    @Test
+    void socialOnlyMemberWithdrawsWithPhraseAndRestoresBySocialLogin() throws Exception {
+        var session = new MockHttpSession();
+        complete(kakao("k-9", "only@example.com", true, "소셜"), session);
+        var r = mvc.perform(postJson("/api/auth/social/signup", Map.of("nickname", "소셜회원")).session(session))
+                .andExpect(status().isCreated()).andReturn();
+        long id = read(r).get("id").asLong();
+
+        mvc.perform(get("/api/me").session(session)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.passwordSet").value(false))
+                .andExpect(jsonPath("$.socialAccounts[0]").value("kakao"));
+        mvc.perform(jsonRequest(put("/api/me/password"), Map.of("currentPassword", "x", "newPassword", PASSWORD,
+                "newPasswordConfirm", PASSWORD)).session(session))
+                .andExpect(jsonPath("$.error.code").value("PASSWORD_NOT_SET"));
+
+        // 비밀번호 대신 확인 문구
+        mvc.perform(jsonRequest(delete("/api/me"), Map.of("confirmText", "탈퇴", "acknowledged", true)).session(session))
+                .andExpect(jsonPath("$.error.fields.confirmText").exists());
+        mvc.perform(jsonRequest(delete("/api/me"), Map.of("confirmText", " 탈퇴합니다 ", "acknowledged", true))
+                .session(session)).andExpect(status().isNoContent());
+        assertThat(members.findById(id).orElseThrow().withdrawn()).isTrue();
+
+        // 보관 기간에 소셜 로그인하면 복구하고 로그인한다
+        var again = new MockHttpSession();
+        assertThat(complete(kakao("k-9", "only@example.com", true, "소셜"), again)).isEqualTo(SocialLoginService.RESTORED);
+        assertThat(memberIdOf(again)).isEqualTo(id);
+        assertThat(members.findById(id).orElseThrow().withdrawn()).isFalse();
+
+        // 비밀번호 찾기로 정하면 보통 회원과 같아진다
+        members.updatePassword(id, "$2a$10$abcdefghijklmnopqrstuuJ1lQ2b7m0W9y7r8eS9K0fG1hI2jK3lO", clock.nowOffset());
+        mvc.perform(get("/api/me").session(again)).andExpect(jsonPath("$.passwordSet").value(true));
+    }
+
+    @Test
+    void emailMemberHasPasswordAndNoSocialAccounts() throws Exception {
+        MockHttpSession s = member("수연", "su@example.com");
+        mvc.perform(get("/api/me").session(s)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.passwordSet").value(true))
+                .andExpect(jsonPath("$.socialAccounts").isEmpty());
     }
 
     @Test

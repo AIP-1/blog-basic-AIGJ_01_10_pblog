@@ -36,6 +36,7 @@ public class SocialLoginService {
     public static final String HOME = "/";
     public static final String SIGNUP_PAGE = "/social/signup";
     public static final String WITHDRAWN = "/?social=withdrawn";
+    public static final String RESTORED = "/?social=restored";
     public static final String NO_EMAIL = "/?social=no-email";
     public static final String FAILED = "/?social=failed";
 
@@ -122,6 +123,7 @@ public class SocialLoginService {
         Pending p = pending(req).orElseThrow(() -> new ApiException(ErrorCode.SOCIAL_SIGNUP_NOT_FOUND));
         String nickname = nicknames.validate(nicknameRaw);
         long id = signups.createMember(p.email(), nickname, encoder.encode(unguessableSecret()));
+        members.markPasswordUnset(id);
         accounts.insert(id, p.provider(), p.providerUserId(), p.email(), clock.nowOffset());
         Member m = members.findById(id).orElseThrow();
         req.getSession().removeAttribute(PENDING_ATTRIBUTE);
@@ -129,8 +131,18 @@ public class SocialLoginService {
         return m;
     }
 
-    private String logInOrRefuse(Member m, HttpServletRequest req, HttpServletResponse res) {
+    /**
+     * 탈퇴 신청한 회원은 로그인하지 않는다. 복구는 이메일 로그인으로 한다.
+     * 다만 비밀번호를 정한 적 없는 소셜 가입 회원은 이메일 로그인을 할 수 없으니, 소셜 로그인으로 복구하고 로그인한다.
+     */
+    @Transactional
+    String logInOrRefuse(Member m, HttpServletRequest req, HttpServletResponse res) {
         if (m.withdrawn()) {
+            if (!members.passwordSet(m.id())) {
+                members.restore(m.id(), clock.nowOffset());
+                login.startSession(m, req, res);
+                return RESTORED;
+            }
             forgetAuthentication(req, res);
             return WITHDRAWN;
         }
