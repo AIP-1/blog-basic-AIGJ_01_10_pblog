@@ -22,7 +22,10 @@ jobs:
             D=docker; $D ps >/dev/null 2>&1 || D="sudo -n docker"
             $D ps -a --filter name=myblog --format '{{.Names}} {{.Status}} {{.Ports}}'
             echo "--- inside: $(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://localhost:8390/api/topics)"
-            $D logs --tail 20 myblog 2>&1 | tail -20
+            # 지금 손님을 받는 서버(블루/그린)는 nginx 설정에 적혀 있다
+            A=$(grep -o 'myblog-\(blue\|green\)' ~/myblog-data/proxy/conf.d/default.conf 2>/dev/null | head -1)
+            echo "--- active: ${A:-없음}"
+            $D logs --tail 20 "${A:-myblog}" 2>&1 | tail -20
       - name: Check from outside
         env:
           HOST: ${{ secrets.SSH_ADDRESS }}
