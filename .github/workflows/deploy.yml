@@ -54,12 +54,19 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          # 사이트 주소 (저장소 변수, 선택. 기본 https://sagak.java21.net). 소셜 로그인 뒤 돌아올 주소에 쓴다
+          SITE_URL: ${{ vars.SITE_URL }}
+          # 소셜 로그인 (저장소 시크릿, 선택). CLIENT_ID가 비어 있는 제공자는 켜지지 않는다
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         with:
           host: ${{ secrets.SSH_ADDRESS }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
-          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_SCHEMA,DB_USERNAME,DB_PASSWORD,IMAGE_TAG,NOTICE_OWNER_EMAIL,SMTP_HOST,SMTP_PORT,SMTP_USERNAME,SMTP_PASSWORD,MAIL_FROM
+          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_SCHEMA,DB_USERNAME,DB_PASSWORD,IMAGE_TAG,NOTICE_OWNER_EMAIL,SMTP_HOST,SMTP_PORT,SMTP_USERNAME,SMTP_PASSWORD,MAIL_FROM,SITE_URL,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET
           command_timeout: 15m
           script: |
             set -e

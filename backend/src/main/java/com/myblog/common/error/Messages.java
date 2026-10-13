@@ -26,6 +26,7 @@ public final class Messages {
     public static final String ACCOUNT_LOCKED = "로그인 시도가 5회 실패해 잠겼습니다. {N}분 뒤에 다시 시도해 주세요";
     public static final String RESET_SENT = "입력하신 이메일로 안내를 보냈습니다. 10분 안에 인증번호를 입력해 주세요";
     public static final String RESET_DONE = "비밀번호를 변경했습니다. 새 비밀번호로 로그인해 주세요";
+    public static final String SOCIAL_SIGNUP_NOT_FOUND = "소셜 가입 정보가 없거나 만료되었습니다. 처음부터 다시 시도해 주세요";
 
     // 02-계정관리
     public static final String SAVED = "저장했습니다";

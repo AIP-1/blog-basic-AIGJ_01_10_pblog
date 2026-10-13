@@ -60,17 +60,26 @@ public class SignupService {
         String email = EmailNormalizer.normalize(req.email());
         passwords.validate("password", req.password(), "passwordConfirm", req.passwordConfirm());
         verification.requireVerified(Purpose.SIGNUP, email); // 화면을 건너뛴 요청도 거절 (CF-01-20)
+        long id = createMember(email, nickname, encoder.encode(req.password()));
+        verification.consume(Purpose.SIGNUP, email);
+        return id;
+    }
+
+    /**
+     * 회원을 만든다: 중복 검사 → 회원 줄 → 블로그와 기본 다이어리. 이메일 가입과 소셜 가입이 같이 쓴다.
+     * email은 정규화한 값, nickname은 {@link NicknamePolicy#validate}를 거친 값을 준다.
+     */
+    @Transactional
+    public long createMember(String email, String nickname, String passwordHash) {
         checkAvailable(email, nickname); // 인증하는 사이 먼저 가입한 경우 (CF-01-21)
         long id;
         try {
-            id = members.insert(email, nickname, NicknamePolicy.key(nickname), encoder.encode(req.password()),
-                    clock.nowOffset());
+            id = members.insert(email, nickname, NicknamePolicy.key(nickname), passwordHash, clock.nowOffset());
         } catch (DuplicateKeyException e) {
             checkAvailable(email, nickname);
             throw e;
         }
         blogs.createFor(id, nickname);
-        verification.consume(Purpose.SIGNUP, email);
         return id;
     }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
 import { AuthModal } from './AuthModal';
 import { Header } from './Header';
+import { SocialLoginNotice } from './SocialLoginNotice';
 import { TopicHighlightContext } from './topicHighlight';
 
 export function Layout() {
@@ -20,6 +21,7 @@ export function Layout() {
           </div>
         </footer>
         <AuthModal />
+        <SocialLoginNotice />
         <ScrollRestoration />
       </div>
     </TopicHighlightContext.Provider>

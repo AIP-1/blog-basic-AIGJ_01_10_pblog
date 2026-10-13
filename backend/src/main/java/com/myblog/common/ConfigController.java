@@ -1,6 +1,7 @@
 package com.myblog.common;
 
 import com.myblog.blog.TopicService;
+import com.myblog.config.SocialClientRegistrations;
 import com.myblog.post.BookmarkService;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,10 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConfigController {
     private final MyBlogProperties props;
     private final TopicService topics;
+    private final SocialClientRegistrations socialClients;
 
-    public ConfigController(MyBlogProperties props, TopicService topics) {
+    public ConfigController(MyBlogProperties props, TopicService topics, SocialClientRegistrations socialClients) {
         this.props = props;
         this.topics = topics;
+        this.socialClients = socialClients;
     }
 
     @GetMapping("/api/config")
@@ -50,6 +53,7 @@ public class ConfigController {
         m.put("draftLimit", props.draft().maxPerMember());
         m.put("draftAutosaveSeconds", props.draft().autosaveInterval().toSeconds());
         m.put("topics", topics.list());
+        m.put("socialLogin", socialClients.enabledIds()); // 켜진 소셜 로그인 제공자 (kakao, google). 없으면 []
         return m;
     }
 }

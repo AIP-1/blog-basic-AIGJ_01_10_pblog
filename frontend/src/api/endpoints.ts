@@ -32,6 +32,7 @@ import type {
   ReportReason,
   SearchResponse,
   SearchType,
+  SocialPending,
   SubscribedBlog,
   SubscribedDiary,
   SubscriptionKind,
@@ -66,6 +67,11 @@ export const login = (body: { email: string; password: string }) =>
 /** 탈퇴 신청한 계정 복구 (보관 기간 안). 성공하면 로그인된다. */
 export const restoreAccount = (body: { email: string; password: string }) =>
   api<{ member: Member }>('/api/auth/restore', { method: 'POST', body, skipAuthEvent: true });
+/** 소셜 로그인 뒤 처음 온 사람의 가입 대기 정보 (없으면 404 SOCIAL_SIGNUP_NOT_FOUND) */
+export const getSocialPending = () => api<SocialPending>('/api/auth/social/pending', { skipAuthEvent: true });
+/** 소셜 가입 마무리. 성공하면 로그인된다. */
+export const socialSignup = (body: { nickname: string }) =>
+  api<{ id: number; member: Member }>('/api/auth/social/signup', { method: 'POST', body, skipAuthEvent: true });
 export const logout = () => api<void>('/api/auth/logout', { method: 'POST', skipAuthEvent: true });
 export const resetPassword = (body: { email: string; newPassword: string; newPasswordConfirm: string }) =>
   api<void>('/api/auth/password-reset', { method: 'POST', body, skipAuthEvent: true });

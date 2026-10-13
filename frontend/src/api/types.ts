@@ -30,6 +30,17 @@ export interface ApiErrorBody {
 
 /* ---------- 설정 ---------- */
 
+/** 소셜 로그인 제공자 (서버에 키가 설정된 것만 켜진다) */
+export type SocialProvider = 'kakao' | 'google';
+
+/** GET /api/auth/social/pending: 소셜 가입 대기 정보 */
+export interface SocialPending {
+  provider: SocialProvider;
+  email: string;
+  /** 제공자 닉네임에서 만든 추천 닉네임 (못 만들면 빈 값) */
+  nickname: string;
+}
+
 /** ASSUMED: GET /api/config 의 칸 이름. 없는 칸은 화면 기본값을 쓴다. */
 export interface AppConfig {
   limits: {
@@ -65,6 +76,8 @@ export interface AppConfig {
   /** 글쓰기 중 자동 임시저장 간격(초). 0이면 끔 */
   draftAutosaveSeconds: number;
   topics: Topic[];
+  /** 켜진 소셜 로그인 제공자. 비어 있으면 소셜 로그인 버튼을 숨긴다 */
+  socialLogin: SocialProvider[];
 }
 
 /* ---------- 회원 ---------- */
