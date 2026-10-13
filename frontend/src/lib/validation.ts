@@ -1,5 +1,10 @@
 import { AUTH, EXPLORE } from '../messages';
 
+/** 글자 수. 서버(Texts.length)처럼 이모지 같은 글자도 한 글자로 센다. */
+export function charCount(s: string): number {
+  return [...s].length;
+}
+
 /** CF-01-2: 앞뒤 공백 제거 후 형식 검사 */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function normalizeEmail(email: string): string {

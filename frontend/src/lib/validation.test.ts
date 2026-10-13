@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkPassword, isValidNickname, isValidPassword, isValidTag, normalizeTag, validateQuery } from './validation';
+import { charCount, checkPassword, isValidNickname, isValidPassword, isValidTag, normalizeTag, validateQuery } from './validation';
 
 describe('입력 규칙', () => {
   it('CF-01-4 비밀번호: 영문·숫자·특수문자 포함 8~64자, 공백 불가', () => {
@@ -33,5 +33,11 @@ describe('입력 규칙', () => {
     expect(validateQuery(' 단 ', 2, 50)).toBe('검색어를 2자 이상 입력해 주세요');
     expect(validateQuery('단풍 명소', 2, 50)).toBeNull();
     expect(validateQuery('x'.repeat(51), 2, 50)).not.toBeNull();
+  });
+
+  it('글자 수는 서버처럼 이모지도 한 글자로 센다', () => {
+    expect(charCount('가나다')).toBe(3);
+    expect(charCount('좋아요😀')).toBe(4);
+    expect('좋아요😀'.length).toBe(5);
   });
 });

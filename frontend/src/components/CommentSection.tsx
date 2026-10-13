@@ -7,6 +7,7 @@ import type { Comment, PostDetail } from '../api/types';
 import { useRequireLogin } from '../api/useRequireLogin';
 import { useAuth } from '../auth/context';
 import { formatDateTime } from '../lib/format';
+import { charCount } from '../lib/validation';
 import { SOCIAL } from '../messages';
 import { ErrorBox, FieldError, Loading } from './Status';
 import { useToast } from './toastContext';
@@ -39,7 +40,7 @@ function CommentForm({
     e.preventDefault();
     const text = body.trim();
     if (!text) return setError(SOCIAL.commentRequired);
-    if (body.length > limits.commentMax) return setError(SOCIAL.commentTooLong(limits.commentMax));
+    if (charCount(text) > limits.commentMax) return setError(SOCIAL.commentTooLong(limits.commentMax));
     if (pending) return;
     requireLogin(() =>
       onSubmit(body).then(
@@ -64,7 +65,6 @@ function CommentForm({
         id={inputId}
         className="input textarea"
         rows={rows}
-        maxLength={limits.commentMax}
         placeholder={placeholder}
         value={body}
         autoFocus={!!onCancel}
@@ -75,7 +75,7 @@ function CommentForm({
       />
       <div className="comment-form__foot">
         <span className="counter">
-          {body.length}/{limits.commentMax}
+          {charCount(body.trim())}/{limits.commentMax}
         </span>
         {onCancel && (
           <button type="button" className="btn btn--sm" onClick={onCancel}>
