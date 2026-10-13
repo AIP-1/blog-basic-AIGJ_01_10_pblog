@@ -104,8 +104,8 @@
 
 ## 문서
 
-- [home-my-blog/docs](https://github.com/home-my-blog/docs): 요구사항 원본과 가이드
-- [기능 설명서](https://github.com/home-my-blog/docs/blob/main/docs/가이드/07-기능-설명서.md), [동작 원리](https://github.com/home-my-blog/docs/blob/main/docs/가이드/08-블로그-동작-원리.md)
+- [home-my-blog/docs](https://github.com/home-my-blog/docs): 기능 설명, 동작 원리, 만들기 전 기획 기록
+- [기능 설명](https://github.com/home-my-blog/docs/blob/main/docs/기능/00-목차.md), [동작 원리](https://github.com/home-my-blog/docs/blob/main/docs/원리/00-목차.md)
 - 스펙과 설계 결정: [`specs/001-blog-core/`](specs/001-blog-core/) (`research.md`에 결정과 대안)
 - 바뀐 점: [CHANGELOG.md](CHANGELOG.md)
 
