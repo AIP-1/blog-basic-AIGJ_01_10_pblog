@@ -86,7 +86,11 @@ public class LoginService {
         return m;
     }
 
-    private void startSession(Member m, HttpServletRequest req, HttpServletResponse res) {
+    /**
+     * 로그인 세션을 연다: 세션 ID를 새로 받고, 회원별 세션 목록에 넣고, 회원 번호를 인증 정보로 저장한다.
+     * 비밀번호 로그인과 소셜 로그인이 같이 쓴다. 이미 있던 인증 정보(소셜 로그인 토큰 등)는 이것으로 바뀐다.
+     */
+    public void startSession(Member m, HttpServletRequest req, HttpServletResponse res) {
         var auth = new UsernamePasswordAuthenticationToken(m.id(), null,
                 List.of(new SimpleGrantedAuthority("ROLE_MEMBER")));
         req.getSession(true);

@@ -32,6 +32,22 @@
   flex-wrap: wrap;
   font-size: 0.8rem;
 }
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.site-footer__links a {
+  color: var(--text-muted);
+}
+.site-footer__links a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.site-footer__links a.is-strong {
+  color: var(--text);
+  font-weight: 700;
+}
 .site-footer__logo {
   font-weight: 800;
   color: var(--text);

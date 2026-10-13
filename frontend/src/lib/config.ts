@@ -43,6 +43,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   draftLimit: 20,
   draftAutosaveSeconds: 60,
   topics: DEFAULT_TOPICS,
+  socialLogin: [],
 };
 
 export function mergeConfig(server: Partial<AppConfig> | null | undefined): AppConfig {
@@ -52,6 +53,7 @@ export function mergeConfig(server: Partial<AppConfig> | null | undefined): AppC
     ...server,
     limits: { ...DEFAULT_CONFIG.limits, ...(server.limits ?? {}) },
     topics: server.topics && server.topics.length > 0 ? server.topics : DEFAULT_CONFIG.topics,
+    socialLogin: Array.isArray(server.socialLogin) ? server.socialLogin : DEFAULT_CONFIG.socialLogin,
   };
 }
 

@@ -3,6 +3,8 @@ package com.myblog.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.GlobalExceptionHandler;
+import com.myblog.member.SocialLoginHandler;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
@@ -14,10 +16,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
@@ -36,12 +41,14 @@ import org.springframework.session.security.SpringSessionBackedSessionRegistry;
  * 세션 쿠키 로그인 + CSRF 쿠키 토큰 (research §2, NF-10~12).
  * 세션은 Redis에 둔다(Spring Session). 서버를 새로 띄워도 로그인이 유지돼 무중단 배포가 된다.
  * 회원별 세션 목록은 SessionRegistry가 관리해 비밀번호 변경·탈퇴 때 다른 기기의 로그인을 끊는다 (CF-15-15, CF-25-8).
+ * 소셜 로그인(카카오·구글)은 키가 설정된 제공자가 있을 때만 켠다. 로그인하면 비밀번호 로그인과 같은 세션이 된다.
  */
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry, ObjectMapper mapper)
+    SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry, ObjectMapper mapper,
+                                    SocialClientRegistrations socialClients, SocialLoginHandler socialHandler)
             throws Exception {
         CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
         csrfHandler.setCsrfRequestAttributeName(null); // 토큰을 매 요청 쿠키로 내려 준다(SPA)
@@ -60,7 +67,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/posts/*/edit").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                         .requestMatchers("/api/auth/verifications/**", "/api/auth/verifications",
-                                "/api/auth/signup", "/api/auth/login", "/api/auth/restore", "/api/auth/password-reset").permitAll()
+                                "/api/auth/signup", "/api/auth/login", "/api/auth/restore", "/api/auth/password-reset",
+                                "/api/auth/social/signup").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .exceptionHandling(e -> e.authenticationEntryPoint(
@@ -68,7 +76,38 @@ public class SecurityConfig {
                 .formLogin(f -> f.disable())
                 .httpBasic(b -> b.disable())
                 .logout(l -> l.disable());
+        if (!socialClients.isEmpty()) {
+            // 소셜 로그인: /oauth2/authorization/{kakao|google} → 제공자 → /login/oauth2/code/{kakao|google}
+            http.oauth2Login(o -> o
+                    .clientRegistrationRepository(socialClients)
+                    .authorizedClientRepository(new DiscardingAuthorizedClientRepository())
+                    .loginPage("/") // 기본 로그인 화면(/login)을 만들지 않는다
+                    .successHandler(socialHandler)
+                    .failureHandler(socialHandler));
+        }
         return http.build();
+    }
+
+    /**
+     * 제공자의 액세스 토큰은 로그인 때 회원 정보를 받는 데만 쓰고 보관하지 않는다.
+     * 기본 저장소는 서버 메모리에 로그인마다 토큰을 쌓는다.
+     */
+    static class DiscardingAuthorizedClientRepository implements OAuth2AuthorizedClientRepository {
+        @Override
+        public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String registrationId, Authentication principal,
+                                                                         HttpServletRequest request) {
+            return null;
+        }
+
+        @Override
+        public void saveAuthorizedClient(OAuth2AuthorizedClient client, Authentication principal,
+                                         HttpServletRequest request, HttpServletResponse response) {
+        }
+
+        @Override
+        public void removeAuthorizedClient(String registrationId, Authentication principal,
+                                           HttpServletRequest request, HttpServletResponse response) {
+        }
     }
 
     private static void writeError(HttpServletResponse res, ObjectMapper mapper) throws IOException {

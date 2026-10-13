@@ -25,7 +25,7 @@
 
 | 메서드·경로 | 설명 |
 |-------------|------|
-| `GET /api/config` | 화면이 쓸 기본값: 글자 수, 페이지 크기, 이미지 제한, 인기 검색어 주기, 주제 목록 (NF-08) |
+| `GET /api/config` | 화면이 쓸 기본값: 글자 수, 페이지 크기, 이미지 제한, 인기 검색어 주기, 주제 목록 (NF-08), 켜진 소셜 로그인 `socialLogin: ["kakao","google"]` |
 | `GET /api/csrf` | CSRF 쿠키 발급(앱 시작 시 1회) |
 
 ## 회원·인증 (상세/01)
@@ -39,6 +39,9 @@
 | `POST /api/auth/logout` 🔒 | — | `204` (세션 삭제) | |
 | `GET /api/auth/me` | — | `200` `{ member, blog, newCommentCount }` 또는 `204`(비로그인) | |
 | `POST /api/auth/password-reset` | `{ email, newPassword, newPasswordConfirm }` | `200` (모든 세션 삭제, 잠금 해제, CF-25-7~9) | `NOT_VERIFIED`, `VERIFICATION_EXPIRED`, `VALIDATION_FAILED` |
+| `GET /oauth2/authorization/{kakao\|google}` | — | `302` 제공자 로그인 → `/login/oauth2/code/{id}` → `302` `/`(로그인), `/social/signup`(처음), `/?social=withdrawn\|no-email\|failed` | |
+| `GET /api/auth/social/pending` | — | `200` `{ provider, email, nickname }` (세션의 소셜 가입 대기 정보) | `SOCIAL_SIGNUP_NOT_FOUND`(404) |
+| `POST /api/auth/social/signup` | `{ nickname }` | `201` `{ id, member }` + 새 세션 | `SOCIAL_SIGNUP_NOT_FOUND`, `NICKNAME_TAKEN`, `EMAIL_TAKEN`, `EMAIL_WITHDRAWN`, `VALIDATION_FAILED` |
 
 - `purpose = "reset"`은 가입 여부와 관계없이 같은 `202`를 돌려준다(CF-25-3). 제한(`RESEND_TOO_SOON`, `DAILY_LIMIT`)도 똑같이 적용한다.
 - 같은 요청이 처리 중이면 두 번째는 `409 DUPLICATE_SUBMIT` (CF-01-10).
