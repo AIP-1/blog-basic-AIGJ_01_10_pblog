@@ -4,6 +4,7 @@ import com.myblog.blog.TopicService;
 import com.myblog.common.KoreanClock;
 import com.myblog.common.MyBlogProperties;
 import com.myblog.common.PageResponse;
+import com.myblog.common.ResponseCache;
 import com.myblog.post.PostQueryService;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,24 +24,31 @@ public class HomeController {
     private final MyBlogProperties.Home rules;
     private final MyBlogProperties.Notice notice;
     private final KoreanClock clock;
+    private final ResponseCache cache;
 
     public HomeController(TopicService topics, PostQueryService posts, BlogCards blogs, MyBlogProperties props,
-                          KoreanClock clock) {
+                          KoreanClock clock, ResponseCache cache) {
         this.topics = topics;
         this.posts = posts;
         this.blogs = blogs;
         this.rules = props.home();
         this.notice = props.notice();
         this.clock = clock;
+        this.cache = cache;
     }
 
     @GetMapping("/api/topics")
-    public List<TopicService.Topic> topics() {
-        return topics.list();
+    public Object topics() {
+        return cache.get("topics", rules.cacheTtl(), topics::list);
     }
 
+    /** 누가 봐도 같은 공개 글만 담으므로 통째로 캐시한다 (ResponseCache). */
     @GetMapping("/api/home")
-    public Map<String, Object> home() {
+    public Object home() {
+        return cache.get("home", rules.cacheTtl(), this::loadHome);
+    }
+
+    private Map<String, Object> loadHome() {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("featured", posts.featured(rules.featured(), clock.nowOffset().minusDays(rules.popularDays())));
         m.put("latestPosts", posts.latestPublic(rules.latest()));
@@ -54,11 +62,13 @@ public class HomeController {
 
     /** 메인 '분야별 글': topic(주제 코드)이 없으면 전체, sort=popular면 인기순. */
     @GetMapping("/api/posts")
-    public PageResponse<Map<String, Object>> feed(@RequestParam(required = false) String topic,
-                                                  @RequestParam(required = false) String sort,
-                                                  @RequestParam(required = false) Integer page) {
+    public Object feed(@RequestParam(required = false) String topic,
+                       @RequestParam(required = false) String sort,
+                       @RequestParam(required = false) Integer page) {
         Long topicId = topic == null || topic.isBlank() ? null : topics.byCode(topic).id();
-        return posts.publicFeed(topicId, sort, page);
+        String sortKey = "popular".equals(sort) ? "popular" : "latest";
+        return cache.get("feed:" + (topicId == null ? "all" : topicId) + ":" + sortKey + ":" + (page == null ? 1 : page),
+                rules.cacheTtl(), () -> posts.publicFeed(topicId, sort, page));
     }
 
     /** 공지사항: 공지 담당 회원(myblog.notice.owner-email) 블로그의 '공지' 다이어리 공개 글, 최신순. */
@@ -74,8 +84,12 @@ public class HomeController {
     }
 
     @GetMapping("/api/topics/{code}")
-    public Map<String, Object> topic(@PathVariable String code) {
+    public Object topic(@PathVariable String code) {
         var topic = topics.byCode(code);
+        return cache.get("topic:" + topic.id(), rules.cacheTtl(), () -> loadTopic(topic));
+    }
+
+    private Map<String, Object> loadTopic(TopicService.Topic topic) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("topic", topic);
         m.put("blogCount", blogs.count(topic.id()));
