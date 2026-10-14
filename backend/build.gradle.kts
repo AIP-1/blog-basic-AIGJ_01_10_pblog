@@ -1,5 +1,6 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.5.14"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -43,6 +44,14 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+// SonarQube가 읽는 테스트 커버리지 보고서 (build/reports/jacoco/test/jacocoTestReport.xml)
+tasks.jacocoTestReport {
+    reports {
+        xml.required = true
+    }
 }
 
 // 배포 이미지에는 실행 가능한 jar 하나만 넣는다
