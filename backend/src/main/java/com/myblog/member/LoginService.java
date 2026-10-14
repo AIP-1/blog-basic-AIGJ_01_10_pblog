@@ -53,12 +53,16 @@ public class LoginService {
      * 탈퇴 신청한 회원은 비밀번호가 맞아도 로그인하지 않고 ACCOUNT_WITHDRAWN으로 알린다.
      * 화면이 복구할지 묻고, 그러겠다고 하면 {@link #restore}를 부른다.
      */
+    /** 탈퇴 신청한 회원을 복구할 수 있는 마지막 시각 (한국 시간) */
+    public java.time.OffsetDateTime restorableUntil(Member m) {
+        return m.deletedAt().plus(withdrawKeep).atZoneSameInstant(KoreanClock.SEOUL).toOffsetDateTime();
+    }
+
     public Member login(String rawEmail, String password, HttpServletRequest req, HttpServletResponse res) {
         Member m = authenticate(rawEmail, password);
         if (m.withdrawn()) {
             throw ApiException.withDetails(ErrorCode.ACCOUNT_WITHDRAWN, Messages.ACCOUNT_WITHDRAWN,
-                    Map.of("restorableUntil", m.deletedAt().plus(withdrawKeep)
-                            .atZoneSameInstant(KoreanClock.SEOUL).toOffsetDateTime()));
+                    Map.of("restorableUntil", restorableUntil(m)));
         }
         startSession(m, req, res);
         return m;

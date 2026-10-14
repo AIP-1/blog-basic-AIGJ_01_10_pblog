@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,10 +20,12 @@ public class SocialAuthController {
 
     private final SocialLoginService social;
     private final EmailVerificationService verification;
+    private final LoginService login;
 
-    public SocialAuthController(SocialLoginService social, EmailVerificationService verification) {
+    public SocialAuthController(SocialLoginService social, EmailVerificationService verification, LoginService login) {
         this.social = social;
         this.verification = verification;
+        this.login = login;
     }
 
     /** 세션에 있는 가입 대기 정보. 없으면 SOCIAL_SIGNUP_NOT_FOUND(404). */
@@ -47,5 +50,25 @@ public class SocialAuthController {
         body.put("id", m.id());
         body.put("member", AuthController.memberView(m));
         return ResponseEntity.status(201).body(body);
+    }
+
+    /** 소셜 로그인으로 확인한 탈퇴 회원의 복구 대기 정보. 없거나 만료됐으면 SOCIAL_RESTORE_NOT_FOUND(404). */
+    @GetMapping("/api/auth/social/restore")
+    public Map<String, Object> pendingRestore(HttpServletRequest req) {
+        Member m = social.pendingRestore(req).orElseThrow(() -> new ApiException(ErrorCode.SOCIAL_RESTORE_NOT_FOUND));
+        return Map.of("restorableUntil", login.restorableUntil(m));
+    }
+
+    /** 복구하고 로그인한다. 응답은 로그인과 같은 모양. */
+    @PostMapping("/api/auth/social/restore")
+    public Map<String, Object> restore(HttpServletRequest req, HttpServletResponse res) {
+        return Map.of("member", AuthController.memberView(social.restore(req, res)));
+    }
+
+    /** 복구하지 않는다: 복구 대기 정보를 지운다. */
+    @DeleteMapping("/api/auth/social/restore")
+    public ResponseEntity<Void> cancelRestore(HttpServletRequest req) {
+        social.cancelRestore(req);
+        return ResponseEntity.noContent().build();
     }
 }
