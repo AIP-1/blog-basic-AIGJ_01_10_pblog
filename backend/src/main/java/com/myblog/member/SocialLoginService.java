@@ -39,6 +39,13 @@ public class SocialLoginService {
     public static final String RESTORED = "/?social=restored";
     public static final String NO_EMAIL = "/?social=no-email";
     public static final String FAILED = "/?social=failed";
+    /** 같은 이메일이 이메일로 가입돼 있다: 이메일로 로그인하라고 안내한다 */
+    public static final String EMAIL_ACCOUNT = "/?social=email-account";
+
+    /** 같은 이메일이 다른 제공자로 가입돼 있다: 그 제공자로 로그인하라고 안내한다 (/?social=kakao-account) */
+    public static String otherProvider(SocialProvider provider) {
+        return "/?social=" + provider.registrationId() + "-account";
+    }
 
     private static final Pattern NOT_ALLOWED = Pattern.compile("[^가-힣A-Za-z0-9]");
 
@@ -89,15 +96,13 @@ public class SocialLoginService {
         }
         var byEmail = members.findByEmail(email);
         if (byEmail.isPresent()) {
+            // 같은 이메일의 회원이 있으면 연결하지 않는다. 계정은 가입한 방법으로만 로그인한다
             Member m = byEmail.get();
-            if (m.withdrawn()) {
-                // 탈퇴 신청한 회원의 이메일: 연결하지 않는다. 복구는 이메일 로그인으로 한다
-                forgetAuthentication(req, res);
-                return WITHDRAWN;
+            forgetAuthentication(req, res);
+            if (!members.passwordSet(m.id())) {
+                return accounts.signupProviderOf(m.id()).map(SocialLoginService::otherProvider).orElse(FAILED);
             }
-            accounts.insert(m.id(), profile.provider(), profile.providerUserId(), email, clock.nowOffset());
-            login.startSession(m, req, res);
-            return HOME;
+            return m.withdrawn() ? WITHDRAWN : EMAIL_ACCOUNT;
         }
         forgetAuthentication(req, res);
         req.getSession(true).setAttribute(PENDING_ATTRIBUTE,
@@ -116,7 +121,7 @@ public class SocialLoginService {
 
     /**
      * 소셜 가입을 마친다: 이메일 가입과 같은 규칙으로 닉네임을 확인하고 회원·블로그를 만든 뒤 연결하고 로그인한다.
-     * 이메일 인증은 제공자가 이미 했다. 비밀번호는 아무도 모르는 값으로 두어, 비밀번호 찾기로 정하기 전에는 이메일 로그인이 안 된다.
+     * 이메일 인증은 제공자가 이미 했다. 비밀번호는 아무도 모르는 값으로 두고, 이 계정은 가입한 제공자로만 로그인한다.
      */
     @Transactional
     public Member signup(String nicknameRaw, HttpServletRequest req, HttpServletResponse res) {

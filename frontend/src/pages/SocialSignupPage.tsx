@@ -96,7 +96,7 @@ function SocialSignupForm({ pending }: { pending: SocialPending }) {
             이메일
           </label>
           <input id={emailId} className="input" type="email" value={pending.email} readOnly />
-          <p className="form__hint">{SOCIAL_LOGIN.emailHint}</p>
+          <p className="form__hint">{SOCIAL_LOGIN.emailHint(providerName)}</p>
         </div>
         <div className="field">
           <label htmlFor={nicknameId} className="field__label">

@@ -74,7 +74,7 @@ public class MemberRepository {
                 .params(hash, now, id).update();
     }
 
-    /** 직접 정한 비밀번호가 있는지 (소셜 가입 후 비밀번호 찾기로 정하기 전에는 false). */
+    /** 직접 정한 비밀번호가 있는지. 이메일로 가입한 회원은 true, 소셜로 가입한 회원은 false. */
     public boolean passwordSet(long id) {
         return jdbc.sql("SELECT password_set FROM members WHERE id = ?").param(id).query(Boolean.class).single();
     }

@@ -3,6 +3,8 @@ package com.myblog.member;
 import com.myblog.blog.BlogService;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
+import com.myblog.mail.MailSender;
+import com.myblog.mail.MailTemplates;
 import com.myblog.manage.NewCommentCounter;
 import com.myblog.member.EmailVerificationService.Purpose;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,13 +35,20 @@ public class AuthController {
     private final LoginService login;
     private final PasswordResetService reset;
     private final MemberRepository members;
+    private final SocialAccountRepository socialAccounts;
+    private final MailSender mailSender;
+    private final MailTemplates templates;
     private final BlogService blogs;
     private final NewCommentCounter newComments;
     private final String mailMode;
 
     public AuthController(EmailVerificationService verification, SignupService signup, LoginService login,
-                          PasswordResetService reset, MemberRepository members, BlogService blogs,
+                          PasswordResetService reset, MemberRepository members, SocialAccountRepository socialAccounts,
+                          MailSender mailSender, MailTemplates templates, BlogService blogs,
                           NewCommentCounter newComments, com.myblog.common.MyBlogProperties props) {
+        this.socialAccounts = socialAccounts;
+        this.mailSender = mailSender;
+        this.templates = templates;
         this.mailMode = props.mail().mode();
         this.verification = verification;
         this.signup = signup;
@@ -61,13 +70,23 @@ public class AuthController {
         Purpose purpose = Purpose.parse(req.purpose());
         String email = EmailNormalizer.normalize(req.email());
         boolean sendMail;
+        java.util.Optional<SocialProvider> socialProvider = java.util.Optional.empty();
         if (purpose == Purpose.SIGNUP) {
             signup.checkAvailable(email, req.nickname());
             sendMail = true;
         } else {
-            sendMail = members.existsActiveByEmail(email); // 가입 여부와 관계없이 같은 응답 (CF-25-3), 탈퇴 신청한 회원 제외
+            // 가입 여부와 관계없이 같은 응답 (CF-25-3), 탈퇴 신청한 회원 제외.
+            // 소셜로 가입한 회원은 비밀번호가 없으니 번호 대신 어느 제공자로 로그인하면 되는지 메일로 알린다
+            var active = members.findByEmail(email).filter(m -> !m.withdrawn());
+            socialProvider = active.filter(m -> !members.passwordSet(m.id()))
+                    .flatMap(m -> socialAccounts.signupProviderOf(m.id()));
+            sendMail = active.isPresent() && socialProvider.isEmpty();
         }
         var sent = verification.send(purpose, email, sendMail);
+        socialProvider.ifPresent(p -> {
+            var notice = templates.socialAccountNoPassword(p.displayName());
+            mailSender.send(email, notice.subject(), notice.body());
+        });
         Map<String, Object> body = new java.util.LinkedHashMap<>();
         body.put("expiresAt", sent.expiresAt());
         // 메일 서버가 없는 동안(mode=log) 가입 인증번호만 화면에 바로 보여 준다. 메일을 연결하면 사라진다.
