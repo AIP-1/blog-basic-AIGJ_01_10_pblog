@@ -269,11 +269,24 @@ class SocialLoginIT extends IntegrationTest {
                 .isEqualTo(SocialLoginService.WITHDRAW_DONE);
         assertThat(members.findById(id).orElseThrow().withdrawn()).isTrue();
 
-        // 보관 기간에 소셜 로그인하면 복구하고 로그인한다
+        // 보관 기간에 소셜 로그인하면 바로 복구하지 않고, 화면에서 복구할지 묻는다
         var again = new MockHttpSession();
-        assertThat(complete(kakao("k-9", "only@example.com", true, "소셜"), again)).isEqualTo(SocialLoginService.RESTORED);
+        assertThat(complete(kakao("k-9", "only@example.com", true, "소셜"), again))
+                .isEqualTo(SocialLoginService.RESTORE_CONFIRM);
+        assertThat(again.getAttribute(CONTEXT)).isNull(); // 소셜 토큰을 남기지 않는다
+        mvc.perform(get("/api/auth/me").session(again)).andExpect(status().isNoContent());
+        assertThat(members.findById(id).orElseThrow().withdrawn()).isTrue();
+        mvc.perform(get("/api/auth/social/restore").session(again)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.restorableUntil").exists());
+
+        // 복구하겠다고 하면 복구하고 로그인한다
+        mvc.perform(postJson("/api/auth/social/restore", Map.of()).session(again)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.member.id").value(id));
         assertThat(memberIdOf(again)).isEqualTo(id);
         assertThat(members.findById(id).orElseThrow().withdrawn()).isFalse();
+        // 복구 대기 정보는 한 번 쓰면 없다
+        mvc.perform(get("/api/auth/social/restore").session(again))
+                .andExpect(jsonPath("$.error.code").value("SOCIAL_RESTORE_NOT_FOUND"));
 
         // 비밀번호 찾기로 정하면 보통 회원과 같아진다
         members.updatePassword(id, "$2a$10$abcdefghijklmnopqrstuuJ1lQ2b7m0W9y7r8eS9K0fG1hI2jK3lO", clock.nowOffset());
@@ -324,6 +337,33 @@ class SocialLoginIT extends IntegrationTest {
         var s = member("수연", "su@example.com");
         mvc.perform(postJson("/api/me/withdraw/social", Map.of("acknowledged", true)).session(s))
                 .andExpect(jsonPath("$.error.code").value("PASSWORD_WITHDRAW_ONLY"));
+    }
+
+    /** 복구하지 않겠다고 하면 탈퇴 상태 그대로, 로그인도 하지 않는다 */
+    @Test
+    void cancellingSocialRestoreKeepsWithdrawn() throws Exception {
+        long id = socialSignup(kakao("k-9", "only@example.com", true, "소셜"), "소셜회원");
+        members.markWithdrawn(id, clock.nowOffset());
+
+        var session = new MockHttpSession();
+        assertThat(complete(kakao("k-9", "only@example.com", true, "소셜"), session))
+                .isEqualTo(SocialLoginService.RESTORE_CONFIRM);
+        mvc.perform(jsonRequest(delete("/api/auth/social/restore"), Map.of()).session(session))
+                .andExpect(status().isNoContent());
+        mvc.perform(postJson("/api/auth/social/restore", Map.of()).session(session))
+                .andExpect(jsonPath("$.error.code").value("SOCIAL_RESTORE_NOT_FOUND"));
+        assertThat(members.findById(id).orElseThrow().withdrawn()).isTrue();
+        mvc.perform(get("/api/auth/me").session(session)).andExpect(status().isNoContent());
+    }
+
+    /** 복구 대기 정보가 없는 브라우저에서는 복구할 수 없다 */
+    @Test
+    void socialRestoreNeedsPendingSession() throws Exception {
+        long id = socialSignup(kakao("k-9", "only@example.com", true, "소셜"), "소셜회원");
+        members.markWithdrawn(id, clock.nowOffset());
+        mvc.perform(postJson("/api/auth/social/restore", Map.of()).session(new MockHttpSession()))
+                .andExpect(jsonPath("$.error.code").value("SOCIAL_RESTORE_NOT_FOUND"));
+        assertThat(members.findById(id).orElseThrow().withdrawn()).isTrue();
     }
 
     @Test
