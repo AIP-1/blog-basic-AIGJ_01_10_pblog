@@ -13,6 +13,7 @@ concurrency:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    secrets: inherit # 품질 게이트에 SONAR_TOKEN을 넘긴다
 
   deploy:
     needs: ci
