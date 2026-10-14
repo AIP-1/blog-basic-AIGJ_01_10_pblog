@@ -1,11 +1,32 @@
+<div align="center">
+
 # 사각
 
-> 여러 회원이 각자 블로그를 하나씩 운영하는 다이어리형 블로그 서비스예요.
-> 사이트: **https://sagak.java21.net**
+**여러 회원이 각자 블로그를 하나씩 운영하는 다이어리형 블로그 서비스**
 
-| 기간 | 2026.10.08 ~ 진행 중 |
+![Java](https://img.shields.io/badge/Java_21-007396?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.5-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)
+![React](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis_7-DC382D?style=flat-square&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+![nginx](https://img.shields.io/badge/nginx-009639?style=flat-square&logo=nginx&logoColor=white)
+
+</div>
+
+| 항목 | 내용 |
 |---|---|
+| 사이트 | **https://sagak.java21.net** |
+| 현재 버전 | v1.9.2 ([CHANGELOG](CHANGELOG.md)) |
+| 기간 | 2026.10.08 ~ 진행 중 |
 | 인원 | 1명 (기획 · 설계 · 백엔드 · 프론트엔드 · 배포) |
+| 개발 저장소 | [home-my-blog/myblog](https://github.com/home-my-blog/myblog) (PR · 이슈 · 릴리스 기록) |
+| 문서 | [home-my-blog/docs](https://github.com/home-my-blog/docs) (기능 설명 · 동작 원리 · API · ERD) |
+| 요구사항 · 스펙 | [`specs/001-blog-core/`](specs/001-blog-core/) |
 | 협업 방식 | AI 코딩 에이전트(Claude Code)와 함께 개발. 요구사항 → 스펙 → 작업 목록(spec-kit)으로 쪼개고, 모든 변경을 PR로 받아 검토 후 merge |
 
 ## 소개
@@ -46,6 +67,41 @@ flowchart LR
     B --> D[("디스크<br/>사진 파일")]
   end
   B --> P[("PostgreSQL<br/>회원 · 글 · 댓글 · 사진 정보")]
+```
+
+## 파일 구조
+
+```text
+myblog/
+├── backend/                     Spring Boot 서버 (com.myblog)
+│   └── src/main/
+│       ├── java/com/myblog/
+│       │   ├── member/          가입 · 로그인 · 소셜 로그인 · 마이페이지 · 탈퇴와 복구
+│       │   ├── blog/            블로그 · 다이어리(분류) · 구독 · 분야
+│       │   ├── post/            글 쓰기와 읽기 · 임시저장 · 태그 · 좋아요 · 책갈피
+│       │   ├── comment/         댓글
+│       │   ├── search/          통합 검색 · 실시간 인기 검색어
+│       │   ├── shop/            잉크 · 스티커 상점 · 다이어리 꾸미기 · 도전과제
+│       │   ├── image/           사진 올리기 (디스크 / S3 호환 저장소)
+│       │   ├── manage/          내 블로그 관리 (글 · 댓글 모아 보기)
+│       │   ├── home/            메인 화면
+│       │   ├── stats/           조회수 · 방문자
+│       │   ├── mail/            인증 메일 (SMTP / 로그)
+│       │   ├── config/          보안 · 세션 쿠키 · 소셜 로그인 설정
+│       │   └── common/          오류 응답 · 페이지 · Redis 보호 같은 공통 코드
+│       └── resources/db/migration/   Flyway DB 변경 이력 (V1 ~ V22)
+├── frontend/                    React 화면 (Vite)
+│   └── src/
+│       ├── pages/               화면 단위 페이지
+│       ├── components/          공통 화면 조각
+│       ├── api/                 서버 API 호출
+│       ├── auth/                로그인 상태
+│       └── messages.ts          화면 문구 모음
+├── deploy/deploy.sh             블루-그린 무중단 배포 스크립트
+├── specs/001-blog-core/         요구사항 · 스펙 · 설계 결정 (spec-kit)
+├── Dockerfile                   화면과 서버를 이미지 하나로
+├── docker-compose.yml           로컬 개발용 PostgreSQL · Redis · MinIO
+└── CHANGELOG.md                 버전별 바뀐 점
 ```
 
 ## 기술적 의사결정
@@ -90,6 +146,12 @@ flowchart LR
 - DB 구조는 Flyway의 번호 붙은 SQL 파일(V1~)로만 바꿔서, 어느 서버에서든 같은 순서로 맞춰져요.
 
 ## 트러블슈팅
+
+| 문제 | 원인 | 해결 | 결과 |
+|---|---|---|---|
+| 배포할 때마다 모든 회원이 로그아웃 | 세션이 서버 메모리에 있음 | Redis 세션 + 블루-그린 배포 | 0.2초 간격 요청 중 배포해도 끊김 **0번**, 로그인 유지 |
+| Redis로 옮긴 뒤 두 번째 요청부터 401 | 연장 쿠키에 세션 번호를 base64 없이 담음 | 쿠키 값 형식 통일 + 재요청 테스트 추가 | 같은 문제 재발 방지 테스트 |
+| 맞는 비밀번호로 DB 접속 실패 | 도커 볼륨에 예전 비밀번호가 남음 | `ALTER USER`로 비밀번호만 맞춤 | 데이터 손실 없이 해결 |
 
 ### 배포할 때마다 모든 회원이 로그아웃됨
 - **증상**: 새 버전을 올리면 로그인했던 사람이 전부 다시 로그인해야 했어요.
