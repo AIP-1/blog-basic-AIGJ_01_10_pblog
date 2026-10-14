@@ -20,8 +20,8 @@ export function isValidNickname(nickname: string, min = 2, max = 10): boolean {
   return n.length >= min && n.length <= max && /^[가-힣A-Za-z0-9]+$/.test(n);
 }
 
-/** CF-01-4 허용 특수문자 */
-export const PASSWORD_SPECIALS = '!@#$%^&*()_+-=';
+/** CF-01-4 비밀번호에 쓸 수 있는 특수문자 목록 (비밀번호 값이 아니다) */
+export const ALLOWED_SPECIAL_CHARS = '!@#$%^&*()_+-=';
 const SPECIAL_RE = /[!@#$%^&*()_+\-=]/;
 const ALLOWED_RE = /^[A-Za-z\d!@#$%^&*()_+\-=]*$/;
 
