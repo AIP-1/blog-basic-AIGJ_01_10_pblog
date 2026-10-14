@@ -82,8 +82,11 @@ export const updateMyProfile = (body: { nickname?: string; bio?: string }) =>
   api<void>('/api/me', { method: 'PATCH', body });
 export const changePassword = (body: { currentPassword: string; newPassword: string; newPasswordConfirm: string }) =>
   api<void>('/api/me/password', { method: 'PUT', body });
-export const withdraw = (body: { password?: string; confirmText?: string; acknowledged: true }) =>
+export const withdraw = (body: { password: string; acknowledged: true }) =>
   api<void>('/api/me', { method: 'DELETE', body });
+/** 소셜 가입 회원의 탈퇴: 가입한 제공자 로그인으로 다시 확인하러 갈 주소 */
+export const withdrawBySocial = () =>
+  api<{ redirectUrl: string }>('/api/me/withdraw/social', { method: 'POST', body: { acknowledged: true } });
 
 /* 주제·홈 */
 export const getTopics = () => api<Topic[]>('/api/topics');

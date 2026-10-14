@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.GlobalExceptionHandler;
 import com.myblog.member.SocialLoginHandler;
+import com.myblog.member.SocialLoginService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -22,7 +23,12 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
@@ -82,10 +88,46 @@ public class SecurityConfig {
                     .clientRegistrationRepository(socialClients)
                     .authorizedClientRepository(new DiscardingAuthorizedClientRepository())
                     .loginPage("/") // 기본 로그인 화면(/login)을 만들지 않는다
+                    .authorizationEndpoint(a -> a.authorizationRequestResolver(
+                            new ReconfirmingAuthorizationRequestResolver(socialClients)))
                     .successHandler(socialHandler)
                     .failureHandler(socialHandler));
         }
         return http.build();
+    }
+
+    /**
+     * 탈퇴 확인 중이면 제공자에게 다시 로그인하게 해 달라고 요청한다. 이미 로그인돼 있어도 그냥 통과되지 않게 한다.
+     * 카카오는 prompt=login(다시 로그인), 구글은 prompt=select_account(계정을 다시 고르게)를 쓴다.
+     */
+    static class ReconfirmingAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
+        private final DefaultOAuth2AuthorizationRequestResolver delegate;
+
+        ReconfirmingAuthorizationRequestResolver(SocialClientRegistrations clients) {
+            this.delegate = new DefaultOAuth2AuthorizationRequestResolver(clients,
+                    OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI);
+        }
+
+        @Override
+        public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
+            return reconfirm(request, delegate.resolve(request));
+        }
+
+        @Override
+        public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
+            return reconfirm(request, delegate.resolve(request, clientRegistrationId));
+        }
+
+        private static OAuth2AuthorizationRequest reconfirm(HttpServletRequest request, OAuth2AuthorizationRequest auth) {
+            if (auth == null || SocialLoginService.withdrawIntent(request).isEmpty()) {
+                return auth;
+            }
+            String registrationId = auth.getAttribute(OAuth2ParameterNames.REGISTRATION_ID);
+            String prompt = SocialClientRegistrations.KAKAO.equals(registrationId) ? "login" : "select_account";
+            return OAuth2AuthorizationRequest.from(auth)
+                    .additionalParameters(p -> p.put("prompt", prompt))
+                    .build();
+        }
     }
 
     /**

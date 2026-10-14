@@ -22,10 +22,9 @@ public class MyPageService {
 
     public record PasswordChange(String currentPassword, String newPassword, String newPasswordConfirm) {}
 
-    /** password: 비밀번호를 정한 회원. confirmText: 비밀번호가 없는 소셜 가입 회원은 {@link #WITHDRAW_PHRASE}를 그대로 적는다. */
-    public record Withdraw(String password, Boolean acknowledged, String confirmText) {}
+    /** 비밀번호로 탈퇴한다. 소셜 가입 회원은 {@link SocialLoginService#startWithdraw}로 소셜 계정에서 다시 확인한다. */
+    public record Withdraw(String password, Boolean acknowledged) {}
 
-    public static final String WITHDRAW_PHRASE = "탈퇴합니다";
 
     private final MemberRepository members;
     private final SocialAccountRepository socialAccounts;
@@ -110,7 +109,7 @@ public class MyPageService {
     }
 
     /**
-     * 탈퇴 (CF-15-17~21): 소프트 삭제. 비밀번호로 확인하고, 비밀번호가 없는 소셜 가입 회원은 확인 문구로 확인한다. deleted_at만 찍고 모든 기기에서 로그아웃한다.
+     * 탈퇴 (CF-15-17~21): 소프트 삭제. 비밀번호로 확인한다(소셜 가입 회원은 SocialLoginService). deleted_at만 찍고 모든 기기에서 로그아웃한다.
      * 그때부터 블로그와 글은 다른 사람에게 보이지 않고, 댓글은 "탈퇴한 사용자"로 보인다.
      * 보관 기간 안에 로그인하면 복구할 수 있고, 지나면 {@link WithdrawalCleaner}가 지우고 익명화한다.
      */
@@ -120,11 +119,10 @@ public class MyPageService {
         if (!Boolean.TRUE.equals(req.acknowledged())) {
             throw new ApiException(ErrorCode.ACKNOWLEDGE_REQUIRED);
         }
-        if (members.passwordSet(memberId)) {
-            login.verifyPassword(m, req.password(), ErrorCode.CURRENT_PASSWORD_MISMATCH);
-        } else if (!WITHDRAW_PHRASE.equals(Texts.trim(req.confirmText()))) {
-            throw ApiException.field("confirmText", Messages.WITHDRAW_PHRASE_MISMATCH);
+        if (!members.passwordSet(memberId)) {
+            throw new ApiException(ErrorCode.SOCIAL_WITHDRAW_ONLY);
         }
+        login.verifyPassword(m, req.password(), ErrorCode.CURRENT_PASSWORD_MISMATCH);
         members.markWithdrawn(memberId, clock.nowOffset());
         sessions.expireAll(memberId, null);
     }

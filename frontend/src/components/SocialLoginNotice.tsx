@@ -11,12 +11,16 @@ const NOTICES: Record<string, { text: string; kind?: 'error' }> = {
   'email-account': { text: SOCIAL_LOGIN.emailAccount, kind: 'error' },
   'kakao-account': { text: SOCIAL_LOGIN.otherProvider(SOCIAL_LOGIN.providerName.kakao), kind: 'error' },
   'google-account': { text: SOCIAL_LOGIN.otherProvider(SOCIAL_LOGIN.providerName.google), kind: 'error' },
+  'withdraw-done': { text: SOCIAL_LOGIN.withdrawDone },
+  'withdraw-mismatch': { text: SOCIAL_LOGIN.withdrawMismatch, kind: 'error' },
+  'withdraw-cancelled': { text: SOCIAL_LOGIN.withdrawCancelled, kind: 'error' },
 };
 
 /**
  * 소셜 로그인에서 돌아온 결과(?social=withdrawn|no-email|failed|restored|email-account|kakao-account|google-account)를
  * 안내하고 주소에서 지운다. *-account: 같은 이메일이 다른 방법으로 가입돼 있어 로그인하지 않은 경우.
  * restored: 비밀번호 없는 소셜 가입 회원이 탈퇴 보관 기간에 다시 로그인해 복구된 경우.
+ * withdraw-*: 소셜 가입 회원이 가입한 소셜 계정으로 다시 확인하고 탈퇴한 결과 (done, mismatch, cancelled).
  */
 export function SocialLoginNotice() {
   const [params, setParams] = useSearchParams();
