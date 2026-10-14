@@ -239,9 +239,9 @@ class SocialLoginIT extends IntegrationTest {
         assertThat(memberIdOf(next)).isEqualTo(id);
     }
 
-    /** 소셜로 가입해 비밀번호가 없는 회원: 비밀번호 변경은 막고, 탈퇴는 확인 문구로, 복구는 소셜 로그인으로 한다. */
+    /** 소셜로 가입해 비밀번호가 없는 회원: 비밀번호 변경은 막고, 탈퇴는 가입한 소셜 계정으로 다시 확인하고, 복구는 소셜 로그인으로 한다. */
     @Test
-    void socialOnlyMemberWithdrawsWithPhraseAndRestoresBySocialLogin() throws Exception {
+    void socialOnlyMemberWithdrawsBySocialReconfirmAndRestoresBySocialLogin() throws Exception {
         var session = new MockHttpSession();
         complete(kakao("k-9", "only@example.com", true, "소셜"), session);
         var r = mvc.perform(postJson("/api/auth/social/signup", Map.of("nickname", "소셜회원")).session(session))
@@ -255,11 +255,18 @@ class SocialLoginIT extends IntegrationTest {
                 "newPasswordConfirm", PASSWORD)).session(session))
                 .andExpect(jsonPath("$.error.code").value("PASSWORD_NOT_SET"));
 
-        // 비밀번호 대신 확인 문구
-        mvc.perform(jsonRequest(delete("/api/me"), Map.of("confirmText", "탈퇴", "acknowledged", true)).session(session))
-                .andExpect(jsonPath("$.error.fields.confirmText").exists());
-        mvc.perform(jsonRequest(delete("/api/me"), Map.of("confirmText", " 탈퇴합니다 ", "acknowledged", true))
-                .session(session)).andExpect(status().isNoContent());
+        // 비밀번호 탈퇴는 받지 않는다
+        mvc.perform(jsonRequest(delete("/api/me"), Map.of("password", "x", "acknowledged", true)).session(session))
+                .andExpect(jsonPath("$.error.code").value("SOCIAL_WITHDRAW_ONLY"));
+        // 안내 확인이 먼저
+        mvc.perform(postJson("/api/me/withdraw/social", Map.of("acknowledged", false)).session(session))
+                .andExpect(jsonPath("$.error.code").value("ACKNOWLEDGE_REQUIRED"));
+        mvc.perform(postJson("/api/me/withdraw/social", Map.of("acknowledged", true)).session(session))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.redirectUrl").value("/oauth2/authorization/kakao"));
+
+        // 가입한 카카오 계정으로 다시 확인하면 탈퇴하고 로그아웃한다
+        assertThat(complete(kakao("k-9", "only@example.com", true, "소셜"), session))
+                .isEqualTo(SocialLoginService.WITHDRAW_DONE);
         assertThat(members.findById(id).orElseThrow().withdrawn()).isTrue();
 
         // 보관 기간에 소셜 로그인하면 복구하고 로그인한다
@@ -271,6 +278,52 @@ class SocialLoginIT extends IntegrationTest {
         // 비밀번호 찾기로 정하면 보통 회원과 같아진다
         members.updatePassword(id, "$2a$10$abcdefghijklmnopqrstuuJ1lQ2b7m0W9y7r8eS9K0fG1hI2jK3lO", clock.nowOffset());
         mvc.perform(get("/api/me").session(again)).andExpect(jsonPath("$.passwordSet").value(true));
+    }
+
+    /** 탈퇴 확인을 다른 소셜 계정으로 하면 탈퇴하지 않고 원래 회원으로 로그인을 유지한다 */
+    @Test
+    void withdrawReconfirmWithOtherAccountKeepsMember() throws Exception {
+        var session = new MockHttpSession();
+        complete(kakao("k-9", "only@example.com", true, "소셜"), session);
+        long id = read(mvc.perform(postJson("/api/auth/social/signup", Map.of("nickname", "소셜회원")).session(session))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        mvc.perform(postJson("/api/me/withdraw/social", Map.of("acknowledged", true)).session(session))
+                .andExpect(status().isOk());
+
+        assertThat(complete(kakao("k-other", "other@example.com", true, "남"), session))
+                .isEqualTo(SocialLoginService.WITHDRAW_MISMATCH);
+        assertThat(members.findById(id).orElseThrow().withdrawn()).isFalse();
+        assertThat(memberIdOf(session)).isEqualTo(id);
+        // 확인 정보는 한 번 쓰면 지운다: 다음 소셜 로그인은 보통 로그인이다
+        assertThat(SocialLoginService.withdrawIntent(afterOAuth2Login(session))).isEmpty();
+    }
+
+    /** 제공자 화면에서 취소하면 탈퇴 확인만 취소하고 로그인은 그대로 둔다 */
+    @Test
+    void cancelledWithdrawReconfirmKeepsLogin() throws Exception {
+        var session = new MockHttpSession();
+        complete(kakao("k-9", "only@example.com", true, "소셜"), session);
+        long id = read(mvc.perform(postJson("/api/auth/social/signup", Map.of("nickname", "소셜회원")).session(session))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        mvc.perform(postJson("/api/me/withdraw/social", Map.of("acknowledged", true)).session(session))
+                .andExpect(status().isOk());
+
+        var req = new MockHttpServletRequest();
+        req.setSession(session);
+        var res = new MockHttpServletResponse();
+        handler.onAuthenticationFailure(req, res,
+                new org.springframework.security.oauth2.core.OAuth2AuthenticationException("access_denied"));
+        assertThat(res.getRedirectedUrl()).isEqualTo(SocialLoginService.WITHDRAW_CANCELLED);
+        assertThat(memberIdOf(session)).isEqualTo(id);
+        assertThat(members.findById(id).orElseThrow().withdrawn()).isFalse();
+    }
+
+    /** 비밀번호가 있는 회원은 소셜 탈퇴를 시작할 수 없다 */
+    @Test
+    void passwordMemberCannotStartSocialWithdraw() throws Exception {
+        var s = member("수연", "su@example.com");
+        mvc.perform(postJson("/api/me/withdraw/social", Map.of("acknowledged", true)).session(s))
+                .andExpect(jsonPath("$.error.code").value("PASSWORD_WITHDRAW_ONLY"));
     }
 
     @Test

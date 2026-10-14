@@ -7,6 +7,7 @@ import {
   getMyProfile,
   updateMyProfile,
   withdraw,
+  withdrawBySocial,
 } from "../api/endpoints";
 import { qk, useConfig } from "../api/queries";
 import type { MyProfile } from "../api/types";
@@ -68,7 +69,6 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
     next: useId(),
     next2: useId(),
     wPw: useId(),
-    wText: useId(),
     wAck: useId(),
   };
 
@@ -104,7 +104,6 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
 
   /* 탈퇴 */
   const [wPw, setWPw] = useState("");
-  const [wText, setWText] = useState("");
   const [ack, setAck] = useState(false);
   const [wError, setWError] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
@@ -114,9 +113,11 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
   const connected = profile.socialAccounts
     .map((p) => SOCIAL_LOGIN.providerName[p] ?? p)
     .join(" · ");
-  const withdrawReady = passwordSet
-    ? wPw !== ""
-    : wText.trim() === ACCOUNT.withdrawPhrase;
+  const signupProvider = profile.socialAccounts[0];
+  const signupProviderName = signupProvider
+    ? (SOCIAL_LOGIN.providerName[signupProvider] ?? signupProvider)
+    : "";
+  const withdrawReady = passwordSet ? wPw !== "" : true;
 
   const profileChanged =
     nickname.trim() !== profile.nickname || bio !== (profile.bio ?? "");
@@ -209,8 +210,6 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
     e.preventDefault();
     if (!ack) return setWError(ACCOUNT.acknowledgeRequired);
     if (passwordSet && !wPw) return setWError(AUTH.required);
-    if (!passwordSet && wText.trim() !== ACCOUNT.withdrawPhrase)
-      return setWError(ACCOUNT.withdrawPhraseMismatch);
     if (wBusy.current) return;
     if (!window.confirm(ACCOUNT.withdrawConfirm(limits.withdrawKeepDays)))
       return;
@@ -218,11 +217,14 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
     setWithdrawing(true);
     setWError(null);
     try {
-      await withdraw(
-        passwordSet
-          ? { password: wPw, acknowledged: true }
-          : { confirmText: wText.trim(), acknowledged: true },
-      );
+      if (!passwordSet) {
+        // 가입한 소셜 계정으로 다시 로그인하러 간다. 돌아오면 서버가 탈퇴를 마치고 안내한다
+        const { redirectUrl } = await withdrawBySocial();
+        allowNavigation();
+        window.location.assign(redirectUrl);
+        return;
+      }
+      await withdraw({ password: wPw, acknowledged: true });
       allowNavigation();
       // 먼저 첫 화면으로 옮긴 뒤 로그아웃 상태로 바꾼다 (로그인 창이 뜨지 않게)
       navigate("/", { replace: true });
@@ -437,19 +439,9 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
               />
             </div>
           ) : (
-            <div className="field">
-              <label htmlFor={ids.wText} className="field__label">
-                확인을 위해 “{ACCOUNT.withdrawPhrase}”를 입력해 주세요
-              </label>
-              <input
-                id={ids.wText}
-                className="input"
-                autoComplete="off"
-                placeholder={ACCOUNT.withdrawPhrase}
-                value={wText}
-                onChange={(e) => setWText(e.target.value)}
-              />
-            </div>
+            <p className="form__hint">
+              {ACCOUNT.socialWithdrawHint(signupProviderName)}
+            </p>
           )}
           <label className="checkbox" htmlFor={ids.wAck}>
             <input
@@ -467,7 +459,9 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
               className="btn btn--danger"
               disabled={!ack || !withdrawReady || withdrawing}
             >
-              탈퇴하기
+              {passwordSet
+                ? "탈퇴하기"
+                : ACCOUNT.socialWithdrawButton(signupProviderName)}
             </button>
           </div>
         </form>

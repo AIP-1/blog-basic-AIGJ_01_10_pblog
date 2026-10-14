@@ -41,6 +41,18 @@ public class SocialLoginService {
     public static final String FAILED = "/?social=failed";
     /** 같은 이메일이 이메일로 가입돼 있다: 이메일로 로그인하라고 안내한다 */
     public static final String EMAIL_ACCOUNT = "/?social=email-account";
+    /** 소셜 계정으로 다시 확인하고 탈퇴했다 */
+    public static final String WITHDRAW_DONE = "/?social=withdraw-done";
+    /** 탈퇴 확인을 다른 소셜 계정으로 했거나 시간이 지났다: 탈퇴하지 않고 로그인을 유지한다 */
+    public static final String WITHDRAW_MISMATCH = "/me?social=withdraw-mismatch";
+    /** 탈퇴 확인을 제공자 화면에서 취소했다 */
+    public static final String WITHDRAW_CANCELLED = "/me?social=withdraw-cancelled";
+    public static final String WITHDRAW_INTENT_ATTRIBUTE = "myblog.socialWithdraw";
+    private static final java.time.Duration WITHDRAW_INTENT_TTL = java.time.Duration.ofMinutes(10);
+
+    /** 탈퇴하려고 소셜 계정으로 다시 확인하는 중. 제공자에서 돌아오면 이 회원의 연결과 맞는지 본다 */
+    public record WithdrawIntent(long memberId, SocialProvider provider, java.time.Instant expiresAt)
+            implements Serializable {}
 
     /** 같은 이메일이 다른 제공자로 가입돼 있다: 그 제공자로 로그인하라고 안내한다 (/?social=kakao-account) */
     public static String otherProvider(SocialProvider provider) {
@@ -58,6 +70,7 @@ public class SocialLoginService {
     private final SignupService signups;
     private final NicknamePolicy nicknames;
     private final LoginService login;
+    private final MemberSessionService sessions;
     private final PasswordEncoder encoder;
     private final SecurityContextRepository contextRepository;
     private final KoreanClock clock;
@@ -65,8 +78,10 @@ public class SocialLoginService {
     private final SecureRandom random = new SecureRandom();
 
     public SocialLoginService(SocialAccountRepository accounts, MemberRepository members, SignupService signups,
-                              NicknamePolicy nicknames, LoginService login, PasswordEncoder encoder,
-                              SecurityContextRepository contextRepository, KoreanClock clock, MyBlogProperties props) {
+                              NicknamePolicy nicknames, LoginService login, MemberSessionService sessions,
+                              PasswordEncoder encoder, SecurityContextRepository contextRepository, KoreanClock clock,
+                              MyBlogProperties props) {
+        this.sessions = sessions;
         this.accounts = accounts;
         this.members = members;
         this.signups = signups;
@@ -78,9 +93,50 @@ public class SocialLoginService {
         this.rules = props.member();
     }
 
+    /**
+     * 소셜 가입 회원의 탈퇴를 시작한다: 가입한 제공자 로그인으로 다시 확인받으러 보낼 주소를 돌려준다.
+     * 비밀번호가 없으니 비밀번호 대신 제공자 로그인으로 본인을 확인한다.
+     */
+    public String startWithdraw(long memberId, Boolean acknowledged, HttpServletRequest req) {
+        if (!Boolean.TRUE.equals(acknowledged)) {
+            throw new ApiException(ErrorCode.ACKNOWLEDGE_REQUIRED);
+        }
+        if (members.passwordSet(memberId)) {
+            throw new ApiException(ErrorCode.PASSWORD_WITHDRAW_ONLY);
+        }
+        SocialProvider provider = accounts.signupProviderOf(memberId)
+                .orElseThrow(() -> new ApiException(ErrorCode.PASSWORD_WITHDRAW_ONLY));
+        req.getSession().setAttribute(WITHDRAW_INTENT_ATTRIBUTE,
+                new WithdrawIntent(memberId, provider, clock.now().plus(WITHDRAW_INTENT_TTL)));
+        return "/oauth2/authorization/" + provider.registrationId();
+    }
+
+    /** 탈퇴 확인 중이면 그 정보 (제공자 화면에 "다시 로그인"을 요청할 때도 쓴다) */
+    public static Optional<WithdrawIntent> withdrawIntent(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        return session != null && session.getAttribute(WITHDRAW_INTENT_ATTRIBUTE) instanceof WithdrawIntent i
+                ? Optional.of(i) : Optional.empty();
+    }
+
+    /** 제공자 화면에서 취소하거나 실패했을 때. 탈퇴 확인 중이었다면 로그인은 그대로 두고 내 정보로 돌려보낸다 */
+    public String failed(HttpServletRequest req, HttpServletResponse res) {
+        var intent = withdrawIntent(req);
+        if (intent.isPresent()) {
+            req.getSession().removeAttribute(WITHDRAW_INTENT_ATTRIBUTE);
+            return WITHDRAW_CANCELLED;
+        }
+        forgetAuthentication(req, res);
+        return FAILED;
+    }
+
     /** 제공자 로그인이 끝난 뒤 부른다. 돌려준 주소로 보낸다. */
     @Transactional
     public String complete(SocialProfile profile, HttpServletRequest req, HttpServletResponse res) {
+        var intent = withdrawIntent(req);
+        if (intent.isPresent()) {
+            req.getSession().removeAttribute(WITHDRAW_INTENT_ATTRIBUTE);
+            return completeWithdraw(intent.get(), profile, req, res);
+        }
         if (profile.providerUserId() == null) {
             forgetAuthentication(req, res);
             return FAILED;
@@ -153,6 +209,32 @@ public class SocialLoginService {
         }
         login.startSession(m, req, res);
         return HOME;
+    }
+
+    /**
+     * 탈퇴 확인을 마친다. 가입한 소셜 계정으로 확인했으면 탈퇴하고 모든 기기에서 로그아웃한다.
+     * 다른 계정이거나 시간이 지났으면 탈퇴하지 않고, 원래 회원으로 로그인을 되돌린다
+     * (제공자 로그인이 끝나면 Spring Security가 로그인 정보를 소셜 토큰으로 바꿔 두기 때문).
+     */
+    private String completeWithdraw(WithdrawIntent intent, SocialProfile profile, HttpServletRequest req,
+                                    HttpServletResponse res) {
+        var member = members.findById(intent.memberId()).filter(m -> !m.withdrawn());
+        boolean same = profile.provider() == intent.provider() && profile.providerUserId() != null
+                && accounts.findMemberId(profile.provider(), profile.providerUserId())
+                        .filter(id -> id == intent.memberId()).isPresent();
+        if (member.isEmpty()) {
+            forgetAuthentication(req, res);
+            return FAILED;
+        }
+        if (!same || clock.now().isAfter(intent.expiresAt())) {
+            login.startSession(member.get(), req, res);
+            return WITHDRAW_MISMATCH;
+        }
+        members.markWithdrawn(intent.memberId(), clock.nowOffset());
+        sessions.expireAll(intent.memberId(), null);
+        forgetAuthentication(req, res);
+        req.getSession().invalidate();
+        return WITHDRAW_DONE;
     }
 
     /** oauth2Login이 넣어 둔 인증 정보(소셜 토큰)를 지운다. 우리 회원으로 로그인시키지 않을 때 부른다. */
