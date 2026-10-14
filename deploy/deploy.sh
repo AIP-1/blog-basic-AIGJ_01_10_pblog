@@ -24,6 +24,10 @@ PROXY_IMAGE=nginx:1.27-alpine
 REDIS=myblog-redis
 NETWORK=myblog-net
 PORT=8390
+# 8390을 어느 주소에서 받을지. 비우면 모든 주소(공인 IP 포함), 127.0.0.1이면 이 서버 안에서만,
+# 내부망 IP(예: 192.168.x.x)면 그 내부망에서만 받는다. 서버 nginx가 https 손님을 넘겨 주는 주소에 맞춘다.
+PROXY_BIND="${PROXY_BIND:-}"
+PUBLISH="${PROXY_BIND:+${PROXY_BIND}:}${PORT}:${PORT}"
 DATA_DIR="${MYBLOG_DATA_DIR:-$HOME/myblog-data}"
 
 : "${DB_ADDRESS:?DB_ADDRESS가 없어요}" "${DB_PORT:?DB_PORT가 없어요}" "${DB_NAME:?DB_NAME이 없어요}"
@@ -170,13 +174,21 @@ if [[ "$("${DOCKER[@]}" inspect -f '{{.State.Running}}' "${PROXY}" 2>/dev/null)"
     exit 1
   fi
   "${DOCKER[@]}" exec "${PROXY}" nginx -s reload
+  # PROXY_BIND를 바꿨으면 nginx를 새 주소로 다시 띄운다 (포트 바인딩은 실행 중에 못 바꿔서, 이때만 1~2초 끊긴다)
+  CURRENT_BIND="$("${DOCKER[@]}" inspect -f '{{range (index .HostConfig.PortBindings "'"${PORT}"'/tcp")}}{{.HostIp}}{{end}}' "${PROXY}" 2>/dev/null || true)"
+  if [[ "${CURRENT_BIND}" != "${PROXY_BIND}" ]]; then
+    echo "==> nginx(${PROXY})를 ${PROXY_BIND:-모든 주소}:${PORT}로 다시 띄웁니다"
+    "${DOCKER[@]}" rm -f "${PROXY}" >/dev/null
+    "${DOCKER[@]}" run -d --name "${PROXY}" --network "${NETWORK}" --restart unless-stopped \
+      -p "${PUBLISH}" -v "${PROXY_CONF_DIR}:/etc/nginx/conf.d:ro" "${PROXY_IMAGE}" >/dev/null
+  fi
 else
   # 처음 한 번만: 예전 방식 컨테이너가 8390을 잡고 있으면 비키고 nginx를 띄운다 (이때만 1~2초 끊긴다)
   echo "==> 처음이라 nginx(${PROXY})를 8390에 띄웁니다"
   "${DOCKER[@]}" rm -f "${LEGACY_APP}" >/dev/null 2>&1 || true
   "${DOCKER[@]}" rm -f "${PROXY}" >/dev/null 2>&1 || true
   "${DOCKER[@]}" run -d --name "${PROXY}" --network "${NETWORK}" --restart unless-stopped \
-    -p "${PORT}:${PORT}" -v "${PROXY_CONF_DIR}:/etc/nginx/conf.d:ro" "${PROXY_IMAGE}" >/dev/null
+    -p "${PUBLISH}" -v "${PROXY_CONF_DIR}:/etc/nginx/conf.d:ro" "${PROXY_IMAGE}" >/dev/null
 fi
 rm -f "${PROXY_CONF}.bak"
 
