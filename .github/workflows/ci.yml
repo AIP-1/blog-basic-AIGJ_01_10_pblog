@@ -43,7 +43,7 @@ jobs:
       # SONAR_TOKEN 시크릿이 없으면(포크 PR 등) 건너뛴다.
       - name: SonarQube 분석과 품질 게이트
         if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703 # v5.3.2
         with:
           projectBaseDir: .
 
