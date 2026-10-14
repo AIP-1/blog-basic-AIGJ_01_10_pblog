@@ -2,6 +2,7 @@ package com.myblog.blog;
 
 import com.myblog.post.PostQueryService;
 import com.myblog.common.MyBlogProperties;
+import com.myblog.common.ResponseCache;
 import com.myblog.common.Texts;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
@@ -33,10 +34,12 @@ public class CategoryService {
 
     private final JdbcClient jdbc;
     private final MyBlogProperties props;
+    private final ResponseCache cache;
 
-    public CategoryService(JdbcClient jdbc, MyBlogProperties props) {
+    public CategoryService(JdbcClient jdbc, MyBlogProperties props, ResponseCache cache) {
         this.jdbc = jdbc;
         this.props = props;
+        this.cache = cache;
     }
 
     void createDefault(long blogId) {
@@ -151,6 +154,7 @@ public class CategoryService {
                 throw ApiException.field("visibility", "공개 범위가 올바르지 않습니다");
             }
             jdbc.sql("UPDATE categories SET visibility = ? WHERE id = ?").params(req.visibility(), categoryId).update();
+            cache.invalidate(); // 다이어리 공개 범위가 바뀌면 메인에 보이는 글도 바뀐다
             // 비공개로 바꾸면 그 다이어리의 구독은 해제한다 (비공개 다이어리는 구독할 수 없다)
             if (req.visibility().equals("PRIVATE")) {
                 jdbc.sql("DELETE FROM diary_subscriptions WHERE category_id = ?").param(categoryId).update();

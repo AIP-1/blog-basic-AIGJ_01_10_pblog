@@ -1,5 +1,6 @@
 package com.myblog.member;
 
+import com.myblog.common.ResponseCache;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -11,9 +12,11 @@ public class MemberRepository {
     private static final String COLUMNS =
             "id, email, nickname, password_hash, bio, failed_login_count, locked_until, created_at, deleted_at";
     private final JdbcClient jdbc;
+    private final ResponseCache cache;
 
-    public MemberRepository(JdbcClient jdbc) {
+    public MemberRepository(JdbcClient jdbc, ResponseCache cache) {
         this.jdbc = jdbc;
+        this.cache = cache;
     }
 
     public Optional<Member> findById(long id) {
@@ -36,11 +39,13 @@ public class MemberRepository {
 
     public void markWithdrawn(long id, OffsetDateTime now) {
         jdbc.sql("UPDATE members SET deleted_at = ?, updated_at = ? WHERE id = ?").params(now, now, id).update();
+        cache.invalidate(); // 탈퇴한 회원의 글은 메인에서 바로 빠진다
     }
 
     public void restore(long id, OffsetDateTime now) {
         jdbc.sql("UPDATE members SET deleted_at = NULL, updated_at = ? WHERE id = ? AND anonymized_at IS NULL")
                 .params(now, id).update();
+        cache.invalidate();
     }
 
     public boolean existsByNicknameKey(String key, Long exceptId) {
