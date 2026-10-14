@@ -59,6 +59,9 @@ export const SOCIAL_LOGIN = {
   connected: (providers: string) => `${providers} 계정으로 로그인해요`,
   emailAccount: '이메일로 가입한 계정입니다. 이메일과 비밀번호로 로그인해 주세요',
   otherProvider: (provider: string) => `${provider}로 가입한 이메일입니다. ${provider}로 로그인해 주세요`,
+  withdrawDone: '탈퇴 신청이 완료되었습니다',
+  withdrawMismatch: '가입한 계정과 다른 계정으로 확인해 탈퇴하지 않았습니다. 가입한 계정으로 다시 시도해 주세요',
+  withdrawCancelled: '탈퇴 확인을 취소해 탈퇴하지 않았습니다',
 } as const;
 
 /** 02-계정관리 '안내 문구' */
@@ -72,8 +75,9 @@ export const ACCOUNT = {
   // [추가]
   bioTooLong: (max: number) => `소개는 ${max}자 이하로 입력해 주세요`,
   acknowledgeRequired: '안내를 확인했다는 항목에 체크해 주세요',
-  withdrawPhrase: '탈퇴합니다',
-  withdrawPhraseMismatch: '"탈퇴합니다"를 그대로 입력해 주세요',
+  socialWithdrawHint: (provider: string) =>
+    `비밀번호 대신 ${provider} 계정으로 본인을 확인합니다. ${provider} 로그인 화면에서 가입한 계정으로 다시 로그인하면 탈퇴가 완료됩니다.`,
+  socialWithdrawButton: (provider: string) => `${provider}로 확인하고 탈퇴하기`,
   passwordNotSet: '소셜 로그인으로 가입한 계정은 비밀번호가 없습니다',
 } as const;
 

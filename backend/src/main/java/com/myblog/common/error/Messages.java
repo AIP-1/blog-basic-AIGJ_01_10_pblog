@@ -45,7 +45,8 @@ public final class Messages {
     public static String socialEmailTaken(String provider) {
         return provider + "로 가입한 이메일입니다. " + provider + "로 로그인해 주세요";
     }
-    public static final String WITHDRAW_PHRASE_MISMATCH = "\"탈퇴합니다\"를 그대로 입력해 주세요";
+    public static final String SOCIAL_WITHDRAW_ONLY = "소셜 로그인으로 가입한 계정은 가입한 소셜 계정으로 다시 확인하고 탈퇴합니다";
+    public static final String PASSWORD_WITHDRAW_ONLY = "비밀번호를 입력해 탈퇴해 주세요";
     public static final String ACCOUNT_WITHDRAWN = "탈퇴 신청한 계정입니다. 보관 기간이 지나기 전이라 복구할 수 있습니다";
     public static final String EMAIL_WITHDRAWN =
             "탈퇴 처리 중인 이메일입니다. 로그인하면 복구할 수 있고, 보관 기간이 지나면 새로 가입할 수 있습니다";

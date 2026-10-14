@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MyPageController {
     private final MyPageService service;
+    private final SocialLoginService social;
 
-    public MyPageController(MyPageService service) {
+    public MyPageController(MyPageService service, SocialLoginService social) {
         this.service = service;
+        this.social = social;
     }
 
     @GetMapping("/api/me")
@@ -39,6 +42,13 @@ public class MyPageController {
         HttpSession session = http.getSession(false);
         service.changePassword(me, session == null ? null : session.getId(), req);
         return ResponseEntity.ok().build();
+    }
+
+    /** 소셜 가입 회원의 탈퇴: 가입한 제공자 로그인으로 다시 확인받으러 갈 주소를 돌려준다 */
+    @PostMapping("/api/me/withdraw/social")
+    public Map<String, Object> withdrawBySocial(@AuthenticationPrincipal Long me, HttpServletRequest http,
+                                                @RequestBody MyPageService.Withdraw req) {
+        return Map.of("redirectUrl", social.startWithdraw(me, req.acknowledged(), http));
     }
 
     @DeleteMapping("/api/me")
