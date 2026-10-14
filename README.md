@@ -49,13 +49,20 @@
 
 ## 기술 스택
 
-| 영역 | 사용한 것 |
-|---|---|
-| 화면 | React 19, TypeScript, Vite, TanStack Query, react-markdown |
-| 서버 | Java 21, Spring Boot 3.5, Spring Security, Spring Session, JdbcClient |
-| 데이터 | PostgreSQL 16 (pg_trgm 검색), Flyway(DB 변경 이력), Redis 7 |
-| 배포 | Docker, GitHub Actions(CI/CD), nginx 블루-그린 무중단 배포 |
-| 협업 | Git Flow(main · develop · feature), PR 리뷰, CHANGELOG → GitHub Releases |
+| 영역 | 사용한 것 | 고른 이유 |
+|---|---|---|
+| 화면 | React 19, TypeScript, Vite | 글 목록 · 댓글 · 그래프처럼 자주 바뀌는 화면을 조각으로 나눠 다루기 편해요. TypeScript로 API 응답 모양 실수를 컴파일 단계에서 잡아요 |
+| 화면 데이터 | TanStack Query, react-markdown | 서버 데이터 캐시와 다시 불러오기를 직접 짜지 않아도 돼요. 글은 마크다운으로 저장하고 그대로 그려요 |
+| 서버 | Java 21, Spring Boot 3.5 | 지원 중인 LTS 버전이고, record와 switch 패턴으로 DTO · 검증 코드가 짧아져요. 인증 · 세션 · DB 연결 도구가 갖춰져 있어 직접 만들 코드가 적어요 |
+| 인증 | Spring Security, Spring Session | "로그아웃하면 바로 끊김", "다른 기기 끊기"를 지키려면 JWT보다 서버 세션이 단순해요([의사결정 1](#1-로그인-jwt-대신-세션--쿠키)) |
+| DB 접근 | JdbcClient | JPA 대신 골랐어요. DB에 어떤 SQL이 나가는지 코드에서 그대로 보여요 |
+| 데이터 | PostgreSQL 16 | 회원 → 블로그 → 글 → 댓글처럼 서로 강하게 연결된 데이터라 관계형 DB가 맞아요. 중복 금지 같은 규칙을 DB가 지켜 주고, `pg_trgm`으로 검색 서버 없이 한국어 부분 일치 검색이 돼요 |
+| DB 변경 이력 | Flyway | 표를 단계적으로 늘려 가며 만들어서, 어느 서버에서든 같은 순서로 DB 구조를 맞추려고요 |
+| 임시 저장 | Redis 7 | 인증번호 · 조회수 중복 막기처럼 금방 사라져야 하는 값은 만료 시간만 걸면 끝나요. 배포 중에도 로그인이 유지되도록 세션도 여기에 둬요 |
+| 배포 | Docker, GitHub Actions, nginx | 내 컴퓨터와 서버를 같은 이미지로 맞추고, main에 합치면 자동 배포돼요. nginx로 블루-그린을 바꿔 끼워 무중단 배포해요 |
+| 협업 | Git Flow, PR 리뷰, CHANGELOG | 기능은 develop에 모아 한 번에 배포하고, 모든 변경을 PR로 검토해요. CHANGELOG가 바뀌면 GitHub Release가 자동으로 만들어져요 |
+
+쓰지 않기로 한 것: **JWT**(로그아웃 즉시 끊기가 어려움), **MSA**(1인 개발에 데이터가 강하게 연결돼 쪼개면 더 복잡), **RabbitMQ · Kafka**(메일 발송 정도라 `@Async`로 충분), **Elasticsearch**(글 수가 적어 PostgreSQL 검색으로 충분).
 
 ```mermaid
 flowchart LR
