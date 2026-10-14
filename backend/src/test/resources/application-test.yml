@@ -10,6 +10,8 @@ spring:
     redis:
       database: 1
 myblog:
+  home:
+    cache-ttl: 0s   # 테스트는 매번 DB에서 읽는다. 캐시 자체는 HomeCacheIT에서 본다
   image:
     storage: disk
     disk-path: build/test-images

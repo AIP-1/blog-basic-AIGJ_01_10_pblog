@@ -5,6 +5,7 @@ import com.myblog.blog.CategoryService;
 import com.myblog.blog.TopicService;
 import com.myblog.common.KoreanClock;
 import com.myblog.common.MyBlogProperties;
+import com.myblog.common.ResponseCache;
 import com.myblog.common.Texts;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
@@ -41,10 +42,12 @@ public class PostCommandService {
     private final DraftService drafts;
     private final TopicService topics;
     private final InkService ink;
+    private final ResponseCache cache;
 
     public PostCommandService(JdbcClient jdbc, MyBlogProperties props, BlogService blogs, CategoryService categories,
                               PostQueryService queries, TagService tags, ImageService images, KoreanClock clock,
-                              DraftService drafts, TopicService topics, InkService ink) {
+                              DraftService drafts, TopicService topics, InkService ink,
+                              ResponseCache cache) {
         this.jdbc = jdbc;
         this.props = props;
         this.blogs = blogs;
@@ -56,6 +59,7 @@ public class PostCommandService {
         this.drafts = drafts;
         this.topics = topics;
         this.ink = ink;
+        this.cache = cache;
     }
 
     private Valid validate(long blogId, Request req) {
@@ -128,6 +132,7 @@ public class PostCommandService {
         images.attach(id, memberId, imageIds(req));
         drafts.deleteQuietly(memberId, req.draftId());
         ink.rewardPost(memberId, id, v.visibility()); // 스티커 상점: 공개 글이면 잉크 (하루 한도)
+        cache.invalidate();
         return id;
     }
 
@@ -150,6 +155,7 @@ public class PostCommandService {
         tags.replace(postId, v.tags());
         images.attach(postId, memberId, imageIds(req));
         // 본문에서 빠진 이미지는 연결만 풀린다. 24시간 정리 작업이 지운다.
+        cache.invalidate();
     }
 
     /** 댓글·좋아요·태그 연결·이미지 기록은 FK로 함께 지우고, 파일은 커밋 후 지운다 (CF-05-15). */
@@ -159,6 +165,7 @@ public class PostCommandService {
         List<String> keys = images.keysOfPost(postId);
         jdbc.sql("DELETE FROM posts WHERE id = ?").param(postId).update();
         images.deleteFilesAfterCommit(keys);
+        cache.invalidate();
         return p.blogId();
     }
 
@@ -174,6 +181,7 @@ public class PostCommandService {
                 .query(Boolean.class).single();
         if (pinned) {
             jdbc.sql("UPDATE posts SET pinned_at = NULL WHERE id = ?").param(postId).update();
+            cache.invalidate();
             return false;
         }
         int limit = props.post().pinLimit();
@@ -183,6 +191,7 @@ public class PostCommandService {
             throw new ApiException(ErrorCode.PIN_LIMIT, Messages.pinLimit(limit), Map.of(), Map.of());
         }
         jdbc.sql("UPDATE posts SET pinned_at = ? WHERE id = ?").params(clock.nowOffset(), postId).update();
+        cache.invalidate();
         return true;
     }
 
@@ -208,8 +217,10 @@ public class PostCommandService {
         if (categoryId == null || categories.get(categoryId).blogId() != blogId) {
             throw ApiException.field("categoryId", Messages.CATEGORY_REQUIRED);
         }
-        return jdbc.sql("UPDATE posts SET category_id = :cat WHERE id IN (:ids)")
+        int n = jdbc.sql("UPDATE posts SET category_id = :cat WHERE id IN (:ids)")
                 .param("cat", categoryId).param("ids", ids).update();
+        cache.invalidate();
+        return n;
     }
 
     /** 다이어리 편집: 글 여러 개를 한꺼번에 지운다. 댓글·좋아요·태그 연결은 FK로, 사진 파일은 커밋 뒤 지운다. */
@@ -220,6 +231,7 @@ public class PostCommandService {
                 .query(String.class).list();
         int n = jdbc.sql("DELETE FROM posts WHERE id IN (:ids)").param("ids", ids).update();
         images.deleteFilesAfterCommit(keys);
+        cache.invalidate();
         return n;
     }
 

@@ -141,6 +141,7 @@ myblog:
     weekly-popular: 6     # 메인 '이번 주 인기 글' 개수 (popular-days 안에 올라온 글)
     popular-diaries: 5    # 메인 '인기 다이어리' 개수
     recommend-pool: 30    # 추천 글 후보(전체 인기 글) 개수 — 브라우저의 읽은 기록으로 고른다
+    cache-ttl: 30s        # 메인 · 분야별 글 · 주제 화면 응답을 Redis에 두는 시간. 글을 쓰거나 지우면 바로 버린다
   notice:
     owner-email: ${NOTICE_OWNER_EMAIL:}   # 공지를 쓰는 회원의 이메일. 비우면 공지사항이 비어 있다
     category-name: 공지                    # 그 회원 블로그에서 공지로 쓰는 다이어리 이름

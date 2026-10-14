@@ -81,7 +81,7 @@ public record MyBlogProperties(
 
     /** 요구사항.md 3.2, 3.3, research §12 */
     public record Home(int featured, int latest, int popularDays, int topicPosts, int blogs, int notices,
-                       int weeklyPopular, int popularDiaries, int recommendPool) {}
+                       int weeklyPopular, int popularDiaries, int recommendPool, Duration cacheTtl) {}
 
     /** 공지사항: 이 이메일 회원 블로그의 categoryName 다이어리 공개 글. ownerEmail이 비면 공지가 없다 */
     public record Notice(String ownerEmail, String categoryName) {}
