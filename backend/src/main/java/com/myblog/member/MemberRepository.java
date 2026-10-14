@@ -68,8 +68,20 @@ public class MemberRepository {
     }
 
     public void updatePassword(long id, String hash, OffsetDateTime now) {
-        jdbc.sql("UPDATE members SET password_hash = ?, failed_login_count = 0, locked_until = NULL, updated_at = ? WHERE id = ?")
+        jdbc.sql("""
+                UPDATE members SET password_hash = ?, password_set = true, failed_login_count = 0, locked_until = NULL,
+                       updated_at = ? WHERE id = ?""")
                 .params(hash, now, id).update();
+    }
+
+    /** 직접 정한 비밀번호가 있는지 (소셜 가입 후 비밀번호 찾기로 정하기 전에는 false). */
+    public boolean passwordSet(long id) {
+        return jdbc.sql("SELECT password_set FROM members WHERE id = ?").param(id).query(Boolean.class).single();
+    }
+
+    /** 소셜 가입: 비밀번호는 아무도 모르는 값이라 아직 정하지 않은 것으로 둔다. */
+    public void markPasswordUnset(long id) {
+        jdbc.sql("UPDATE members SET password_set = false WHERE id = ?").param(id).update();
     }
 
     public void updateProfile(long id, String nickname, String nicknameKey, String bio, OffsetDateTime now) {

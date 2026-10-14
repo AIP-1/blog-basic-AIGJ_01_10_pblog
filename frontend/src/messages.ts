@@ -55,6 +55,8 @@ export const SOCIAL_LOGIN = {
   withdrawn: '탈퇴 신청한 계정입니다. 복구하려면 이메일과 비밀번호로 로그인해 주세요',
   noEmail: '이메일 정보를 받지 못해 로그인할 수 없습니다. 이메일 제공에 동의하고 다시 시도해 주세요',
   failed: '소셜 로그인에 실패했습니다. 잠시 뒤 다시 시도해 주세요',
+  restored: '탈퇴 신청을 취소하고 계정을 복구했어요. 다시 만나서 반가워요!',
+  connected: (providers: string) => `${providers} 계정으로 로그인해요`,
 } as const;
 
 /** 02-계정관리 '안내 문구' */
@@ -68,6 +70,9 @@ export const ACCOUNT = {
   // [추가]
   bioTooLong: (max: number) => `소개는 ${max}자 이하로 입력해 주세요`,
   acknowledgeRequired: '안내를 확인했다는 항목에 체크해 주세요',
+  withdrawPhrase: '탈퇴합니다',
+  withdrawPhraseMismatch: '"탈퇴합니다"를 그대로 입력해 주세요',
+  passwordNotSet: '소셜 로그인으로 가입한 계정은 비밀번호 찾기로 비밀번호를 정할 수 있습니다',
 } as const;
 
 /** 03-코어-블로그-글 '안내 문구' */
@@ -379,6 +384,7 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   CURRENT_PASSWORD_MISMATCH: ACCOUNT.currentPasswordMismatch,
   SAME_AS_CURRENT: ACCOUNT.sameAsCurrent,
   ACKNOWLEDGE_REQUIRED: ACCOUNT.acknowledgeRequired,
+  PASSWORD_NOT_SET: ACCOUNT.passwordNotSet,
   POST_NOT_FOUND: POST.notFound,
   BLOG_NOT_FOUND: COMMON.notFound('블로그'),
   TOPIC_NOT_FOUND: COMMON.notFound('주제'),

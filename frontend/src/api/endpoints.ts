@@ -82,7 +82,7 @@ export const updateMyProfile = (body: { nickname?: string; bio?: string }) =>
   api<void>('/api/me', { method: 'PATCH', body });
 export const changePassword = (body: { currentPassword: string; newPassword: string; newPasswordConfirm: string }) =>
   api<void>('/api/me/password', { method: 'PUT', body });
-export const withdraw = (body: { password: string; acknowledged: true }) =>
+export const withdraw = (body: { password?: string; confirmText?: string; acknowledged: true }) =>
   api<void>('/api/me', { method: 'DELETE', body });
 
 /* 주제·홈 */

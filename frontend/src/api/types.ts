@@ -119,6 +119,10 @@ export interface MyProfile {
   bio: string;
   createdAt: ISODateString;
   blogId: number;
+  /** 직접 정한 비밀번호가 있는지. 소셜로 가입하고 아직 정하지 않았으면 false */
+  passwordSet: boolean;
+  /** 연결된 소셜 로그인 (kakao, google) */
+  socialAccounts: string[];
 }
 
 /* ---------- 주제·홈 ---------- */
