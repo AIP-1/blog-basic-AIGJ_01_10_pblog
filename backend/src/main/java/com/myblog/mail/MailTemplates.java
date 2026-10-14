@@ -38,6 +38,16 @@ public class MailTemplates {
                 """.formatted(service, code, minutes));
     }
 
+    /** 소셜로 가입해 비밀번호가 없는 계정으로 비밀번호 찾기를 했을 때. provider는 카카오·구글 */
+    public Mail socialAccountNoPassword(String provider) {
+        return new Mail("[" + service + "] 비밀번호 찾기 안내", """
+                이 이메일은 %s %s로 가입한 계정이라 비밀번호가 없습니다.
+                로그인 창에서 "%s로 시작하기"를 눌러 로그인해 주세요.
+
+                본인이 요청하지 않았다면 이 메일을 무시해 주세요.
+                """.formatted(service, provider, provider));
+    }
+
     public Mail passwordChanged() {
         return new Mail("[" + service + "] 비밀번호가 변경되었습니다", """
                 %s 계정의 비밀번호가 변경되었습니다.

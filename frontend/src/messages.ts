@@ -46,7 +46,7 @@ export const SOCIAL_LOGIN = {
   divider: '또는',
   signupTitle: (provider: string) => `${provider}로 가입`,
   signupIntro: '사각에서 쓸 닉네임을 정하면 가입이 끝나요. 내 블로그도 하나 생겨요.',
-  emailHint: '로그인에 쓴 계정의 이메일이에요. 비밀번호는 나중에 비밀번호 찾기로 정할 수 있어요.',
+  emailHint: (provider: string) => `로그인에 쓴 계정의 이메일이에요. 이 계정은 ${provider}로만 로그인해요.`,
   signupSubmit: '가입하기',
   signupSubmitting: '가입하는 중…',
   signupDone: '가입이 완료되었습니다. 환영해요!',
@@ -57,6 +57,8 @@ export const SOCIAL_LOGIN = {
   failed: '소셜 로그인에 실패했습니다. 잠시 뒤 다시 시도해 주세요',
   restored: '탈퇴 신청을 취소하고 계정을 복구했어요. 다시 만나서 반가워요!',
   connected: (providers: string) => `${providers} 계정으로 로그인해요`,
+  emailAccount: '이메일로 가입한 계정입니다. 이메일과 비밀번호로 로그인해 주세요',
+  otherProvider: (provider: string) => `${provider}로 가입한 이메일입니다. ${provider}로 로그인해 주세요`,
 } as const;
 
 /** 02-계정관리 '안내 문구' */
@@ -72,7 +74,7 @@ export const ACCOUNT = {
   acknowledgeRequired: '안내를 확인했다는 항목에 체크해 주세요',
   withdrawPhrase: '탈퇴합니다',
   withdrawPhraseMismatch: '"탈퇴합니다"를 그대로 입력해 주세요',
-  passwordNotSet: '소셜 로그인으로 가입한 계정은 비밀번호 찾기로 비밀번호를 정할 수 있습니다',
+  passwordNotSet: '소셜 로그인으로 가입한 계정은 비밀번호가 없습니다',
 } as const;
 
 /** 03-코어-블로그-글 '안내 문구' */

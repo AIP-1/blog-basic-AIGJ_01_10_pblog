@@ -34,7 +34,17 @@ public final class Messages {
     public static final String SAME_AS_CURRENT = "현재 비밀번호와 다른 값을 입력해 주세요";
     public static final String PASSWORD_CHANGED = "비밀번호를 변경했습니다";
     public static final String ACKNOWLEDGE_REQUIRED = "안내를 읽고 확인란에 체크해 주세요";
-    public static final String PASSWORD_NOT_SET = "소셜 로그인으로 가입한 계정은 비밀번호 찾기로 비밀번호를 정할 수 있습니다";
+    public static final String PASSWORD_NOT_SET = "소셜 로그인으로 가입한 계정은 비밀번호가 없습니다";
+    public static final String SOCIAL_ACCOUNT = "소셜 로그인으로 가입한 계정입니다";
+
+    /** 소셜로 가입한 계정에 이메일 로그인·가입을 시도했을 때. provider는 카카오·구글 */
+    public static String socialAccount(String provider) {
+        return provider + "로 가입한 계정입니다. " + provider + "로 로그인해 주세요";
+    }
+
+    public static String socialEmailTaken(String provider) {
+        return provider + "로 가입한 이메일입니다. " + provider + "로 로그인해 주세요";
+    }
     public static final String WITHDRAW_PHRASE_MISMATCH = "\"탈퇴합니다\"를 그대로 입력해 주세요";
     public static final String ACCOUNT_WITHDRAWN = "탈퇴 신청한 계정입니다. 보관 기간이 지나기 전이라 복구할 수 있습니다";
     public static final String EMAIL_WITHDRAWN =
