@@ -36,7 +36,8 @@ public class SocialLoginService {
     public static final String HOME = "/";
     public static final String SIGNUP_PAGE = "/social/signup";
     public static final String WITHDRAWN = "/?social=withdrawn";
-    public static final String RESTORED = "/?social=restored";
+    /** 탈퇴 신청한 소셜 가입 회원: 복구할지 화면에서 묻는다 */
+    public static final String RESTORE_CONFIRM = "/?social=restore-confirm";
     public static final String NO_EMAIL = "/?social=no-email";
     public static final String FAILED = "/?social=failed";
     /** 같은 이메일이 이메일로 가입돼 있다: 이메일로 로그인하라고 안내한다 */
@@ -48,6 +49,11 @@ public class SocialLoginService {
     /** 탈퇴 확인을 제공자 화면에서 취소했다 */
     public static final String WITHDRAW_CANCELLED = "/me?social=withdraw-cancelled";
     public static final String WITHDRAW_INTENT_ATTRIBUTE = "myblog.socialWithdraw";
+    public static final String RESTORE_ATTRIBUTE = "myblog.socialRestore";
+    private static final java.time.Duration RESTORE_TTL = java.time.Duration.ofMinutes(10);
+
+    /** 소셜 로그인으로 본인을 확인한 탈퇴 회원. 화면에서 복구하겠다고 하면 복구하고 로그인한다 */
+    public record PendingRestore(long memberId, java.time.Instant expiresAt) implements Serializable {}
     private static final java.time.Duration WITHDRAW_INTENT_TTL = java.time.Duration.ofMinutes(10);
 
     /** 탈퇴하려고 소셜 계정으로 다시 확인하는 중. 제공자에서 돌아오면 이 회원의 연결과 맞는지 본다 */
@@ -194,21 +200,50 @@ public class SocialLoginService {
 
     /**
      * 탈퇴 신청한 회원은 로그인하지 않는다. 복구는 이메일 로그인으로 한다.
-     * 다만 비밀번호를 정한 적 없는 소셜 가입 회원은 이메일 로그인을 할 수 없으니, 소셜 로그인으로 복구하고 로그인한다.
+     * 다만 비밀번호를 정한 적 없는 소셜 가입 회원은 이메일 로그인을 할 수 없으니, 소셜 로그인으로 본인을 확인한 뒤
+     * 이메일 로그인처럼 화면에서 복구할지 묻는다({@link #restore}).
      */
     @Transactional
     String logInOrRefuse(Member m, HttpServletRequest req, HttpServletResponse res) {
         if (m.withdrawn()) {
-            if (!members.passwordSet(m.id())) {
-                members.restore(m.id(), clock.nowOffset());
-                login.startSession(m, req, res);
-                return RESTORED;
-            }
             forgetAuthentication(req, res);
+            if (!members.passwordSet(m.id())) {
+                req.getSession(true).setAttribute(RESTORE_ATTRIBUTE,
+                        new PendingRestore(m.id(), clock.now().plus(RESTORE_TTL)));
+                return RESTORE_CONFIRM;
+            }
             return WITHDRAWN;
         }
         login.startSession(m, req, res);
         return HOME;
+    }
+
+    /** 복구를 기다리는 탈퇴 회원. 시간이 지났거나 이미 복구됐으면 없다 */
+    public Optional<Member> pendingRestore(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session == null || !(session.getAttribute(RESTORE_ATTRIBUTE) instanceof PendingRestore p)
+                || clock.now().isAfter(p.expiresAt())) {
+            return Optional.empty();
+        }
+        return members.findById(p.memberId()).filter(Member::withdrawn);
+    }
+
+    /** 화면에서 복구하겠다고 했을 때: 탈퇴 신청을 취소하고 로그인한다 */
+    @Transactional
+    public Member restore(HttpServletRequest req, HttpServletResponse res) {
+        Member m = pendingRestore(req).orElseThrow(() -> new ApiException(ErrorCode.SOCIAL_RESTORE_NOT_FOUND));
+        req.getSession().removeAttribute(RESTORE_ATTRIBUTE);
+        members.restore(m.id(), clock.nowOffset());
+        login.startSession(m, req, res);
+        return members.findById(m.id()).orElseThrow();
+    }
+
+    /** 복구하지 않겠다고 했을 때 */
+    public void cancelRestore(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            session.removeAttribute(RESTORE_ATTRIBUTE);
+        }
     }
 
     /**

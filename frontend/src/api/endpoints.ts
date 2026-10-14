@@ -70,6 +70,13 @@ export const restoreAccount = (body: { email: string; password: string }) =>
 /** 소셜 로그인 뒤 처음 온 사람의 가입 대기 정보 (없으면 404 SOCIAL_SIGNUP_NOT_FOUND) */
 export const getSocialPending = () => api<SocialPending>('/api/auth/social/pending', { skipAuthEvent: true });
 /** 소셜 가입 마무리. 성공하면 로그인된다. */
+/** 소셜 로그인으로 확인한 탈퇴 회원의 복구 (묻고 나서) */
+export const getSocialRestore = () =>
+  api<{ restorableUntil: string }>('/api/auth/social/restore', { skipAuthEvent: true });
+export const restoreBySocial = () =>
+  api<{ member: Member }>('/api/auth/social/restore', { method: 'POST', skipAuthEvent: true });
+export const cancelSocialRestore = () =>
+  api<void>('/api/auth/social/restore', { method: 'DELETE', skipAuthEvent: true });
 export const socialSignup = (body: { nickname: string }) =>
   api<{ id: number; member: Member }>('/api/auth/social/signup', { method: 'POST', body, skipAuthEvent: true });
 export const logout = () => api<void>('/api/auth/logout', { method: 'POST', skipAuthEvent: true });

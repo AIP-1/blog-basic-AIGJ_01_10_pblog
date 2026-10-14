@@ -74,7 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                         .requestMatchers("/api/auth/verifications/**", "/api/auth/verifications",
                                 "/api/auth/signup", "/api/auth/login", "/api/auth/restore", "/api/auth/password-reset",
-                                "/api/auth/social/signup").permitAll()
+                                "/api/auth/social/signup", "/api/auth/social/restore").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .exceptionHandling(e -> e.authenticationEntryPoint(
