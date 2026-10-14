@@ -24,9 +24,11 @@ PROXY_IMAGE=nginx:1.27-alpine
 REDIS=myblog-redis
 NETWORK=myblog-net
 PORT=8390
-# 8390을 어느 주소에서 받을지. 비우면 모든 주소(공인 IP 포함), 127.0.0.1이면 이 서버 안에서만,
-# 내부망 IP(예: 192.168.x.x)면 그 내부망에서만 받는다. 서버 nginx가 https 손님을 넘겨 주는 주소에 맞춘다.
-PROXY_BIND="${PROXY_BIND:-}"
+# 8390을 어느 주소에서 받을지. 127.0.0.1(기본)이면 이 서버 안에서만, 내부망 IP(예: 192.168.x.x)면 그 내부망에서만,
+# "all"이면 모든 주소(공인 IP 포함)에서 받는다. 서버 nginx가 https 손님을 넘겨 주는 주소에 맞춘다.
+# 서버 nginx는 sagak.java21.net을 localhost:8390으로 넘긴다(2026-10-14 status 워크플로로 확인).
+PROXY_BIND="${PROXY_BIND:-127.0.0.1}"
+[[ "${PROXY_BIND}" == "all" ]] && PROXY_BIND=""
 PUBLISH="${PROXY_BIND:+${PROXY_BIND}:}${PORT}:${PORT}"
 DATA_DIR="${MYBLOG_DATA_DIR:-$HOME/myblog-data}"
 
@@ -162,6 +164,8 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_read_timeout 60s;
+        # 브라우저가 앞으로 이 사이트를 https로만 열게 한다 (바깥 nginx가 https로 그대로 전달)
+        add_header Strict-Transport-Security "max-age=31536000" always;
     }
 }
 NGINX
@@ -179,8 +183,14 @@ if [[ "$("${DOCKER[@]}" inspect -f '{{.State.Running}}' "${PROXY}" 2>/dev/null)"
   if [[ "${CURRENT_BIND}" != "${PROXY_BIND}" ]]; then
     echo "==> nginx(${PROXY})를 ${PROXY_BIND:-모든 주소}:${PORT}로 다시 띄웁니다"
     "${DOCKER[@]}" rm -f "${PROXY}" >/dev/null
-    "${DOCKER[@]}" run -d --name "${PROXY}" --network "${NETWORK}" --restart unless-stopped \
-      -p "${PUBLISH}" -v "${PROXY_CONF_DIR}:/etc/nginx/conf.d:ro" "${PROXY_IMAGE}" >/dev/null
+    if ! "${DOCKER[@]}" run -d --name "${PROXY}" --network "${NETWORK}" --restart unless-stopped \
+      -p "${PUBLISH}" -v "${PROXY_CONF_DIR}:/etc/nginx/conf.d:ro" "${PROXY_IMAGE}" >/dev/null; then
+      # 그 주소로 못 열면 예전 주소로 다시 띄워서 사이트는 살려 둔다
+      echo "nginx를 ${PROXY_BIND:-모든 주소}:${PORT}에 못 띄웠어요. ${CURRENT_BIND:-모든 주소}로 되돌립니다." >&2
+      "${DOCKER[@]}" rm -f "${PROXY}" >/dev/null 2>&1 || true
+      "${DOCKER[@]}" run -d --name "${PROXY}" --network "${NETWORK}" --restart unless-stopped \
+        -p "${CURRENT_BIND:+${CURRENT_BIND}:}${PORT}:${PORT}" -v "${PROXY_CONF_DIR}:/etc/nginx/conf.d:ro" "${PROXY_IMAGE}" >/dev/null
+    fi
   fi
 else
   # 처음 한 번만: 예전 방식 컨테이너가 8390을 잡고 있으면 비키고 nginx를 띄운다 (이때만 1~2초 끊긴다)
