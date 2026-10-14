@@ -94,7 +94,7 @@ public class MyPageService {
     @Transactional
     public void changePassword(long memberId, String currentSessionId, PasswordChange req) {
         Member m = member(memberId);
-        if (!members.passwordSet(memberId)) { // 소셜 가입 회원은 비밀번호 찾기로 처음 정한다
+        if (!members.passwordSet(memberId)) { // 소셜 가입 회원은 비밀번호가 없다
             throw new ApiException(ErrorCode.PASSWORD_NOT_SET);
         }
         login.verifyPassword(m, req.currentPassword(), ErrorCode.CURRENT_PASSWORD_MISMATCH);

@@ -4,6 +4,7 @@ import com.myblog.blog.BlogService;
 import com.myblog.common.KoreanClock;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
+import com.myblog.common.error.Messages;
 import com.myblog.member.EmailVerificationService.Purpose;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +17,7 @@ public class SignupService {
     public record Request(String nickname, String email, String password, String passwordConfirm) {}
 
     private final MemberRepository members;
+    private final SocialAccountRepository socialAccounts;
     private final NicknamePolicy nicknames;
     private final PasswordPolicy passwords;
     private final EmailVerificationService verification;
@@ -23,10 +25,11 @@ public class SignupService {
     private final BlogService blogs;
     private final KoreanClock clock;
 
-    public SignupService(MemberRepository members, NicknamePolicy nicknames, PasswordPolicy passwords,
-                         EmailVerificationService verification, PasswordEncoder encoder, BlogService blogs,
-                         KoreanClock clock) {
+    public SignupService(MemberRepository members, SocialAccountRepository socialAccounts, NicknamePolicy nicknames,
+                         PasswordPolicy passwords, EmailVerificationService verification, PasswordEncoder encoder,
+                         BlogService blogs, KoreanClock clock) {
         this.members = members;
+        this.socialAccounts = socialAccounts;
         this.nicknames = nicknames;
         this.passwords = passwords;
         this.verification = verification;
@@ -41,7 +44,17 @@ public class SignupService {
             throw ApiException.withDetails(ErrorCode.EMAIL_WITHDRAWN, ErrorCode.EMAIL_WITHDRAWN.message(),
                     java.util.Map.of("fields", java.util.Map.of("email", ErrorCode.EMAIL_WITHDRAWN.message())));
         }
-        if (members.existsByEmail(email)) {
+        var taken = members.findByEmail(email);
+        if (taken.isPresent() && !members.passwordSet(taken.get().id())) {
+            // 소셜로 가입한 이메일: 어느 제공자로 로그인하면 되는지 알려 준다
+            var provider = socialAccounts.signupProviderOf(taken.get().id());
+            if (provider.isPresent()) {
+                String message = Messages.socialEmailTaken(provider.get().displayName());
+                throw ApiException.withDetails(ErrorCode.EMAIL_TAKEN, message, java.util.Map.of(
+                        "fields", java.util.Map.of("email", message), "provider", provider.get().registrationId()));
+            }
+        }
+        if (taken.isPresent()) {
             throw ApiException.withDetails(ErrorCode.EMAIL_TAKEN, ErrorCode.EMAIL_TAKEN.message(),
                     java.util.Map.of("fields", java.util.Map.of("email", ErrorCode.EMAIL_TAKEN.message())));
         }

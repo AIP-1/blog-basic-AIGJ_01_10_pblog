@@ -42,7 +42,7 @@ public class PasswordResetService {
         passwords.validate("newPassword", req.newPassword(), "newPasswordConfirm", req.newPasswordConfirm());
         verification.requireVerified(Purpose.RESET, email);
         // 인증은 가입된 이메일에만 번호가 가므로 여기서 회원이 없을 수는 없다. 그래도 같은 응답을 쓴다.
-        var member = members.findByEmail(email).filter(m -> !m.withdrawn());
+        var member = members.findByEmail(email).filter(m -> !m.withdrawn() && members.passwordSet(m.id()));
         verification.consume(Purpose.RESET, email);
         member.ifPresent(m -> {
             members.updatePassword(m.id(), encoder.encode(req.newPassword()), clock.nowOffset()); // 잠금도 해제 (CF-25-9)

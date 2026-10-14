@@ -102,20 +102,67 @@ class SocialLoginIT extends IntegrationTest {
         mvc.perform(get("/api/auth/me").session(session)).andExpect(status().isNoContent());
     }
 
+    /** 소셜로 가입을 마친다 (제공자 로그인 → 닉네임). 회원 번호를 돌려준다 */
+    private long socialSignup(SocialProfile profile, String nickname) throws Exception {
+        var session = new MockHttpSession();
+        assertThat(complete(profile, session)).isEqualTo(SocialLoginService.SIGNUP_PAGE);
+        var r = mvc.perform(postJson("/api/auth/social/signup", Map.of("nickname", nickname)).session(session))
+                .andExpect(status().isCreated()).andReturn();
+        redis.delete(redis.keys("submit:*")); // 연타 방지(5초)를 건너뛴다
+        return read(r).get("id").asLong();
+    }
+
+    /** 계정은 가입한 방법으로만 로그인한다: 같은 이메일이어도 소셜 계정을 이메일 계정에 연결하지 않는다 */
     @Test
-    void verifiedEmailOfActiveMemberIsLinkedAndLoggedIn() throws Exception {
-        long id = signup("수연", "su@example.com");
+    void emailAccountIsNotLinkedBySocialLogin() throws Exception {
+        signup("수연", "su@example.com");
 
         var session = new MockHttpSession();
         assertThat(complete(kakao("k-1", "  SU@Example.com ", true, "수연"), session))
-                .isEqualTo(SocialLoginService.HOME);
-        assertThat(memberIdOf(session)).isEqualTo(id);
-        assertThat(accounts.findMemberId(SocialProvider.KAKAO, "k-1")).contains(id);
+                .isEqualTo(SocialLoginService.EMAIL_ACCOUNT);
+        assertThat(accounts.findMemberId(SocialProvider.KAKAO, "k-1")).isEmpty();
+        assertThat(session.getAttribute(CONTEXT)).isNull();
+        assertThat(session.getAttribute(SocialLoginService.PENDING_ATTRIBUTE)).isNull();
+        mvc.perform(get("/api/auth/me").session(session)).andExpect(status().isNoContent());
+    }
 
-        // 다음부터는 연결로 찾는다 (이메일이 바뀌어도)
-        var again = new MockHttpSession();
-        assertThat(complete(kakao("k-1", "changed@example.com", true, "수연"), again)).isEqualTo(SocialLoginService.HOME);
-        assertThat(memberIdOf(again)).isEqualTo(id);
+    @Test
+    void emailOfOtherProviderIsNotLinked() throws Exception {
+        long id = socialSignup(new SocialProfile(SocialProvider.GOOGLE, "g-1", "both@example.com", true, "구글"), "구글회원");
+
+        var session = new MockHttpSession();
+        assertThat(complete(kakao("k-1", "both@example.com", true, "카카오"), session)).isEqualTo("/?social=google-account");
+        assertThat(accounts.findMemberId(SocialProvider.KAKAO, "k-1")).isEmpty();
+        assertThat(accounts.providersOf(id)).containsExactly(SocialProvider.GOOGLE);
+        mvc.perform(get("/api/auth/me").session(session)).andExpect(status().isNoContent());
+    }
+
+    /** 소셜로 가입한 이메일: 이메일 가입·로그인·비밀번호 찾기에서 어느 제공자로 로그인하면 되는지 알려 준다 */
+    @Test
+    void socialAccountEmailPointsToItsProvider() throws Exception {
+        socialSignup(kakao("k-1", "only@example.com", true, "카카오"), "카카오회원");
+        String message = "카카오로 가입한 이메일입니다. 카카오로 로그인해 주세요";
+
+        mvc.perform(postJson("/api/auth/verifications", Map.of("purpose", "signup", "email", "only@example.com",
+                        "nickname", "새닉")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("EMAIL_TAKEN"))
+                .andExpect(jsonPath("$.error.message").value(message))
+                .andExpect(jsonPath("$.error.fields.email").value(message));
+
+        mvc.perform(postJson("/api/auth/login", Map.of("email", "only@example.com", "password", PASSWORD)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("SOCIAL_ACCOUNT"))
+                .andExpect(jsonPath("$.error.message").value("카카오로 가입한 계정입니다. 카카오로 로그인해 주세요"));
+
+        // 비밀번호 찾기: 응답은 다른 이메일과 같고, 번호 대신 카카오로 로그인하라는 메일이 간다
+        mail.sent.clear();
+        mvc.perform(postJson("/api/auth/verifications", Map.of("purpose", "reset", "email", "only@example.com")))
+                .andExpect(status().isAccepted());
+        assertThat(mail.sent).singleElement().satisfies(m -> {
+            assertThat(m.to()).isEqualTo("only@example.com");
+            assertThat(m.body()).contains("카카오로 가입한 계정").doesNotContain("인증번호:");
+        });
     }
 
     @Test
@@ -178,11 +225,12 @@ class SocialLoginIT extends IntegrationTest {
         // 가입 정보는 한 번만 쓴다
         mvc.perform(get("/api/auth/social/pending").session(session)).andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("SOCIAL_SIGNUP_NOT_FOUND"));
-        // 비밀번호는 아무도 모르는 값이라 비밀번호 찾기로 정하기 전에는 이메일 로그인이 안 된다
+        // 비밀번호는 아무도 모르는 값이고, 이메일 로그인은 구글로 로그인하라고 안내한다
         String hash = jdbc.sql("SELECT password_hash FROM members WHERE id = ?").param(id).query(String.class).single();
         assertThat(hash).startsWith("$2");
         mvc.perform(postJson("/api/auth/login", Map.of("email", "new@example.com", "password", PASSWORD)))
-                .andExpect(jsonPath("$.error.code").value("LOGIN_FAILED"));
+                .andExpect(jsonPath("$.error.code").value("SOCIAL_ACCOUNT"))
+                .andExpect(jsonPath("$.error.provider").value("google"));
 
         // 다음 소셜 로그인은 바로 로그인
         var next = new MockHttpSession();
@@ -226,6 +274,47 @@ class SocialLoginIT extends IntegrationTest {
     }
 
     @Test
+    void v23MarksSocialSignupsFromBeforeV22AsPasswordUnset() throws Exception {
+        // v1.8.0 소셜 가입: 회원과 연결이 같은 순간에 생겼지만 V22가 password_set = true로 채웠다
+        long social = signup("소셜", "social@example.com");
+        jdbc.sql("""
+                INSERT INTO member_social_accounts (member_id, provider, provider_user_id, email, created_at)
+                SELECT id, 'KAKAO', 'k-old', email, created_at FROM members WHERE id = ?""").param(social).update();
+        // 이메일로 가입하고 나중에 카카오를 연결한 회원
+        long linked = signup("연결", "linked@example.com");
+        jdbc.sql("""
+                INSERT INTO member_social_accounts (member_id, provider, provider_user_id, email, created_at)
+                SELECT id, 'KAKAO', 'k-linked', email, created_at + interval '1 hour' FROM members WHERE id = ?""")
+                .param(linked).update();
+        long plain = signup("메일", "plain@example.com");
+
+        String v23 = new String(getClass().getResourceAsStream("/db/migration/V23__social_signup_password_unset.sql")
+                .readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        jdbc.sql(v23).update();
+
+        assertThat(members.passwordSet(social)).isFalse();
+        assertThat(members.passwordSet(linked)).isTrue();
+        assertThat(members.passwordSet(plain)).isTrue();
+    }
+
+    @Test
+    void v24UnlinksSocialAccountsFromEmailMembers() throws Exception {
+        long email = signup("메일", "mail@example.com");
+        jdbc.sql("""
+                INSERT INTO member_social_accounts (member_id, provider, provider_user_id, email, created_at)
+                SELECT id, 'KAKAO', 'k-linked', email, created_at + interval '1 hour' FROM members WHERE id = ?""")
+                .param(email).update();
+        long social = socialSignup(new SocialProfile(SocialProvider.GOOGLE, "g-1", "g@example.com", true, "구글"), "구글회원");
+
+        String v24 = new String(getClass().getResourceAsStream("/db/migration/V24__separate_signup_methods.sql")
+                .readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        jdbc.sql(v24).update();
+
+        assertThat(accounts.providersOf(email)).isEmpty();
+        assertThat(accounts.providersOf(social)).containsExactly(SocialProvider.GOOGLE);
+    }
+
+    @Test
     void emailMemberHasPasswordAndNoSocialAccounts() throws Exception {
         MockHttpSession s = member("수연", "su@example.com");
         mvc.perform(get("/api/me").session(s)).andExpect(status().isOk())
@@ -263,7 +352,7 @@ class SocialLoginIT extends IntegrationTest {
 
     @Test
     void successHandlerReadsKakaoAttributesAndRedirects() throws Exception {
-        long id = signup("수연", "su@example.com");
+        long id = socialSignup(kakao("12345", "su@example.com", true, "수연"), "수연");
         Map<String, Object> attributes = Map.of(
                 "id", 12345L,
                 "kakao_account", Map.of("email", "su@example.com", "is_email_verified", true,
@@ -279,7 +368,6 @@ class SocialLoginIT extends IntegrationTest {
         handler.onAuthenticationSuccess(req, res, token);
 
         assertThat(res.getRedirectedUrl()).isEqualTo("/");
-        assertThat(accounts.findMemberId(SocialProvider.KAKAO, "12345")).contains(id);
         assertThat(memberIdOf(session)).isEqualTo(id);
     }
 

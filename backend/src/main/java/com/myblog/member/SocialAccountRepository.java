@@ -26,6 +26,11 @@ public class SocialAccountRepository {
                 .param(memberId).query(String.class).list().stream().map(SocialProvider::valueOf).toList();
     }
 
+    /** 소셜로 가입한 회원의 제공자. 가입 방법으로만 로그인하므로 연결은 하나뿐이다. */
+    public java.util.Optional<SocialProvider> signupProviderOf(long memberId) {
+        return providersOf(memberId).stream().findFirst();
+    }
+
     public void insert(long memberId, SocialProvider provider, String providerUserId, String email,
                        OffsetDateTime now) {
         jdbc.sql("""

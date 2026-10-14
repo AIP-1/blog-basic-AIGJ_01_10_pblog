@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class LoginService {
     private final MemberRepository members;
+    private final SocialAccountRepository socialAccounts;
     private final PasswordEncoder encoder;
     private final MyBlogProperties.Login rules;
     private final java.time.Duration withdrawKeep;
@@ -34,9 +35,11 @@ public class LoginService {
     // 없는 이메일에도 같은 시간을 쓰게 해 응답 시간으로 가입 여부를 짐작하지 못하게 한다
     private final String dummyHash;
 
-    public LoginService(MemberRepository members, PasswordEncoder encoder, MyBlogProperties props, KoreanClock clock,
-                        SessionAuthenticationStrategy sessionStrategy, SecurityContextRepository contextRepository) {
+    public LoginService(MemberRepository members, SocialAccountRepository socialAccounts, PasswordEncoder encoder,
+                        MyBlogProperties props, KoreanClock clock, SessionAuthenticationStrategy sessionStrategy,
+                        SecurityContextRepository contextRepository) {
         this.members = members;
+        this.socialAccounts = socialAccounts;
         this.encoder = encoder;
         this.rules = props.login();
         this.withdrawKeep = props.member().withdrawKeep();
@@ -81,9 +84,21 @@ public class LoginService {
             throw new ApiException(ErrorCode.LOGIN_FAILED);
         }
         Member m = found.get();
+        refuseSocialAccount(m);
         verifyPassword(m, password, ErrorCode.LOGIN_FAILED);
         members.clearFailures(m.id());
         return m;
+    }
+
+    /** 소셜로 가입한 계정은 가입한 방법으로만 로그인한다. 이메일 로그인이면 어느 제공자로 로그인할지 알려 준다. */
+    private void refuseSocialAccount(Member m) {
+        if (members.passwordSet(m.id())) {
+            return;
+        }
+        var provider = socialAccounts.signupProviderOf(m.id());
+        String message = provider.map(p -> Messages.socialAccount(p.displayName())).orElse(Messages.SOCIAL_ACCOUNT);
+        throw ApiException.withDetails(ErrorCode.SOCIAL_ACCOUNT, message,
+                provider.<Map<String, Object>>map(p -> Map.of("provider", p.registrationId())).orElse(Map.of()));
     }
 
     /**
