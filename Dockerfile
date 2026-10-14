@@ -2,7 +2,7 @@
 FROM node:22-alpine AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts   # 의존성의 설치 스크립트는 실행하지 않는다 (공급망 공격 방지)
 COPY frontend/ ./
 RUN npm run build
 

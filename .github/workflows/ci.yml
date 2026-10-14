@@ -2,6 +2,8 @@ name: ci
 
 on:
   pull_request:
+  push:
+    branches: [develop] # 머지된 develop도 분석해야 SonarQube 첫 화면(develop)에 커버리지가 뜬다
   workflow_call: # main에 들어오면 deploy.yml이 이 검사를 먼저 돌린다
 
 jobs:
