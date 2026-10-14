@@ -200,10 +200,6 @@ cd backend && DB_USERNAME=myblog DB_PASSWORD=... ./gradlew test
 cd frontend && npm run lint && npm run typecheck && npm test
 ```
 
-## 이번 범위에서 뺀 것
-
-- 커뮤니티 게시판, 세션 표(`spring_session`). 로그인 세션은 DB 대신 Redis에 둡니다(서버를 다시 켜도 로그인 유지).
-
 ## 배포
 
 ```mermaid
