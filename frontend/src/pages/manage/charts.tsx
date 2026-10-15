@@ -31,7 +31,7 @@ interface ViewsPoint {
 }
 
 /** 일별 조회수·방문자 선 그래프 (BM-02-2, BM-06-2) */
-export function ViewsChart({ data, height = 260 }: { data: ViewsPoint[]; height?: number }) {
+export function ViewsChart({ data, height = 260 }: Readonly<{ data: ViewsPoint[]; height?: number }>) {
   useTheme(); // 야간모드가 바뀌면 다시 그려 토큰을 새로 읽는다
   const c = chartColors();
   return (
@@ -41,7 +41,7 @@ export function ViewsChart({ data, height = 260 }: { data: ViewsPoint[]; height?
           <CartesianGrid stroke={c.grid} vertical={false} />
           <XAxis dataKey="date" tickFormatter={formatShortDay} tick={{ fontSize: 11, fill: c.axis }} tickLine={false} axisLine={false} minTickGap={24} />
           <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: c.axis }} tickLine={false} axisLine={false} width={44} />
-          <Tooltip labelFormatter={(l) => String(l)} contentStyle={tooltipStyle(c.grid)} />
+          <Tooltip labelFormatter={String} contentStyle={tooltipStyle(c.grid)} />
           <Legend verticalAlign="top" align="right" iconType="plainline" iconSize={10} itemSorter={null} wrapperStyle={legendStyle} />
           <Line type="linear" dataKey="views" name="조회수" stroke={c.views} strokeWidth={2} dot={{ r: 2, strokeWidth: 0, fill: c.views }} activeDot={{ r: 4 }} />
           <Line type="linear" dataKey="visitors" name="방문자" stroke={c.visitors} strokeWidth={2} dot={{ r: 2, strokeWidth: 0, fill: c.visitors }} activeDot={{ r: 4 }} />
@@ -52,7 +52,7 @@ export function ViewsChart({ data, height = 260 }: { data: ViewsPoint[]; height?
 }
 
 /** 일별 댓글 수 막대 그래프 (BM-06-2) */
-export function CommentsChart({ data, height = 200 }: { data: { date: string; comments: number }[]; height?: number }) {
+export function CommentsChart({ data, height = 200 }: Readonly<{ data: { date: string; comments: number }[]; height?: number }>) {
   useTheme(); // 야간모드가 바뀌면 다시 그려 토큰을 새로 읽는다
   const c = chartColors();
   return (

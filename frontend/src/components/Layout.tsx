@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Outlet, ScrollRestoration } from 'react-router';
 import { POLICIES } from '../lib/policies';
 import { AuthModal } from './AuthModal';
@@ -8,8 +8,9 @@ import { TopicHighlightContext } from './topicHighlight';
 
 export function Layout() {
   const [code, setCode] = useState<string | null>(null);
+  const highlight = useMemo(() => ({ code, setCode }), [code]);
   return (
-    <TopicHighlightContext.Provider value={{ code, setCode }}>
+    <TopicHighlightContext.Provider value={highlight}>
       <div className="app">
         <Header />
         <main className="site-main container">

@@ -47,6 +47,6 @@ public class SocialLoginHandler implements AuthenticationSuccessHandler, Authent
             throws IOException {
         // 사용자가 동의를 취소한 경우도 여기로 온다
         log.info("Social login failed: {}", e.getMessage());
-        redirect.sendRedirect(req, res, social.failed(req, res));
+        redirect.sendRedirect(req, res, social.failureRedirect(req, res));
     }
 }

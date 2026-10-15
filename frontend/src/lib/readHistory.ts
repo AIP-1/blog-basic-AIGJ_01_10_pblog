@@ -93,7 +93,9 @@ export function recommend(pool: PostSummary[], count: number, myBlogId?: number 
       const fromBlog = blogFreq.has(p.blog.id);
       const sameCat = !!p.category && catNames.has(p.category.name);
       const score = (fromBlog ? 3 : 0) + (sameCat ? 2 : 0);
-      const reason = fromBlog ? `자주 읽은 '${p.blog.name}'` : sameCat ? `읽은 '${p.category?.name}' 다이어리와 비슷` : '인기 글';
+      let reason = '인기 글';
+      if (fromBlog) reason = `자주 읽은 '${p.blog.name}'`;
+      else if (sameCat) reason = `읽은 '${p.category?.name}' 다이어리와 비슷`;
       return { p, i, score, reason };
     })
     .sort((a, b) => b.score - a.score || a.i - b.i);

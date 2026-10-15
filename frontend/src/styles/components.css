@@ -1086,9 +1086,6 @@ span.thumb--paper {
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-}
-.tag-list {
   gap: 8px;
 }
 .tag {

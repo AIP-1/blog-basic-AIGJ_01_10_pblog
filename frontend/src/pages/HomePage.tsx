@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { getBlog, getFeed, getHome } from '../api/endpoints';
 import { qk, useMe, useTopics } from '../api/queries';
@@ -72,7 +72,7 @@ export function HomePage() {
 }
 
 /** 메인 맨 위 공지 띠: 최근 공지 몇 개 (없으면 안 보인다) */
-function NoticeStrip({ notices }: { notices: PostSummary[] }) {
+function NoticeStrip({ notices }: Readonly<{ notices: PostSummary[] }>) {
   if (notices.length === 0) return null;
   return (
     <section className="notice-strip" aria-label={NOTICE.title}>
@@ -95,7 +95,7 @@ function NoticeStrip({ notices }: { notices: PostSummary[] }) {
 }
 
 /** 이번 주 인기 글: 사진 카드 6개, 왼쪽 위에 순위 (1~3위 빨강) */
-function PopularCards({ posts }: { posts: PostSummary[] }) {
+function PopularCards({ posts }: Readonly<{ posts: PostSummary[] }>) {
   if (posts.length === 0) return <p className="hint hint--pad">{HOME.weeklyEmpty}</p>;
   return (
     <ol className="pop-cards">
@@ -120,7 +120,7 @@ function PopularCards({ posts }: { posts: PostSummary[] }) {
 }
 
 /** 추천 글: 이 브라우저에서 읽은 글로 인기 글 중에서 고른다. 기록이 없으면 인기 글 */
-function RecommendSection({ pool }: { pool: PostSummary[] }) {
+function RecommendSection({ pool }: Readonly<{ pool: PostSummary[] }>) {
   const { data: me } = useMe();
   const [, setTick] = useState(0);
   const rerender = () => setTick((t) => t + 1);
@@ -128,12 +128,15 @@ function RecommendSection({ pool }: { pool: PostSummary[] }) {
   const reads = readCount();
   const items = recommend(pool, RECOMMEND_COUNT, me?.blog?.id);
   const based = !off && reads > 0 && items.some((p) => p.reason !== '인기 글');
+  let recommendNote: string = HOME.recommendHint;
+  if (off) recommendNote = HOME.recommendOff;
+  else if (based) recommendNote = HOME.recommendBased;
 
   return (
     <section className="recommend">
       <header className="section-head">
         <h2>{HOME.recommendTitle}</h2>
-        <span>{off ? HOME.recommendOff : based ? HOME.recommendBased : HOME.recommendHint}</span>
+        <span>{recommendNote}</span>
       </header>
       {items.length === 0 ? (
         <p className="hint hint--pad">{HOME.recommendEmpty}</p>
@@ -227,6 +230,30 @@ function TopicFeed() {
     document.getElementById('latest')?.scrollIntoView({ block: 'start' });
   };
 
+  let feedContent: ReactNode;
+  if (isPending) {
+    feedContent = <Loading />;
+  } else if (error) {
+    feedContent = <ErrorBox error={error} onRetry={() => void refetch()} />;
+  } else if (data.items.length === 0) {
+    feedContent = (
+      <div className="empty">
+        <b>{HOME.feedEmpty}</b>
+      </div>
+    );
+  } else {
+    feedContent = (
+      <>
+        <div className="row-list">
+          {data.items.map((p) => (
+            <PostRow key={p.id} post={p} />
+          ))}
+        </div>
+        <Pagination page={data.page} totalPages={data.totalPages} window={5} onChange={(p) => setFeed({ page: p })} />
+      </>
+    );
+  }
+
   return (
     <section className="topic-feed">
       <header className="section-head" id="latest">
@@ -263,24 +290,7 @@ function TopicFeed() {
           </button>
         ))}
       </nav>
-      {isPending ? (
-        <Loading />
-      ) : error ? (
-        <ErrorBox error={error} onRetry={() => void refetch()} />
-      ) : data.items.length === 0 ? (
-        <div className="empty">
-          <b>{HOME.feedEmpty}</b>
-        </div>
-      ) : (
-        <>
-          <div className="row-list">
-            {data.items.map((p) => (
-              <PostRow key={p.id} post={p} />
-            ))}
-          </div>
-          <Pagination page={data.page} totalPages={data.totalPages} window={5} onChange={(p) => setFeed({ page: p })} />
-        </>
-      )}
+      {feedContent}
     </section>
   );
 }
@@ -309,7 +319,7 @@ function AccountBox() {
   return <MyAccountBox me={me} />;
 }
 
-function MyAccountBox({ me }: { me: MeResponse }) {
+function MyAccountBox({ me }: Readonly<{ me: MeResponse }>) {
   const blogId = me.blog?.id;
   const { data: blog } = useQuery({
     queryKey: qk.blog(blogId ?? 0),
@@ -353,7 +363,7 @@ function MyAccountBox({ me }: { me: MeResponse }) {
 }
 
 /** 인기 다이어리: 다이어리 표지 + 이름 + 블로그 · 글 수 */
-function PopularDiaries({ diaries }: { diaries: PopularDiary[] }) {
+function PopularDiaries({ diaries }: Readonly<{ diaries: PopularDiary[] }>) {
   const coverStickers = useDiaryStickers(diaries.map((d) => d.id));
   if (diaries.length === 0) return null;
   return (

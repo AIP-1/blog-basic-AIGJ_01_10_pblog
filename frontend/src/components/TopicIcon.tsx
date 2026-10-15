@@ -60,7 +60,7 @@ const PATHS: Record<string, ReactNode> = {
   other: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />,
 };
 
-export function TopicIcon({ code }: { code: string }) {
+export function TopicIcon({ code }: Readonly<{ code: string }>) {
   return (
     <svg
       className="topic-tabs__icon"

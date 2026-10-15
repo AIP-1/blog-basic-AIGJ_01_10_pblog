@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { errorMessage } from '../api/client';
 import {
@@ -82,6 +82,92 @@ function Bookmarks() {
     </>
   );
 
+  let content: ReactNode;
+  if (foldersQ.isPending) {
+    content = <Loading />;
+  } else if (foldersQ.error) {
+    content = <ErrorBox error={foldersQ.error} onRetry={() => void foldersQ.refetch()} />;
+  } else {
+    let listContent: ReactNode;
+    if (listQ.isPending) {
+      listContent = <Loading />;
+    } else if (listQ.error) {
+      listContent = <ErrorBox error={listQ.error} onRetry={() => void listQ.refetch()} />;
+    } else if (listQ.data.items.length === 0) {
+      listContent = (
+        <div className="empty saved__empty">
+          <b>{folder === 'all' ? BOOKMARK.empty : BOOKMARK.emptyFolder}</b>
+          {BOOKMARK.emptyHint}
+        </div>
+      );
+    } else {
+      listContent = (
+        <>
+          <ul className="saved-list">
+            {listQ.data.items.map((p) => (
+              <li key={p.id}>
+                <span className="saved-list__when" title={formatDateLong(p.savedAt)}>
+                  {BOOKMARK.savedAgo(formatRelative(p.savedAt))}
+                </span>
+                <label className="saved-list__folder">
+                  {BOOKMARK.folderSelect}{' '}
+                  <select
+                    aria-label={BOOKMARK.moveLabel}
+                    value={p.folderId ?? ''}
+                    onChange={(e) => move.mutate({ postId: p.id, folderId: e.target.value ? Number(e.target.value) : null })}
+                  >
+                    {folderOptions(foldersQ.data.folders)}
+                  </select>
+                </label>
+                <PostRow post={p} />
+                <button
+                  type="button"
+                  className="saved-list__remove"
+                  aria-label={BOOKMARK.removeLabel(p.title)}
+                  onClick={() => remove.mutate(p.id)}
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+          <Pagination
+            page={listQ.data.page}
+            totalPages={listQ.data.totalPages}
+            onChange={(n) => {
+              const next = new URLSearchParams(params);
+              if (n > 1) next.set('page', String(n));
+              else next.delete('page');
+              setParams(next);
+            }}
+          />
+        </>
+      );
+    }
+
+    content = (
+      <>
+        <nav className="folder-tabs" aria-label={BOOKMARK.foldersLabel}>
+          <Link to={folderHref('all')} className={folder === 'all' ? 'is-on' : undefined}>
+            {BOOKMARK.all} <span className="folder-tabs__n">{foldersQ.data.total}</span>
+          </Link>
+          <Link to={folderHref('none')} className={folder === 'none' ? 'is-on' : undefined}>
+            {BOOKMARK.none} <span className="folder-tabs__n">{foldersQ.data.none}</span>
+          </Link>
+          {foldersQ.data.folders.map((f) => (
+            <Link key={f.id} to={folderHref(String(f.id))} className={folder === String(f.id) ? 'is-on' : undefined}>
+              {f.name} <span className="folder-tabs__n">{f.count}</span>
+            </Link>
+          ))}
+          <button type="button" className="folder-tabs__add" onClick={() => setNaming('new')}>
+            {BOOKMARK.newFolder}
+          </button>
+        </nav>
+        {listContent}
+      </>
+    );
+  }
+
   return (
     <section className="saved">
       <header className="saved__head">
@@ -97,81 +183,7 @@ function Bookmarks() {
           </span>
         )}
       </header>
-      {foldersQ.isPending ? (
-        <Loading />
-      ) : foldersQ.error ? (
-        <ErrorBox error={foldersQ.error} onRetry={() => void foldersQ.refetch()} />
-      ) : (
-        <>
-          <nav className="folder-tabs" aria-label={BOOKMARK.foldersLabel}>
-            <Link to={folderHref('all')} className={folder === 'all' ? 'is-on' : undefined}>
-              {BOOKMARK.all} <span className="folder-tabs__n">{foldersQ.data.total}</span>
-            </Link>
-            <Link to={folderHref('none')} className={folder === 'none' ? 'is-on' : undefined}>
-              {BOOKMARK.none} <span className="folder-tabs__n">{foldersQ.data.none}</span>
-            </Link>
-            {foldersQ.data.folders.map((f) => (
-              <Link key={f.id} to={folderHref(String(f.id))} className={folder === String(f.id) ? 'is-on' : undefined}>
-                {f.name} <span className="folder-tabs__n">{f.count}</span>
-              </Link>
-            ))}
-            <button type="button" className="folder-tabs__add" onClick={() => setNaming('new')}>
-              {BOOKMARK.newFolder}
-            </button>
-          </nav>
-          {listQ.isPending ? (
-            <Loading />
-          ) : listQ.error ? (
-            <ErrorBox error={listQ.error} onRetry={() => void listQ.refetch()} />
-          ) : listQ.data.items.length === 0 ? (
-            <div className="empty saved__empty">
-              <b>{folder === 'all' ? BOOKMARK.empty : BOOKMARK.emptyFolder}</b>
-              {BOOKMARK.emptyHint}
-            </div>
-          ) : (
-            <>
-              <ul className="saved-list">
-                {listQ.data.items.map((p) => (
-                  <li key={p.id}>
-                    <span className="saved-list__when" title={formatDateLong(p.savedAt)}>
-                      {BOOKMARK.savedAgo(formatRelative(p.savedAt))}
-                    </span>
-                    <label className="saved-list__folder">
-                      {BOOKMARK.folderSelect}{' '}
-                      <select
-                        aria-label={BOOKMARK.moveLabel}
-                        value={p.folderId ?? ''}
-                        onChange={(e) => move.mutate({ postId: p.id, folderId: e.target.value ? Number(e.target.value) : null })}
-                      >
-                        {folderOptions(foldersQ.data.folders)}
-                      </select>
-                    </label>
-                    <PostRow post={p} />
-                    <button
-                      type="button"
-                      className="saved-list__remove"
-                      aria-label={BOOKMARK.removeLabel(p.title)}
-                      onClick={() => remove.mutate(p.id)}
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <Pagination
-                page={listQ.data.page}
-                totalPages={listQ.data.totalPages}
-                onChange={(n) => {
-                  const next = new URLSearchParams(params);
-                  if (n > 1) next.set('page', String(n));
-                  else next.delete('page');
-                  setParams(next);
-                }}
-              />
-            </>
-          )}
-        </>
-      )}
+      {content}
       {error && (
         <p className="modal-error" role="alert">
           {error}
@@ -186,7 +198,7 @@ function Bookmarks() {
           onSave={async (name) => {
             const f = await createBookmarkFolder(name);
             await refresh();
-            navigate(folderHref(String(f.id)));
+            void navigate(folderHref(String(f.id)));
           }}
         />
       )}
@@ -209,7 +221,7 @@ function Bookmarks() {
           onClose={() => setDeleting(false)}
           onOk={async () => {
             await deleteBookmarkFolder(curFolder.id);
-            navigate('/bookmarks');
+            void navigate('/bookmarks');
             await refresh();
             void queryClient.invalidateQueries({ queryKey: ['post'] });
           }}
@@ -225,12 +237,12 @@ function FolderNameDialog({
   initial,
   onSave,
   onClose,
-}: {
+}: Readonly<{
   title: string;
   initial: string;
   onSave: (name: string) => Promise<void>;
   onClose: () => void;
-}) {
+}>) {
   const { limits } = useConfig();
   const [name, setName] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -247,8 +259,8 @@ function FolderNameDialog({
           try {
             await onSave(name);
             onClose();
-          } catch (x) {
-            setError(errorMessage(x));
+          } catch (error_) {
+            setError(errorMessage(error_));
             setBusy(false);
           }
         }}
@@ -289,13 +301,13 @@ function ConfirmDialog({
   ok,
   onOk,
   onClose,
-}: {
+}: Readonly<{
   title: string;
   body: string;
   ok: string;
   onOk: () => Promise<void>;
   onClose: () => void;
-}) {
+}>) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -321,8 +333,8 @@ function ConfirmDialog({
             try {
               await onOk();
               onClose();
-            } catch (x) {
-              setError(errorMessage(x));
+            } catch (error_) {
+              setError(errorMessage(error_));
               setBusy(false);
             }
           }}

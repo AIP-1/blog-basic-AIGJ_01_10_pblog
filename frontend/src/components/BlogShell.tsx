@@ -22,7 +22,7 @@ interface BlogShellProps {
 }
 
 /** 자물쇠 (비공개 다이어리) */
-export function LockIcon({ label = '비공개' }: { label?: string }) {
+export function LockIcon({ label = '비공개' }: Readonly<{ label?: string }>) {
   return (
     <svg className="lock-icon" viewBox="0 0 16 16" width="10" height="10" role="img" aria-label={label}>
       <path
@@ -34,7 +34,7 @@ export function LockIcon({ label = '비공개' }: { label?: string }) {
 }
 
 /** 다이어리 공개 범위 표시: 비공개는 자물쇠, 구독자만은 '구독자 공개' 표 (데모 diaryVisBadge) */
-export function DiaryVisBadge({ visibility }: { visibility: Visibility }) {
+export function DiaryVisBadge({ visibility }: Readonly<{ visibility: Visibility }>) {
   if (visibility === 'PRIVATE') return <LockIcon />;
   if (visibility === 'SUBSCRIBERS') {
     return (
@@ -53,13 +53,13 @@ export function DiaryCover({
   locked,
   visibility,
   stickers,
-}: {
+}: Readonly<{
   colorIndex: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   locked?: boolean;
   visibility?: Visibility;
   stickers?: DiarySticker[];
-}) {
+}>) {
   const lock = locked || (visibility !== undefined && visibility !== 'PUBLIC');
   return (
     <span className={`cover cover--${size}`} style={{ ['--c' as string]: categoryColor(colorIndex) }} aria-hidden={!lock}>
@@ -77,7 +77,7 @@ export function DiaryCover({
  * 블로그 화면 공통 틀 (데모 블로그 화면): 이름·소개·다이어리 책장 머리 +
  * 왼쪽 다이어리 목록·태그 모음 + 본문.
  */
-export function BlogShell({ blogId, active, children }: BlogShellProps) {
+export function BlogShell({ blogId, active, children }: Readonly<BlogShellProps>) {
   const blogQ = useQuery({ queryKey: qk.blog(blogId), queryFn: () => getBlog(blogId) });
   const catQ = useQuery({ queryKey: qk.categories(blogId), queryFn: () => getCategories(blogId), enabled: blogQ.isSuccess });
   const tagQ = useQuery({ queryKey: qk.blogTags(blogId), queryFn: () => getBlogTags(blogId), enabled: blogQ.isSuccess });

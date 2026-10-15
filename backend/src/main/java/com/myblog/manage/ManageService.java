@@ -20,6 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 /** 블로그 관리: 대시보드, 글 관리, 댓글 관리, 통계 (BM-02 ~ BM-06). 블로그 주인만 부른다. */
 @Service
 public class ManageService {
+    // 컬럼·응답 이름
+    private static final String TODAY = "today";
+    private static final String YESTERDAY = "yesterday";
+    private static final String VIEWS = "views";
+    private static final String VISITORS = "visitors";
+    private static final String TITLE = "title";
+    private static final String CREATED_AT_COLUMN = "created_at";
+    private static final String CREATED_AT = "createdAt";
+    private static final String VISIBILITY = "visibility";
     private final JdbcClient jdbc;
     private final PostQueryService posts;
     private final NewCommentCounter newComments;
@@ -41,8 +50,8 @@ public class ManageService {
                         + " coalesce(sum(CASE WHEN stat_date = :yesterday THEN " + column + " END), 0) AS yesterday,"
                         + " coalesce(sum(" + column + "), 0) AS total"
                         + " FROM daily_stats WHERE blog_id = :blog AND post_id IS NULL")
-                .param("today", today).param("yesterday", today.minusDays(1)).param("blog", blogId)
-                .query((rs, i) -> Map.of("today", rs.getLong("today"), "yesterday", rs.getLong("yesterday"),
+                .param(TODAY, today).param(YESTERDAY, today.minusDays(1)).param("blog", blogId)
+                .query((rs, i) -> Map.of(TODAY, rs.getLong(TODAY), YESTERDAY, rs.getLong(YESTERDAY),
                         "total", rs.getLong("total"))).single();
     }
 
@@ -54,7 +63,7 @@ public class ManageService {
         jdbc.sql("SELECT stat_date, views, visitors FROM daily_stats WHERE blog_id = ? AND post_id IS NULL AND stat_date >= ?")
                 .params(blogId, from)
                 .query((rs, i) -> byDate.put(rs.getObject("stat_date", LocalDate.class),
-                        new long[] {rs.getLong("views"), rs.getLong("visitors"), 0})).list();
+                        new long[] {rs.getLong(VIEWS), rs.getLong(VISITORS), 0})).list();
         jdbc.sql("""
                 SELECT (cm.created_at AT TIME ZONE 'Asia/Seoul')::date AS d, count(*) AS c
                 FROM comments cm JOIN posts p ON p.id = cm.post_id
@@ -65,7 +74,7 @@ public class ManageService {
         List<Map<String, Object>> out = new ArrayList<>();
         for (LocalDate d = from; !d.isAfter(today); d = d.plusDays(1)) {
             long[] v = byDate.getOrDefault(d, new long[3]);
-            out.add(Map.of("date", d, "views", v[0], "visitors", v[1], "comments", v[2]));
+            out.add(Map.of("date", d, VIEWS, v[0], VISITORS, v[1], "comments", v[2]));
         }
         return out;
     }
@@ -73,17 +82,17 @@ public class ManageService {
     public Map<String, Object> dashboard(long blogId, long ownerId) {
         var d = props.dashboard();
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("views", totals(blogId, "views"));
-        m.put("visitors", totals(blogId, "visitors"));
+        m.put(VIEWS, totals(blogId, VIEWS));
+        m.put(VISITORS, totals(blogId, VISITORS));
         m.put("newCommentCount", newComments.count(blogId, ownerId));
         m.put("daily", daily(blogId, d.chartDays()));
         m.put("popularPosts", posts.popularInBlog(blogId, clock.today().minusDays(d.popularDays() - 1L), d.popularSize()));
         m.put("recentPosts", jdbc.sql("""
                 SELECT id, title, created_at, visibility FROM posts WHERE blog_id = ?
                 ORDER BY created_at DESC, id DESC LIMIT ?""").params(blogId, d.recentSize())
-                .query((rs, i) -> Map.of("id", rs.getLong("id"), "title", rs.getString("title"),
-                        "createdAt", rs.getObject("created_at", OffsetDateTime.class),
-                        "visibility", rs.getString("visibility"))).list());
+                .query((rs, i) -> Map.of("id", rs.getLong("id"), TITLE, rs.getString(TITLE),
+                        CREATED_AT, rs.getObject(CREATED_AT_COLUMN, OffsetDateTime.class),
+                        VISIBILITY, rs.getString(VISIBILITY))).list());
         return m;
     }
 
@@ -115,10 +124,10 @@ public class ManageService {
                     .params(all).query((rs, i) -> {
                         Map<String, Object> m = new LinkedHashMap<>();
                         m.put("id", rs.getLong("id"));
-                        m.put("title", rs.getString("title"));
+                        m.put(TITLE, rs.getString(TITLE));
                         m.put("category", Map.of("id", rs.getLong("category_id"), "name", rs.getString("category_name")));
-                        m.put("createdAt", rs.getObject("created_at", OffsetDateTime.class));
-                        m.put("visibility", rs.getString("visibility"));
+                        m.put(CREATED_AT, rs.getObject(CREATED_AT_COLUMN, OffsetDateTime.class));
+                        m.put(VISIBILITY, rs.getString(VISIBILITY));
                         m.put("viewCount", rs.getLong("view_count"));
                         m.put("commentCount", rs.getLong("comment_count"));
                         return m;
@@ -142,12 +151,12 @@ public class ManageService {
                     Map<String, Object> m = new LinkedHashMap<>();
                     long authorId = rs.getLong("author_id");
                     boolean deleted = rs.wasNull();
-                    OffsetDateTime at = rs.getObject("created_at", OffsetDateTime.class);
+                    OffsetDateTime at = rs.getObject(CREATED_AT_COLUMN, OffsetDateTime.class);
                     m.put("id", rs.getLong("id"));
                     m.put("author", deleted ? null : Map.of("id", authorId, "nickname", rs.getString("nickname")));
-                    m.put("createdAt", at);
+                    m.put(CREATED_AT, at);
                     m.put("preview", Texts.cut(rs.getString("body").replaceAll("\\s+", " "), preview));
-                    m.put("post", Map.of("id", rs.getLong("post_id"), "title", rs.getString("title")));
+                    m.put("post", Map.of("id", rs.getLong("post_id"), TITLE, rs.getString(TITLE)));
                     m.put("reply", rs.getObject("parent_id") != null);
                     m.put("isNew", at.isAfter(seenAt) && (deleted || authorId != ownerId));
                     return m;

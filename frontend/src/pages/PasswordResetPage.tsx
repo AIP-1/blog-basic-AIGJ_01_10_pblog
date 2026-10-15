@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type SubmitEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { errorMessage, isApiError } from '../api/client';
 import { resetPassword } from '../api/endpoints';
@@ -50,7 +50,7 @@ function PasswordResetForm() {
   const pwOk = isValidPassword(pw, limits.passwordMin, limits.passwordMax);
   const confirmOk = pw2.length > 0 && pw === pw2;
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const next: typeof errors = {};
     if (!pw) next.newPassword = AUTH.required;
@@ -65,7 +65,7 @@ function PasswordResetForm() {
     try {
       const normalized = normalizeEmail(email);
       await resetPassword({ email: normalized, newPassword: pw, newPasswordConfirm: pw2 });
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
       openLogin({ tab: 'login', notice: AUTH.resetDone, email: normalized });
     } catch (err) {
       setPw('');

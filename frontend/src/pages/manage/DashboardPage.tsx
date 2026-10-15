@@ -9,7 +9,7 @@ import { formatDate } from '../../lib/format';
 import { MANAGE } from '../../messages';
 import { ViewsChart } from './charts';
 
-function StatCard({ label, value }: { label: string; value: CountTriple }) {
+function StatCard({ label, value }: Readonly<{ label: string; value: CountTriple }>) {
   return (
     <div className="stat-card">
       <p className="stat-card__label">{label}</p>

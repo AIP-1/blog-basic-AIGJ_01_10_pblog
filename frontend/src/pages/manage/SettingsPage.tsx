@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type SubmitEvent } from 'react';
 import { errorMessage, isApiError } from '../../api/client';
 import { getBlog, getBlogAbout, updateBlog } from '../../api/endpoints';
 import { qk, useConfig, useTopics } from '../../api/queries';
@@ -33,7 +33,7 @@ export function SettingsPage() {
   return <SettingsForm key={JSON.stringify(initial)} blogId={blogId} initial={initial} />;
 }
 
-function SettingsForm({ blogId, initial }: { blogId: number; initial: Values }) {
+function SettingsForm({ blogId, initial }: Readonly<{ blogId: number; initial: Values }>) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const topics = useTopics();
@@ -54,7 +54,7 @@ function SettingsForm({ blogId, initial }: { blogId: number; initial: Values }) 
     setErrors((e) => ({ ...e, [k]: undefined }));
   };
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const errs: typeof errors = {};
     const name = v.name.trim();

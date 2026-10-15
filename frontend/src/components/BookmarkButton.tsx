@@ -5,7 +5,7 @@ import { BOOKMARK } from '../messages';
 import { BookmarkDialog } from './BookmarkDialog';
 
 /** 책갈피 (데모 '저장'). 글 아래 공유 버튼 옆에 있고, 누르면 폴더를 고르는 창이 뜬다. 내 책갈피(/bookmarks)에 모인다 */
-export function BookmarkButton({ post }: { post: PostDetail }) {
+export function BookmarkButton({ post }: Readonly<{ post: PostDetail }>) {
   const requireLogin = useRequireLogin();
   const [open, setOpen] = useState(false);
   const on = !!post.bookmarkedByMe;

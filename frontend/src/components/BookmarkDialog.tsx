@@ -11,7 +11,7 @@ import { Modal } from './Modal';
  * 책갈피 창 (데모 '어디에 저장할까요?'): 폴더 고르기, 새 폴더 만들기.
  * 이미 꽂은 글이면 다른 폴더로 옮기거나 책갈피를 뺀다.
  */
-export function BookmarkDialog({ post, onClose }: { post: PostDetail; onClose: () => void }) {
+export function BookmarkDialog({ post, onClose }: Readonly<{ post: PostDetail; onClose: () => void }>) {
   const queryClient = useQueryClient();
   const { limits } = useConfig();
   const saved = post.bookmarkedByMe ? (post.bookmark ?? { folderId: null, folderName: null }) : null;

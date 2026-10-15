@@ -3,7 +3,7 @@ import { useTrending } from '../api/queries';
 import type { TrendingItem } from '../api/types';
 import { formatTime } from '../lib/format';
 
-function ChangeBadge({ item }: { item: TrendingItem }) {
+function ChangeBadge({ item }: Readonly<{ item: TrendingItem }>) {
   switch (item.change) {
     case 'UP':
       return (
@@ -35,7 +35,7 @@ interface TrendingListProps {
 }
 
 /** 실시간 인기 검색어 1~10위 (3.8). 순위가 바뀐 항목은 위아래로 부드럽게 움직인다. */
-export function TrendingList({ onSelect, title = '실시간 인기 검색어', className }: TrendingListProps) {
+export function TrendingList({ onSelect, title = '실시간 인기 검색어', className }: Readonly<TrendingListProps>) {
   const { data, isPending, isError } = useTrending();
   const listRef = useRef<HTMLOListElement>(null);
   const positions = useRef(new Map<string, number>());
@@ -60,31 +60,32 @@ export function TrendingList({ onSelect, title = '실시간 인기 검색어', c
     positions.current = next;
   }, [data]);
 
+  const renderBody = () => {
+    if (isPending) return <p className="trend__empty">불러오는 중…</p>;
+    if (isError) return <p className="trend__empty">순위를 불러오지 못했습니다</p>;
+    if (data.items.length === 0) return <p className="trend__empty">아직 인기 검색어가 없습니다</p>;
+    return (
+      <ol className="trend__list" ref={listRef}>
+        {data.items.map((item) => (
+          <li key={item.keyword} data-keyword={item.keyword} className="trend__item">
+            <button type="button" className="trend__btn" onMouseDown={(e) => e.preventDefault()} onClick={() => onSelect(item.keyword)}>
+              <span className={`trend__rank${item.rank <= 3 ? ' is-top' : ''}`}>{item.rank}</span>
+              <span className="trend__keyword">{item.keyword}</span>
+              <ChangeBadge item={item} />
+            </button>
+          </li>
+        ))}
+      </ol>
+    );
+  };
+
   return (
-    <section className={`trend${className ? ` ${className}` : ''}`} aria-label={title}>
+    <section className={className ? `trend ${className}` : 'trend'} aria-label={title}>
       <div className="trend__head">
         <h3 className="trend__title">{title}</h3>
         {data?.updatedAt && <span className="trend__time">{formatTime(data.updatedAt)} 기준</span>}
       </div>
-      {isPending ? (
-        <p className="trend__empty">불러오는 중…</p>
-      ) : isError ? (
-        <p className="trend__empty">순위를 불러오지 못했습니다</p>
-      ) : data.items.length === 0 ? (
-        <p className="trend__empty">아직 인기 검색어가 없습니다</p>
-      ) : (
-        <ol className="trend__list" ref={listRef}>
-          {data.items.map((item) => (
-            <li key={item.keyword} data-keyword={item.keyword} className="trend__item">
-              <button type="button" className="trend__btn" onMouseDown={(e) => e.preventDefault()} onClick={() => onSelect(item.keyword)}>
-                <span className={`trend__rank${item.rank <= 3 ? ' is-top' : ''}`}>{item.rank}</span>
-                <span className="trend__keyword">{item.keyword}</span>
-                <ChangeBadge item={item} />
-              </button>
-            </li>
-          ))}
-        </ol>
-      )}
+      {renderBody()}
     </section>
   );
 }

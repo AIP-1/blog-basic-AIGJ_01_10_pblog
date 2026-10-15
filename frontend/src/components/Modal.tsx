@@ -10,7 +10,7 @@ interface ModalProps {
 }
 
 /** 바깥을 누르거나 × · Esc 로 닫히는 창 (요구사항.md 3.9) */
-export function Modal({ title, onClose, children, hideTitle, width = 'sm' }: ModalProps) {
+export function Modal({ title, onClose, children, hideTitle, width = 'sm' }: Readonly<ModalProps>) {
   const titleId = useId();
 
   useEffect(() => {

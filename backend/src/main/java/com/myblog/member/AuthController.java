@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 /** contracts/api.md '회원·인증'. */
 @RestController
 public class AuthController {
+    // 응답에서 회원 정보를 담는 이름
+    private static final String MEMBER = "member";
     public record VerificationRequest(String purpose, String email, String nickname) {}
 
     public record ConfirmRequest(String purpose, String email, String code) {}
@@ -116,14 +118,14 @@ public class AuthController {
     public Map<String, Object> login(@RequestBody LoginRequest req, HttpServletRequest httpReq,
                                      HttpServletResponse httpRes) {
         Member m = login.login(req.email(), req.password(), httpReq, httpRes);
-        return Map.of("member", memberView(m));
+        return Map.of(MEMBER, memberView(m));
     }
 
     @PostMapping("/api/auth/restore")
     public Map<String, Object> restore(@RequestBody LoginRequest req, HttpServletRequest httpReq,
                                        HttpServletResponse httpRes) {
         Member m = login.restore(req.email(), req.password(), httpReq, httpRes);
-        return Map.of("member", memberView(m));
+        return Map.of(MEMBER, memberView(m));
     }
 
     @PostMapping("/api/auth/logout")
@@ -146,7 +148,7 @@ public class AuthController {
             return ResponseEntity.noContent().build();
         }
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("member", memberView(member.get()));
+        body.put(MEMBER, memberView(member.get()));
         var blogId = blogs.blogIdOf(memberId);
         body.put("blog", blogId.map(id -> {
             var b = blogs.get(id);

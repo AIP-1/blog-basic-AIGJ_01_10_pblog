@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { errorMessage } from '../api/client';
 import { useMe } from '../api/queries';
@@ -65,9 +66,33 @@ export function ShopPage() {
 }
 
 /** 오른쪽: 잔액 · 연속 출석 · 잉크 모으는 법(오늘 받은 횟수) · 최근 내역 */
-function InkPanel({ wallet, loggedIn }: { wallet: InkWallet | undefined; loggedIn: boolean }) {
+function InkPanel({ wallet, loggedIn }: Readonly<{ wallet: InkWallet | undefined; loggedIn: boolean }>) {
   const { openLogin } = useAuth();
   const earn = wallet?.earn;
+  let historyContent: ReactNode;
+  if (!wallet) {
+    historyContent = <Loading />;
+  } else if (wallet.history.length === 0) {
+    historyContent = <p className="muted ink-history__empty">{SHOP.historyEmpty}</p>;
+  } else {
+    historyContent = (
+      <ul>
+        {wallet.history.map((e) => (
+          <li key={e.id}>
+            <span className="ink-history__what">
+              {SHOP.reasons[e.reason]}
+              {e.label && <span className="muted"> · {e.label}</span>}
+              <small className="muted">{formatRelative(e.createdAt)}</small>
+            </span>
+            <b className={e.amount > 0 ? 'ink-plus' : 'ink-minus'}>
+              {e.amount > 0 ? `+${e.amount}` : e.amount}
+            </b>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <aside className="shop__side">
       <section className="box ink-box">
@@ -111,33 +136,14 @@ function InkPanel({ wallet, loggedIn }: { wallet: InkWallet | undefined; loggedI
       {loggedIn && (
         <section className="box ink-history">
           <h2 className="box-title">{SHOP.historyTitle}</h2>
-          {!wallet ? (
-            <Loading />
-          ) : wallet.history.length === 0 ? (
-            <p className="muted ink-history__empty">{SHOP.historyEmpty}</p>
-          ) : (
-            <ul>
-              {wallet.history.map((e) => (
-                <li key={e.id}>
-                  <span className="ink-history__what">
-                    {SHOP.reasons[e.reason]}
-                    {e.label && <span className="muted"> · {e.label}</span>}
-                    <small className="muted">{formatRelative(e.createdAt)}</small>
-                  </span>
-                  <b className={e.amount > 0 ? 'ink-plus' : 'ink-minus'}>
-                    {e.amount > 0 ? `+${e.amount}` : e.amount}
-                  </b>
-                </li>
-              ))}
-            </ul>
-          )}
+          {historyContent}
         </section>
       )}
     </aside>
   );
 }
 
-function PacksTab({ loggedIn, balance }: { loggedIn: boolean; balance: number }) {
+function PacksTab({ loggedIn, balance }: Readonly<{ loggedIn: boolean; balance: number }>) {
   const packsQ = useQuery({ queryKey: shopKeys.packs, queryFn: getPacks });
   const challengesQ = useQuery({ queryKey: shopKeys.challenges, queryFn: getChallenges });
   const limited = (challengesQ.data ?? []).flatMap((c) => (c.rewardSticker ? [{ ...c.rewardSticker, from: c.title }] : []));
@@ -171,7 +177,7 @@ function PacksTab({ loggedIn, balance }: { loggedIn: boolean; balance: number })
   );
 }
 
-function PackCard({ pack, loggedIn, balance }: { pack: StickerPack; loggedIn: boolean; balance: number }) {
+function PackCard({ pack, loggedIn, balance }: Readonly<{ pack: StickerPack; loggedIn: boolean; balance: number }>) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { openLogin } = useAuth();
@@ -231,7 +237,7 @@ function PackCard({ pack, loggedIn, balance }: { pack: StickerPack; loggedIn: bo
   );
 }
 
-function MineTab({ loggedIn }: { loggedIn: boolean }) {
+function MineTab({ loggedIn }: Readonly<{ loggedIn: boolean }>) {
   const q = useQuery({ queryKey: shopKeys.mine, queryFn: getMyStickers, enabled: loggedIn });
   if (!loggedIn) return <Empty>{SHOP.mineLoggedOut}</Empty>;
   if (q.isPending) return <Loading />;
@@ -258,7 +264,7 @@ function MineTab({ loggedIn }: { loggedIn: boolean }) {
   );
 }
 
-function ChallengesTab({ loggedIn }: { loggedIn: boolean }) {
+function ChallengesTab({ loggedIn }: Readonly<{ loggedIn: boolean }>) {
   const q = useQuery({ queryKey: shopKeys.challenges, queryFn: getChallenges });
   if (q.isPending) return <Loading />;
   if (q.error) return <ErrorBox error={q.error} onRetry={() => void q.refetch()} />;
@@ -271,7 +277,7 @@ function ChallengesTab({ loggedIn }: { loggedIn: boolean }) {
   );
 }
 
-function ChallengeRow({ challenge: c, loggedIn }: { challenge: Challenge; loggedIn: boolean }) {
+function ChallengeRow({ challenge: c, loggedIn }: Readonly<{ challenge: Challenge; loggedIn: boolean }>) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const claim = useMutation({
@@ -283,8 +289,24 @@ function ChallengeRow({ challenge: c, loggedIn }: { challenge: Challenge; logged
     onError: (e) => toast.show(errorMessage(e), 'error'),
   });
   const pct = Math.round((c.progress / c.goal) * 100);
+  let stateClass = '';
+  if (c.claimed) stateClass = ' is-claimed';
+  else if (c.completed) stateClass = ' is-done';
+  let action: ReactNode;
+  if (c.claimed) {
+    action = <span className="challenge__state challenge__state--ok">✓ {SHOP.claimed}</span>;
+  } else if (c.completed && loggedIn) {
+    action = (
+      <button type="button" className="btn btn--sm btn--primary" disabled={claim.isPending} onClick={() => claim.mutate()}>
+        {SHOP.claim}
+      </button>
+    );
+  } else {
+    action = <span className="challenge__state">{SHOP.inProgress}</span>;
+  }
+
   return (
-    <li className={`challenge${c.claimed ? ' is-claimed' : c.completed ? ' is-done' : ''}`}>
+    <li className={`challenge${stateClass}`}>
       <div className="challenge__badge" aria-hidden="true">
         {c.rewardSticker ? <StickerImg code={c.rewardSticker.code} size={44} /> : <InkIcon size={26} />}
       </div>
@@ -305,15 +327,7 @@ function ChallengeRow({ challenge: c, loggedIn }: { challenge: Challenge; logged
         </span>
       </div>
       <div className="challenge__action">
-        {c.claimed ? (
-          <span className="challenge__state challenge__state--ok">✓ {SHOP.claimed}</span>
-        ) : c.completed && loggedIn ? (
-          <button type="button" className="btn btn--sm btn--primary" disabled={claim.isPending} onClick={() => claim.mutate()}>
-            {SHOP.claim}
-          </button>
-        ) : (
-          <span className="challenge__state">{SHOP.inProgress}</span>
-        )}
+        {action}
       </div>
     </li>
   );

@@ -6,7 +6,8 @@ export function charCount(s: string): number {
 }
 
 /** CF-01-2: 앞뒤 공백 제거 후 형식 검사 */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 도메인은 점으로 나뉜 조각으로 본다. 점이 연달아 오거나 끝에 오면 틀린 주소다 (서버 EmailNormalizer와 같다)
+const EMAIL_RE = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
