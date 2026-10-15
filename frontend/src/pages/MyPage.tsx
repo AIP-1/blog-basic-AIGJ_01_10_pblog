@@ -227,7 +227,7 @@ function MyPageForms({ profile }: Readonly<{ profile: MyProfile }>) {
       await withdraw({ password: wPw, acknowledged: true });
       allowNavigation();
       // 먼저 첫 화면으로 옮긴 뒤 로그아웃 상태로 바꾼다 (로그인 창이 뜨지 않게)
-      navigate("/", { replace: true });
+      void navigate("/", { replace: true });
       await doLogout();
       toast.show(ACCOUNT.withdrawn);
     } catch (err) {

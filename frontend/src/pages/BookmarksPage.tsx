@@ -198,7 +198,7 @@ function Bookmarks() {
           onSave={async (name) => {
             const f = await createBookmarkFolder(name);
             await refresh();
-            navigate(folderHref(String(f.id)));
+            void navigate(folderHref(String(f.id)));
           }}
         />
       )}
@@ -221,7 +221,7 @@ function Bookmarks() {
           onClose={() => setDeleting(false)}
           onOk={async () => {
             await deleteBookmarkFolder(curFolder.id);
-            navigate('/bookmarks');
+            void navigate('/bookmarks');
             await refresh();
             void queryClient.invalidateQueries({ queryKey: ['post'] });
           }}

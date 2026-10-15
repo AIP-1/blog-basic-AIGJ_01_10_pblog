@@ -65,7 +65,7 @@ function PasswordResetForm() {
     try {
       const normalized = normalizeEmail(email);
       await resetPassword({ email: normalized, newPassword: pw, newPasswordConfirm: pw2 });
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
       openLogin({ tab: 'login', notice: AUTH.resetDone, email: normalized });
     } catch (err) {
       setPw('');

@@ -74,7 +74,7 @@ function SocialSignupForm({ pending }: Readonly<{ pending: SocialPending }>) {
       await socialSignup({ nickname: nickname.trim() });
       await completeLogin();
       toast.show(SOCIAL_LOGIN.signupDone);
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
     } catch (err) {
       if (isApiError(err) && (err.code === 'NICKNAME_TAKEN' || err.fields.nickname)) {
         setNicknameError(err.fields.nickname ?? errorMessage(err));

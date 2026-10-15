@@ -44,7 +44,7 @@ export function UserMenu({ me }: Readonly<{ me: MeResponse }>) {
   const onLogout = async () => {
     setOpen(false);
     // 로그인이 필요한 화면이면 먼저 첫 화면으로 옮긴다 (CF-02-11)
-    if (isLoginRequiredPath(pathname)) navigate('/', { replace: true });
+    if (isLoginRequiredPath(pathname)) void navigate('/', { replace: true });
     await doLogout();
   };
 

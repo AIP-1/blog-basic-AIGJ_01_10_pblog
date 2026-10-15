@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 /** CF-01-2: 앞뒤 공백 제거, 대소문자 무시. */
 public final class EmailNormalizer {
-    private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@.]+(?:\\.[^\\s@.]+)+$");
 
     private EmailNormalizer() {}
 

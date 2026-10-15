@@ -442,7 +442,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
       void queryClient.invalidateQueries({ queryKey: qk.drafts });
       void queryClient.invalidateQueries({ queryKey: ['shop'] }); // 잉크 적립 알림 (InkWatcher)
       allowNavigation();
-      navigate(`/posts/${id}`, { replace: mode === 'edit' });
+      void navigate(`/posts/${id}`, { replace: mode === 'edit' });
     } catch (err) {
       // 저장에 실패해도 입력한 내용은 그대로 둔다 (CF-05-8)
       if (isNotFound(err)) {

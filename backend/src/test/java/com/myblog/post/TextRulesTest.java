@@ -3,7 +3,9 @@ package com.myblog.post;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.myblog.common.Texts;
 import com.myblog.common.error.ApiException;
+import com.myblog.member.EmailNormalizer;
 import com.myblog.search.KeywordQuery;
 import org.junit.jupiter.api.Test;
 
@@ -35,5 +37,30 @@ class TextRulesTest {
     void CF_11_9_specialCharactersEscaped() {
         var q = KeywordQuery.parse("100% a_b c\\d", 2, 50);
         assertThat(q.patterns()).containsExactly("%100\\%%", "%a\\_b%", "%c\\\\d%");
+    }
+
+    @Test
+    void horizontalRuleIsRemovedButNotAcrossLines() {
+        assertThat(ExcerptMaker.plain("위\n---\n아래")).isEqualTo("위 아래");
+        assertThat(ExcerptMaker.plain("위\n* * *  \n아래")).isEqualTo("위 아래");
+        // 긴 입력에서도 정규식이 스택을 넘치지 않는다
+        assertThat(ExcerptMaker.plain("-".repeat(100_000))).isEmpty();
+    }
+
+    @Test
+    void cutTreatsNullAsEmpty() {
+        assertThat(Texts.cut(null, 10)).isEmpty();
+        assertThat(Texts.cut("가나다라", 2)).isEqualTo("가나…");
+    }
+
+    @Test
+    void CF_01_2_emailFormat() {
+        assertThat(EmailNormalizer.normalize("  User@Example.CO.kr ")).isEqualTo("user@example.co.kr");
+        for (String bad : new String[] {"a@b", "a@b.", "a@.b.c", "a@b..c", "a b@c.d", "@b.c"}) {
+            assertThatThrownBy(() -> EmailNormalizer.normalize(bad)).as(bad).isInstanceOf(ApiException.class);
+        }
+        // 형식이 틀린 긴 입력도 바로 끝난다 (예전 식은 길이에 따라 느려졌다)
+        String slow = "a@" + "b".repeat(200) + "!";
+        assertThatThrownBy(() -> EmailNormalizer.normalize(slow)).isInstanceOf(ApiException.class);
     }
 }

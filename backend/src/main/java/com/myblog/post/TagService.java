@@ -9,12 +9,15 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
 /** 태그 (CF-20). */
 @Service
 public class TagService {
+    /** 태그에 쓸 수 없는 글자 (공백, 쉼표) */
+    private static final Pattern FORBIDDEN = Pattern.compile("[\\s,]");
     private final JdbcClient jdbc;
     private final MyBlogProperties.Tag rules;
 
@@ -35,7 +38,7 @@ public class TagService {
             if (name.isEmpty()) {
                 continue;
             }
-            if (Texts.length(name) > rules.maxLength() || name.matches(".*[\\s,].*")) {
+            if (Texts.length(name) > rules.maxLength() || FORBIDDEN.matcher(name).find()) {
                 throw ApiException.field("tags", Messages.TAG_RULE);
             }
             byKey.putIfAbsent(key(name), name);
