@@ -26,7 +26,7 @@ export function SearchBox({ initialQuery = '' }: Readonly<{ initialQuery?: strin
     setOpen(false);
     setHint(null);
     setValue(q);
-    navigate(`/search?q=${encodeURIComponent(q)}&type=all`);
+    void navigate(`/search?q=${encodeURIComponent(q)}&type=all`);
   };
 
   const onSubmit = (e: SubmitEvent<HTMLFormElement>) => {

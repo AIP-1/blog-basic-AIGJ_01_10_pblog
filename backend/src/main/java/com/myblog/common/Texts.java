@@ -14,7 +14,11 @@ public final class Texts {
         return s == null ? 0 : s.codePointCount(0, s.length());
     }
 
+    /** 최대 max자로 자르고 "…"를 붙인다. null은 빈 문자열로 본다. */
     public static String cut(String s, int max) {
+        if (s == null) {
+            return "";
+        }
         if (length(s) <= max) {
             return s;
         }

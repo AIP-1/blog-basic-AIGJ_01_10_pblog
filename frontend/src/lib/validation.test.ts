@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { charCount, checkPassword, isValidNickname, isValidPassword, isValidTag, normalizeTag, validateQuery } from './validation';
+import { charCount, checkPassword, isValidEmail, isValidNickname, isValidPassword, isValidTag, normalizeTag, validateQuery } from './validation';
 
 describe('입력 규칙', () => {
   it('CF-01-4 비밀번호: 영문·숫자·특수문자 포함 8~64자, 공백 불가', () => {
@@ -39,5 +39,14 @@ describe('입력 규칙', () => {
     expect(charCount('가나다')).toBe(3);
     expect(charCount('좋아요😀')).toBe(4);
     expect('좋아요😀'.length).toBe(5);
+  });
+});
+
+describe('이메일 형식 (CF-01-2, 서버 EmailNormalizer와 같은 규칙)', () => {
+  it('보통 주소는 받고, 도메인에 점이 없거나 비거나 겹치면 막는다', () => {
+    expect(isValidEmail(' user@example.co.kr ')).toBe(true);
+    for (const bad of ['a@b', 'a@b.', 'a@.b.c', 'a@b..c', 'a b@c.d', '@b.c']) {
+      expect(isValidEmail(bad), bad).toBe(false);
+    }
   });
 });
