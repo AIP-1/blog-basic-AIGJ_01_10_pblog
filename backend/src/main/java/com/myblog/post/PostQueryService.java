@@ -29,13 +29,22 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class PostQueryService {
+    // SQL 조각과 이름 붙은 매개변수
+    private static final String AND = " AND ";
+    private static final String WHERE = " WHERE ";
+    private static final String VIEWER = "viewer";
+    private static final String LIMIT = "limit";
+    private static final String SINCE = "since";
+    private static final String TITLE = "title";
+    private static final String TOPIC = "topic";
+    private static final String TOPIC_FILTER = " AND p.topic_id = :topic";
     public static final String ACTIVE_AUTHOR =
             "p.author_id NOT IN (SELECT wm.id FROM members wm WHERE wm.deleted_at IS NOT NULL)";
     /** 공개 다이어리의 글 (구독자만·비공개 다이어리가 아님) */
     static final String OPEN_CATEGORY =
             "p.category_id NOT IN (SELECT pc.id FROM categories pc WHERE pc.visibility <> 'PUBLIC')";
     /** 누구나 볼 수 있는 글. 다른 클래스에서도 posts 별칭 p에 붙여 쓴다. */
-    public static final String PUBLIC_ONLY = "p.visibility = 'PUBLIC' AND " + OPEN_CATEGORY + " AND " + ACTIVE_AUTHOR;
+    public static final String PUBLIC_ONLY = "p.visibility = 'PUBLIC' AND " + OPEN_CATEGORY + AND + ACTIVE_AUTHOR;
     /** :viewer가 구독자로서 볼 수 있는 글: 글과 다이어리가 비공개가 아니고, 그 블로그나 다이어리를 구독 중 */
     static final String SUBSCRIBER_VISIBLE = "(p.visibility <> 'PRIVATE'"
             + " AND p.category_id NOT IN (SELECT xc.id FROM categories xc WHERE xc.visibility = 'PRIVATE')"
@@ -54,6 +63,8 @@ public class PostQueryService {
              + 3 * (SELECT count(DISTINCT cm.author_id) FROM comments cm
                     WHERE cm.post_id = p.id AND cm.author_id <> p.author_id)
              + 4 * (SELECT count(*) FROM bookmarks bk WHERE bk.post_id = p.id AND bk.member_id <> p.author_id))""";
+    /** 인기순 정렬: 인기 점수, 같으면 최신순 */
+    private static final String POPULAR_ORDER = " ORDER BY " + POPULARITY + " DESC, p.created_at DESC, p.id DESC";
 
     public record PostRow(long id, long blogId, String blogName, long authorId, long categoryId, String categoryName,
                           int categoryColorIndex,
@@ -93,7 +104,7 @@ public class PostQueryService {
     /** 볼 수 없는 글은 없는 글과 같다: POST_NOT_FOUND (CF-09-4). */
     public PostRow requireVisible(long postId, Long viewer) {
         return jdbc.sql(SELECT + " WHERE p.id = :id AND " + VISIBLE_TO)
-                .param("id", postId).param("viewer", viewerParam(viewer))
+                .param("id", postId).param(VIEWER, viewerParam(viewer))
                 .query(PostRow.class).optional()
                 .orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
     }
@@ -113,7 +124,7 @@ public class PostQueryService {
         m.put("blog", Map.of("id", p.blogId(), "name", p.blogName()));
         m.put("topic", Map.of("id", p.topicId(), "code", p.topicCode(), "name", p.topicName()));
         m.put("category", Map.of("id", p.categoryId(), "name", p.categoryName(), "colorIndex", p.categoryColorIndex()));
-        m.put("title", p.title());
+        m.put(TITLE, p.title());
         m.put("excerpt", ExcerptMaker.excerpt(p.body(), props.post().excerptLength()));
         m.put("createdAt", p.createdAt());
         m.put("visibility", p.visibility());
@@ -138,17 +149,17 @@ public class PostQueryService {
                 .params(params).query(Long.class).single();
         return PageRequests.page(page, size, total, (limit, offset) -> {
             Map<String, Object> all = new LinkedHashMap<>(params);
-            all.put("limit", limit);
+            all.put(LIMIT, limit);
             all.put("offset", offset);
-            return jdbc.sql(SELECT + " WHERE " + where + order + " LIMIT :limit OFFSET :offset")
+            return jdbc.sql(SELECT + WHERE + where + order + " LIMIT :limit OFFSET :offset")
                     .params(all).query(PostRow.class).list();
         }).map(this::summary);
     }
 
     private List<Map<String, Object>> top(String where, Map<String, Object> params, int limit) {
         Map<String, Object> all = new LinkedHashMap<>(params);
-        all.put("limit", limit);
-        return jdbc.sql(SELECT + " WHERE " + where + ORDER + " LIMIT :limit").params(all)
+        all.put(LIMIT, limit);
+        return jdbc.sql(SELECT + WHERE + where + ORDER + " LIMIT :limit").params(all)
                 .query(PostRow.class).list().stream().map(this::summary).toList();
     }
 
@@ -160,7 +171,7 @@ public class PostQueryService {
                                                        Long viewer, Integer page) {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("blog", blogId);
-        params.put("viewer", viewerParam(viewer));
+        params.put(VIEWER, viewerParam(viewer));
         String where = "p.blog_id = :blog AND " + VISIBLE_TO;
         if (categoryId != null) {
             where += " AND p.category_id = :category";
@@ -172,7 +183,7 @@ public class PostQueryService {
             params.put("tag", tagKey);
         }
         String order = switch (sort == null ? "" : sort) {
-            case "popular" -> " ORDER BY " + POPULARITY + " DESC, p.created_at DESC, p.id DESC";
+            case "popular" -> POPULAR_ORDER;
             case "oldest" -> " ORDER BY p.created_at, p.id";
             default -> ORDER;
         };
@@ -183,7 +194,7 @@ public class PostQueryService {
     public List<Map<String, Object>> pinned(long blogId, Long viewer) {
         return jdbc.sql(SELECT + " WHERE p.blog_id = :blog AND p.pinned_at IS NOT NULL AND " + VISIBLE_TO
                         + " ORDER BY p.pinned_at, p.id")
-                .param("blog", blogId).param("viewer", viewerParam(viewer))
+                .param("blog", blogId).param(VIEWER, viewerParam(viewer))
                 .query(PostRow.class).list().stream().map(this::summary).toList();
     }
 
@@ -192,9 +203,9 @@ public class PostQueryService {
         return jdbc.sql("""
                 SELECT g.name, count(*) AS cnt
                 FROM post_tags pt JOIN tags g ON g.id = pt.tag_id JOIN posts p ON p.id = pt.post_id
-                WHERE p.blog_id = :blog AND """ + VISIBLE_TO + """
-                GROUP BY g.id, g.name ORDER BY cnt DESC, g.name LIMIT :limit""")
-                .param("blog", blogId).param("viewer", viewerParam(viewer)).param("limit", limit)
+                WHERE p.blog_id = :blog AND """ + VISIBLE_TO
+                + "GROUP BY g.id, g.name ORDER BY cnt DESC, g.name LIMIT :limit")
+                .param("blog", blogId).param(VIEWER, viewerParam(viewer)).param(LIMIT, limit)
                 .query((rs, i) -> Map.<String, Object>of("name", rs.getString("name"), "count", rs.getLong("cnt")))
                 .list();
     }
@@ -238,7 +249,7 @@ public class PostQueryService {
             conds.add("(p.title ILIKE :" + k + " ESCAPE '\\' OR p.body ILIKE :" + k + " ESCAPE '\\' OR c.name ILIKE :"
                     + k + " ESCAPE '\\' OR b.name ILIKE :" + k + " ESCAPE '\\' OR t.name ILIKE :" + k + " ESCAPE '\\')");
         }
-        return page(PUBLIC_ONLY + " AND " + String.join(" AND ", conds), params, page);
+        return page(PUBLIC_ONLY + AND + String.join(AND, conds), params, page);
     }
 
     public List<Map<String, Object>> latestPublic(int limit) {
@@ -246,12 +257,12 @@ public class PostQueryService {
     }
 
     public List<Map<String, Object>> latestPublicInTopic(long topicId, int limit) {
-        return top(PUBLIC_ONLY + " AND p.topic_id = :topic", Map.of("topic", topicId), limit);
+        return top(PUBLIC_ONLY + TOPIC_FILTER, Map.of(TOPIC, topicId), limit);
     }
 
     public long countPublicInTopic(long topicId) {
         return jdbc.sql("SELECT count(*) FROM posts p JOIN blogs b ON b.id = p.blog_id WHERE " + PUBLIC_ONLY
-                + " AND p.topic_id = :topic").param("topic", topicId).query(Long.class).single();
+                + TOPIC_FILTER).param(TOPIC, topicId).query(Long.class).single();
     }
 
     /** 오늘의 이슈: 대표 글을 최신순으로, 모자라면 최근 N일 조회수 많은 공개 글로 채운다 (research §12). */
@@ -260,8 +271,8 @@ public class PostQueryService {
         if (list.size() < limit) {
             List<Object> taken = list.stream().map(m -> m.get("id")).toList();
             var params = new LinkedHashMap<String, Object>();
-            params.put("since", popularSince.toLocalDate());
-            params.put("limit", limit - list.size());
+            params.put(SINCE, popularSince.toLocalDate());
+            params.put(LIMIT, limit - list.size());
             params.put("taken", taken.isEmpty() ? List.of(-1L) : taken);
             jdbc.sql(SELECT + " LEFT JOIN (SELECT post_id, sum(views) AS v FROM daily_stats WHERE post_id IS NOT NULL"
                             + " AND stat_date >= :since GROUP BY post_id) s ON s.post_id = p.id WHERE " + PUBLIC_ONLY
@@ -278,8 +289,8 @@ public class PostQueryService {
                 WHERE s.blog_id = :blog AND s.stat_date >= :since AND\s""" + PUBLIC_ONLY + """
 
                 GROUP BY p.id, p.title ORDER BY views DESC, p.id DESC LIMIT :limit""")
-                .param("blog", blogId).param("since", since).param("limit", limit)
-                .query((rs, i) -> Map.<String, Object>of("id", rs.getLong("id"), "title", rs.getString("title"),
+                .param("blog", blogId).param(SINCE, since).param(LIMIT, limit)
+                .query((rs, i) -> Map.<String, Object>of("id", rs.getLong("id"), TITLE, rs.getString(TITLE),
                         "viewCount", rs.getLong("views"))).list();
     }
 
@@ -295,10 +306,10 @@ public class PostQueryService {
         Map<String, Object> params = new LinkedHashMap<>();
         String where = PUBLIC_ONLY;
         if (topicId != null) {
-            where += " AND p.topic_id = :topic";
-            params.put("topic", topicId);
+            where += TOPIC_FILTER;
+            params.put(TOPIC, topicId);
         }
-        String order = "popular".equals(sort) ? " ORDER BY " + POPULARITY + " DESC, p.created_at DESC, p.id DESC" : ORDER;
+        String order = "popular".equals(sort) ? POPULAR_ORDER : ORDER;
         return page(where, params, page, order);
     }
 
@@ -308,11 +319,10 @@ public class PostQueryService {
         String where = PUBLIC_ONLY;
         if (since != null) {
             where += " AND p.created_at >= :since";
-            params.put("since", since);
+            params.put(SINCE, since);
         }
-        params.put("limit", limit);
-        return jdbc.sql(SELECT + " WHERE " + where + " ORDER BY " + POPULARITY + " DESC, p.created_at DESC, p.id DESC"
-                        + " LIMIT :limit").params(params)
+        params.put(LIMIT, limit);
+        return jdbc.sql(SELECT + WHERE + where + POPULAR_ORDER + " LIMIT :limit").params(params)
                 .query(PostRow.class).list().stream().map(this::summary).toList();
     }
 
@@ -322,7 +332,7 @@ public class PostQueryService {
      */
     public PageResponse<Map<String, Object>> bookmarks(long me, Long folderId, boolean noneOnly, Integer page) {
         Map<String, Object> params = new LinkedHashMap<>();
-        params.put("viewer", me);
+        params.put(VIEWER, me);
         String folder = "";
         if (noneOnly) {
             folder = " AND bm.folder_id IS NULL";
@@ -340,7 +350,7 @@ public class PostQueryService {
         }
         Map<Long, Map<String, Object>> saved = new LinkedHashMap<>();
         jdbc.sql("SELECT post_id, created_at, folder_id FROM bookmarks WHERE member_id = :viewer AND post_id IN (:ids)")
-                .param("viewer", me)
+                .param(VIEWER, me)
                 .param("ids", result.items().stream().map(m -> m.get("id")).toList())
                 .query((rs, i) -> {
                     Map<String, Object> m = new LinkedHashMap<>();
@@ -352,7 +362,7 @@ public class PostQueryService {
                 }).list();
         return result.map(m -> {
             Map<String, Object> out = new LinkedHashMap<>(m);
-            out.putAll(saved.getOrDefault((Long) m.get("id"), Map.of()));
+            out.putAll(saved.getOrDefault(m.get("id"), Map.of()));
             return out;
         });
     }
@@ -370,7 +380,7 @@ public class PostQueryService {
             default -> "(" + byBlog + " OR " + byDiary + ")";
         };
         // 구독자만 글도 구독 피드에는 나온다. 내 블로그·다이어리는 구독할 수 없어서 내 글은 섞이지 않는다.
-        return page(pick + " AND " + VISIBLE_TO, Map.of("viewer", me), page);
+        return page(pick + AND + VISIBLE_TO, Map.of(VIEWER, me), page);
     }
 
     /**
@@ -381,10 +391,10 @@ public class PostQueryService {
                         + " count(p.id) AS post_count, sum" + POPULARITY + " AS score,"
                         + " " + SubscriptionService.DIARY_SUBSCRIBERS + " AS subscriber_count"
                         + " FROM categories c JOIN blogs b ON b.id = c.blog_id JOIN posts p ON p.category_id = c.id"
-                        + " WHERE " + PUBLIC_ONLY
+                        + WHERE + PUBLIC_ONLY
                         + " GROUP BY c.id, c.name, c.color_index, b.id, b.name"
                         + " ORDER BY subscriber_count DESC, score DESC, post_count DESC, c.id LIMIT :limit")
-                .param("limit", limit)
+                .param(LIMIT, limit)
                 .query((rs, i) -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("id", rs.getLong("id"));

@@ -19,6 +19,31 @@ export function Header() {
   // 내 블로그 안의 화면(글 쓰기 제외)이면 '내 블로그'를 강조한다
   const onMyBlog = !!myBlog && (pathname === myBlog || pathname.startsWith(`${myBlog}/`));
 
+  const renderAuth = () => {
+    if (isPending) return null;
+    if (me) {
+      return (
+        <>
+          <Link to="/write" className="btn btn--sm btn--primary site-header__write">
+            글쓰기
+          </Link>
+          <UserMenu me={me} />
+          <InkWatcher />
+        </>
+      );
+    }
+    return (
+      <>
+        <button type="button" className="btn btn--sm btn--text" onClick={() => openLogin({ tab: 'login' })}>
+          로그인
+        </button>
+        <button type="button" className="btn btn--sm btn--primary" onClick={() => openLogin({ tab: 'signup' })}>
+          회원가입
+        </button>
+      </>
+    );
+  };
+
   return (
     <header className="site-header">
       <div className="site-header__bar container">
@@ -49,24 +74,7 @@ export function Header() {
         </div>
         <div className="site-header__auth">
           <ThemeToggle />
-          {isPending ? null : me ? (
-            <>
-              <Link to="/write" className="btn btn--sm btn--primary site-header__write">
-                글쓰기
-              </Link>
-              <UserMenu me={me} />
-              <InkWatcher />
-            </>
-          ) : (
-            <>
-              <button type="button" className="btn btn--sm btn--text" onClick={() => openLogin({ tab: 'login' })}>
-                로그인
-              </button>
-              <button type="button" className="btn btn--sm btn--primary" onClick={() => openLogin({ tab: 'signup' })}>
-                회원가입
-              </button>
-            </>
-          )}
+          {renderAuth()}
         </div>
       </div>
     </header>

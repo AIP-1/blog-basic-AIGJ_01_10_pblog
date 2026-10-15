@@ -5,7 +5,7 @@ import { categoryColor, formatDate, formatDateLong, formatRelative } from '../li
 import { POST, SUB_VIS } from '../messages';
 
 /** 블로그 카드: 주인 첫 글자 · 주제 · 이름 · 주인 · 소개 · 글 개수 · 최근 글 날짜 (3.2) */
-export function BlogCard({ blog }: { blog: BlogSummary }) {
+export function BlogCard({ blog }: Readonly<{ blog: BlogSummary }>) {
   return (
     <article className="blog-card">
       <Link to={`/blogs/${blog.id}`} className="blog-card__link">
@@ -39,7 +39,7 @@ const ICON_COMMENT = (
 );
 
 /** 좋아요 수 · 댓글 수 (작은 아이콘) */
-export function PostStats({ likes = 0, comments = 0 }: { likes?: number; comments?: number }) {
+export function PostStats({ likes = 0, comments = 0 }: Readonly<{ likes?: number; comments?: number }>) {
   return (
     <>
       <span className="stat" title={`좋아요 ${likes}`}>
@@ -58,7 +58,7 @@ export function PostStats({ likes = 0, comments = 0 }: { likes?: number; comment
  * 사진 자리: 대표 사진이 있으면 사진, 없으면 연한 회색 줄노트.
  * 인기 글·추천 글 카드처럼 사진 칸이 꼭 있어야 하는 곳에서 쓴다.
  */
-export function Thumb({ src, className = 'thumb' }: { src?: string | null; className?: string }) {
+export function Thumb({ src, className = 'thumb' }: Readonly<{ src?: string | null; className?: string }>) {
   if (src) {
     return (
       <span className={className}>
@@ -70,7 +70,7 @@ export function Thumb({ src, className = 'thumb' }: { src?: string | null; class
 }
 
 /** 다이어리 이름표: 표지 색 점 + 이름 */
-export function DiaryChip({ blogId, category }: { blogId: number; category: CategoryRef }) {
+export function DiaryChip({ blogId, category }: Readonly<{ blogId: number; category: CategoryRef }>) {
   return (
     <Link className="diary-chip" to={`/blogs/${blogId}?category=${category.id}`}>
       <span className="dot" style={{ background: categoryColor(category.colorIndex) }} aria-hidden="true" />
@@ -80,7 +80,7 @@ export function DiaryChip({ blogId, category }: { blogId: number; category: Cate
 }
 
 /** 글 공개 범위 표시: 비공개 · 구독자 공개 (데모 visBadge). 공개면 없다 */
-export function VisBadge({ visibility }: { visibility?: Visibility }) {
+export function VisBadge({ visibility }: Readonly<{ visibility?: Visibility }>) {
   if (visibility === 'PRIVATE') return <span className="badge badge--muted">{POST.privateBadge}</span>;
   if (visibility === 'SUBSCRIBERS') {
     return (
@@ -101,7 +101,7 @@ export function PostRow({
   blogId,
   showBlog = true,
   badge,
-}: {
+}: Readonly<{
   post: Pick<PostSummary, 'id' | 'title' | 'excerpt' | 'createdAt' | 'coverImageUrl' | 'likeCount' | 'commentCount'> & {
     blog?: BlogRef;
     category?: CategoryRef | null;
@@ -110,7 +110,7 @@ export function PostRow({
   blogId?: number;
   showBlog?: boolean;
   badge?: ReactNode;
-}) {
+}>) {
   const bid = post.blog?.id ?? blogId;
   return (
     <article className="row">

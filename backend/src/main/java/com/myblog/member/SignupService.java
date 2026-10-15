@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 /** 가입 (CF-01, CF-14, CF-03-2, CF-03-3). */
 @Service
 public class SignupService {
+    // 오류 details의 칸별 문구 이름과 이메일 칸 이름
+    private static final String FIELDS = "fields";
+    private static final String EMAIL = "email";
     public record Request(String nickname, String email, String password, String passwordConfirm) {}
 
     private final MemberRepository members;
@@ -42,7 +45,7 @@ public class SignupService {
     public void checkAvailable(String email, String nicknameRaw) {
         if (members.findByEmail(email).filter(Member::withdrawn).isPresent()) {
             throw ApiException.withDetails(ErrorCode.EMAIL_WITHDRAWN, ErrorCode.EMAIL_WITHDRAWN.message(),
-                    java.util.Map.of("fields", java.util.Map.of("email", ErrorCode.EMAIL_WITHDRAWN.message())));
+                    java.util.Map.of(FIELDS, java.util.Map.of(EMAIL, ErrorCode.EMAIL_WITHDRAWN.message())));
         }
         var taken = members.findByEmail(email);
         if (taken.isPresent() && !members.passwordSet(taken.get().id())) {
@@ -51,18 +54,18 @@ public class SignupService {
             if (provider.isPresent()) {
                 String message = Messages.socialEmailTaken(provider.get().displayName());
                 throw ApiException.withDetails(ErrorCode.EMAIL_TAKEN, message, java.util.Map.of(
-                        "fields", java.util.Map.of("email", message), "provider", provider.get().registrationId()));
+                        FIELDS, java.util.Map.of(EMAIL, message), "provider", provider.get().registrationId()));
             }
         }
         if (taken.isPresent()) {
             throw ApiException.withDetails(ErrorCode.EMAIL_TAKEN, ErrorCode.EMAIL_TAKEN.message(),
-                    java.util.Map.of("fields", java.util.Map.of("email", ErrorCode.EMAIL_TAKEN.message())));
+                    java.util.Map.of(FIELDS, java.util.Map.of(EMAIL, ErrorCode.EMAIL_TAKEN.message())));
         }
         if (nicknameRaw != null) {
             String nickname = nicknames.validate(nicknameRaw);
             if (members.existsByNicknameKey(NicknamePolicy.key(nickname), null)) {
                 throw ApiException.withDetails(ErrorCode.NICKNAME_TAKEN, ErrorCode.NICKNAME_TAKEN.message(),
-                        java.util.Map.of("fields", java.util.Map.of("nickname", ErrorCode.NICKNAME_TAKEN.message())));
+                        java.util.Map.of(FIELDS, java.util.Map.of("nickname", ErrorCode.NICKNAME_TAKEN.message())));
             }
         }
     }

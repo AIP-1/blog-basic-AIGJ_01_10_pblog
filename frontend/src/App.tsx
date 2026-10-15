@@ -5,7 +5,7 @@ import { ToastProvider } from './components/ToastProvider';
 
 type Router = ReturnType<typeof createBrowserRouter>;
 
-export function App({ queryClient, router }: { queryClient: QueryClient; router: Router }) {
+export function App({ queryClient, router }: Readonly<{ queryClient: QueryClient; router: Router }>) {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>

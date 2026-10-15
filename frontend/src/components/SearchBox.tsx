@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useConfig } from '../api/queries';
 import { validateQuery } from '../lib/validation';
 import { TrendingList } from './TrendingList';
 
 /** 검색창. 누르면 입력 전에도 인기 검색어 10개 상자가 펼쳐진다 (3.8). */
-export function SearchBox({ initialQuery = '' }: { initialQuery?: string }) {
+export function SearchBox({ initialQuery = '' }: Readonly<{ initialQuery?: string }>) {
   const navigate = useNavigate();
   const { limits } = useConfig();
   const [value, setValue] = useState(initialQuery);
@@ -29,7 +29,7 @@ export function SearchBox({ initialQuery = '' }: { initialQuery?: string }) {
     navigate(`/search?q=${encodeURIComponent(q)}&type=all`);
   };
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = validateQuery(value, limits.searchMin, limits.searchMax);
     if (err) {

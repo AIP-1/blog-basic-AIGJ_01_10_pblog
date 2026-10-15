@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { getNotices } from '../api/endpoints';
 import { qk } from '../api/queries';
@@ -17,6 +18,26 @@ export function NoticesPage() {
     placeholderData: (prev) => prev,
   });
 
+  let content: ReactNode;
+  if (isPending) {
+    content = <Loading />;
+  } else if (error) {
+    content = <ErrorBox error={error} onRetry={() => void refetch()} />;
+  } else if (data.items.length === 0) {
+    content = <Empty>{NOTICE.empty}</Empty>;
+  } else {
+    content = (
+      <>
+        <div className="row-list">
+          {data.items.map((p) => (
+            <PostRow key={p.id} post={p} showBlog={false} />
+          ))}
+        </div>
+        <Pagination page={data.page} totalPages={data.totalPages} onChange={(p) => setParams(p > 1 ? { page: String(p) } : {})} />
+      </>
+    );
+  }
+
   return (
     <div className="narrow">
       <header className="page-head">
@@ -24,22 +45,7 @@ export function NoticesPage() {
         <p className="page-head__desc">{NOTICE.desc}</p>
         {data && data.totalItems > 0 && <p className="page-head__meta">{EXPLORE.postCount(data.totalItems)}</p>}
       </header>
-      {isPending ? (
-        <Loading />
-      ) : error ? (
-        <ErrorBox error={error} onRetry={() => void refetch()} />
-      ) : data.items.length === 0 ? (
-        <Empty>{NOTICE.empty}</Empty>
-      ) : (
-        <>
-          <div className="row-list">
-            {data.items.map((p) => (
-              <PostRow key={p.id} post={p} showBlog={false} />
-            ))}
-          </div>
-          <Pagination page={data.page} totalPages={data.totalPages} onChange={(p) => setParams(p > 1 ? { page: String(p) } : {})} />
-        </>
-      )}
+      {content}
     </div>
   );
 }

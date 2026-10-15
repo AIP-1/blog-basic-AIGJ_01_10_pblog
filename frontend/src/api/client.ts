@@ -114,7 +114,9 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
     params.set(k, String(v));
   }
   const qs = params.toString();
-  return qs ? `${path}${path.includes('?') ? '&' : '?'}${qs}` : path;
+  if (!qs) return path;
+  const sep = path.includes('?') ? '&' : '?';
+  return `${path}${sep}${qs}`;
 }
 
 async function parseError(res: Response): Promise<ApiError> {
@@ -136,7 +138,9 @@ async function parseError(res: Response): Promise<ApiError> {
       rest,
     );
   }
-  const fallbackCode = res.status === 401 ? 'UNAUTHENTICATED' : res.status === 404 ? 'NOT_FOUND' : `HTTP_${res.status}`;
+  let fallbackCode = `HTTP_${res.status}`;
+  if (res.status === 401) fallbackCode = 'UNAUTHENTICATED';
+  else if (res.status === 404) fallbackCode = 'NOT_FOUND';
   return new ApiError(res.status, fallbackCode, ERROR_CODE_MESSAGES[fallbackCode] ?? COMMON.genericError);
 }
 

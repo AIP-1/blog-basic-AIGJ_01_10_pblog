@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { getStats } from '../../api/endpoints';
 import { qk } from '../../api/queries';
 import { ErrorBox, Loading } from '../../components/Status';
@@ -17,6 +17,42 @@ export function StatsPage() {
 
   const sum = (k: 'views' | 'visitors' | 'comments') => (data?.daily ?? []).reduce((s, d) => s + (d[k] ?? 0), 0);
 
+  let content: ReactNode;
+  if (isPending) {
+    content = <Loading />;
+  } else if (error) {
+    content = <ErrorBox error={error} onRetry={() => void refetch()} />;
+  } else if (data.daily.length === 0) {
+    content = <p className="muted">{MANAGE.noData}</p>;
+  } else {
+    content = (
+      <>
+        <div className="stat-grid">
+          <div className="stat-card">
+            <p className="stat-card__label">조회수 합계</p>
+            <p className="stat-card__value">{sum('views').toLocaleString()}</p>
+          </div>
+          <div className="stat-card">
+            <p className="stat-card__label">방문자 합계</p>
+            <p className="stat-card__value">{sum('visitors').toLocaleString()}</p>
+          </div>
+          <div className="stat-card">
+            <p className="stat-card__label">댓글 합계</p>
+            <p className="stat-card__value">{sum('comments').toLocaleString()}</p>
+          </div>
+        </div>
+        <section className="card section-card">
+          <h2 className="section-card__title">일별 조회수 · 방문자</h2>
+          <ViewsChart data={data.daily} height={260} />
+        </section>
+        <section className="card section-card">
+          <h2 className="section-card__title">일별 댓글 수</h2>
+          <CommentsChart data={data.daily} />
+        </section>
+      </>
+    );
+  }
+
   return (
     <div>
       <div className="page-head-row">
@@ -29,38 +65,7 @@ export function StatsPage() {
           ))}
         </div>
       </div>
-      {isPending ? (
-        <Loading />
-      ) : error ? (
-        <ErrorBox error={error} onRetry={() => void refetch()} />
-      ) : data.daily.length === 0 ? (
-        <p className="muted">{MANAGE.noData}</p>
-      ) : (
-        <>
-          <div className="stat-grid">
-            <div className="stat-card">
-              <p className="stat-card__label">조회수 합계</p>
-              <p className="stat-card__value">{sum('views').toLocaleString()}</p>
-            </div>
-            <div className="stat-card">
-              <p className="stat-card__label">방문자 합계</p>
-              <p className="stat-card__value">{sum('visitors').toLocaleString()}</p>
-            </div>
-            <div className="stat-card">
-              <p className="stat-card__label">댓글 합계</p>
-              <p className="stat-card__value">{sum('comments').toLocaleString()}</p>
-            </div>
-          </div>
-          <section className="card section-card">
-            <h2 className="section-card__title">일별 조회수 · 방문자</h2>
-            <ViewsChart data={data.daily} height={260} />
-          </section>
-          <section className="card section-card">
-            <h2 className="section-card__title">일별 댓글 수</h2>
-            <CommentsChart data={data.daily} />
-          </section>
-        </>
-      )}
+      {content}
     </div>
   );
 }

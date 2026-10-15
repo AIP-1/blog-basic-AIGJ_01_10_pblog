@@ -7,7 +7,7 @@ interface PaginationProps {
 }
 
 /** `‹ 1 2 ›` — 현재 페이지 강조, 처음·끝에서 이전/다음 비활성 (CF-10-3) */
-export function Pagination({ page, totalPages, onChange, window = 10 }: PaginationProps) {
+export function Pagination({ page, totalPages, onChange, window = 10 }: Readonly<PaginationProps>) {
   if (totalPages <= 1) return null;
   const current = Math.min(Math.max(1, page), totalPages);
   const start = Math.floor((current - 1) / window) * window + 1;

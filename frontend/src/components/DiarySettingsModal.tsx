@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { errorMessage, isApiError } from '../api/client';
 import { updateCategory } from '../api/endpoints';
 import { useConfig } from '../api/queries';
@@ -13,7 +13,7 @@ import { FieldError, FormMessage } from './Status';
 import { useToast } from './toastContext';
 
 /** 다이어리 설정: 이름 · 소개 · 표지 색 · 표지 스티커 · 공개 범위 */
-export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClose: () => void }) {
+export function DiarySettingsModal({ diary, onClose }: Readonly<{ diary: Category; onClose: () => void }>) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const { limits } = useConfig();
@@ -29,7 +29,7 @@ export function DiarySettingsModal({ diary, onClose }: { diary: Category; onClos
   const savedStickers = useDiaryStickers([diary.id])[diary.id];
   const [stickers, setStickers] = useState<DiarySticker[] | null>(null);
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const next: { name?: string; description?: string } = {};
     if (!name.trim()) next.name = CATEGORY.nameRequired;

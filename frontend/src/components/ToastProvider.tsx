@@ -7,7 +7,7 @@ interface Toast {
   kind: 'info' | 'error';
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function ToastProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
 

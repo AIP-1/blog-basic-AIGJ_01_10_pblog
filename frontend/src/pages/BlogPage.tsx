@@ -123,15 +123,17 @@ function DiaryHead({
   isOwner,
   editing,
   onEdit,
-}: {
+}: Readonly<{
   blogId: number;
   diary: Category;
   isOwner: boolean;
   editing: boolean;
   onEdit: (on: boolean) => void;
-}) {
+}>) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const note = diary.visibility === 'PRIVATE' ? ` · ${CATEGORY.privateNote}` : diary.visibility === 'SUBSCRIBERS' ? ` · ${SUB_VIS.diaryNote}` : '';
+  let note = '';
+  if (diary.visibility === 'PRIVATE') note = ` · ${CATEGORY.privateNote}`;
+  else if (diary.visibility === 'SUBSCRIBERS') note = ` · ${SUB_VIS.diaryNote}`;
   const coverStickers = useDiaryStickers([diary.id]);
   return (
     <section className="diary-head" style={{ ['--c' as string]: categoryColor(diary.colorIndex) }}>
@@ -179,7 +181,7 @@ function DiaryHead({
 }
 
 /** 블로그 첫 화면 위쪽 대표글 (최대 3개, 고정한 순서) */
-function PinnedPosts({ blogId, isOwner }: { blogId: string; isOwner: boolean }) {
+function PinnedPosts({ blogId, isOwner }: Readonly<{ blogId: string; isOwner: boolean }>) {
   const { data } = useQuery({
     queryKey: qk.pinned(blogId),
     queryFn: () => getPinnedPosts(blogId),
@@ -219,13 +221,13 @@ function DiaryEditList({
   others,
   page,
   onPage,
-}: {
+}: Readonly<{
   blogId: number;
   diary: Category;
   others: Category[];
   page: number;
   onPage: (p: number) => void;
-}) {
+}>) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [picked, setPicked] = useState<number[]>([]);
@@ -354,7 +356,7 @@ interface ListProps {
   onPage: (p: number) => void;
 }
 
-function BlogPostList({ blogId, isOwner, categoryId, title, tag, sort, page, onSort, onClearTag, onPage }: ListProps) {
+function BlogPostList({ blogId, isOwner, categoryId, title, tag, sort, page, onSort, onClearTag, onPage }: Readonly<ListProps>) {
   const { data, isPending, error, refetch } = useQuery({
     queryKey: qk.blogPosts(blogId, categoryId, page, tag, sort),
     queryFn: () => getBlogPosts(blogId, { categoryId, tag, sort, page }),

@@ -369,10 +369,10 @@ class SocialLoginIT extends IntegrationTest {
     @Test
     void v23MarksSocialSignupsFromBeforeV22AsPasswordUnset() throws Exception {
         // v1.8.0 소셜 가입: 회원과 연결이 같은 순간에 생겼지만 V22가 password_set = true로 채웠다
-        long social = signup("소셜", "social@example.com");
+        long socialId = signup("소셜", "social@example.com");
         jdbc.sql("""
                 INSERT INTO member_social_accounts (member_id, provider, provider_user_id, email, created_at)
-                SELECT id, 'KAKAO', 'k-old', email, created_at FROM members WHERE id = ?""").param(social).update();
+                SELECT id, 'KAKAO', 'k-old', email, created_at FROM members WHERE id = ?""").param(socialId).update();
         // 이메일로 가입하고 나중에 카카오를 연결한 회원
         long linked = signup("연결", "linked@example.com");
         jdbc.sql("""
@@ -385,7 +385,7 @@ class SocialLoginIT extends IntegrationTest {
                 .readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
         jdbc.sql(v23).update();
 
-        assertThat(members.passwordSet(social)).isFalse();
+        assertThat(members.passwordSet(socialId)).isFalse();
         assertThat(members.passwordSet(linked)).isTrue();
         assertThat(members.passwordSet(plain)).isTrue();
     }
@@ -397,14 +397,14 @@ class SocialLoginIT extends IntegrationTest {
                 INSERT INTO member_social_accounts (member_id, provider, provider_user_id, email, created_at)
                 SELECT id, 'KAKAO', 'k-linked', email, created_at + interval '1 hour' FROM members WHERE id = ?""")
                 .param(email).update();
-        long social = socialSignup(new SocialProfile(SocialProvider.GOOGLE, "g-1", "g@example.com", true, "구글"), "구글회원");
+        long socialId = socialSignup(new SocialProfile(SocialProvider.GOOGLE, "g-1", "g@example.com", true, "구글"), "구글회원");
 
         String v24 = new String(getClass().getResourceAsStream("/db/migration/V24__separate_signup_methods.sql")
                 .readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
         jdbc.sql(v24).update();
 
         assertThat(accounts.providersOf(email)).isEmpty();
-        assertThat(accounts.providersOf(social)).containsExactly(SocialProvider.GOOGLE);
+        assertThat(accounts.providersOf(socialId)).containsExactly(SocialProvider.GOOGLE);
     }
 
     @Test

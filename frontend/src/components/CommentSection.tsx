@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type SubmitEvent } from 'react';
 import { errorMessage, isApiError } from '../api/client';
 import { createComment, deleteComment, getComments } from '../api/endpoints';
 import { qk, useConfig, useMe } from '../api/queries';
@@ -21,7 +21,7 @@ function CommentForm({
   pending,
   onSubmit,
   onCancel,
-}: {
+}: Readonly<{
   label: string;
   placeholder: string;
   submitLabel: string;
@@ -29,14 +29,14 @@ function CommentForm({
   pending: boolean;
   onSubmit: (text: string) => Promise<unknown>;
   onCancel?: () => void;
-}) {
+}>) {
   const { limits } = useConfig();
   const requireLogin = useRequireLogin();
   const inputId = useId();
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const submit = (e: FormEvent) => {
+  const submit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const text = body.trim();
     if (!text) return setError(SOCIAL.commentRequired);
@@ -92,7 +92,7 @@ function CommentForm({
 }
 
 /** 댓글: 오래된 순, 답글 한 단계, 비회원 안내, 등록, 삭제 확인, 탈퇴한 사용자 (CF-18) */
-export function CommentSection({ post }: { post: PostDetail }) {
+export function CommentSection({ post }: Readonly<{ post: PostDetail }>) {
   const queryClient = useQueryClient();
   const { data: me } = useMe();
   const { openLogin } = useAuth();
@@ -138,6 +138,14 @@ export function CommentSection({ post }: { post: PostDetail }) {
     if (window.confirm(msg)) remove.mutate(c);
   };
 
+  const toggleReply = (id: number) => {
+    if (!me) {
+      openLogin();
+      return;
+    }
+    setReplyTo(replyTo === id ? null : id);
+  };
+
   const renderComment = (c: Comment, root?: Comment) => (
     <li key={c.id} id={`comment-${c.id}`} className={`comment${root ? ' comment--reply' : ''}`}>
       <div className="comment__head">
@@ -152,7 +160,7 @@ export function CommentSection({ post }: { post: PostDetail }) {
             <button
               type="button"
               className="link-btn comment__reply"
-              onClick={() => (me ? setReplyTo(replyTo === c.id ? null : c.id) : openLogin())}
+              onClick={() => toggleReply(c.id)}
             >
               답글
             </button>
@@ -186,6 +194,13 @@ export function CommentSection({ post }: { post: PostDetail }) {
     </li>
   );
 
+  const renderList = () => {
+    if (q.isPending) return <Loading />;
+    if (q.error) return <ErrorBox error={q.error} onRetry={() => void q.refetch()} />;
+    if (q.data.length === 0) return <p className="muted">아직 댓글이 없습니다</p>;
+    return <ul className="comment-list">{q.data.map((c) => renderComment(c))}</ul>;
+  };
+
   const count = q.data ? q.data.reduce((n, c) => n + 1 + (c.replies?.length ?? 0), 0) : post.commentCount;
 
   return (
@@ -194,15 +209,7 @@ export function CommentSection({ post }: { post: PostDetail }) {
         댓글 <span className="comments__count">{count}</span>
       </h2>
 
-      {q.isPending ? (
-        <Loading />
-      ) : q.error ? (
-        <ErrorBox error={q.error} onRetry={() => void q.refetch()} />
-      ) : q.data.length === 0 ? (
-        <p className="muted">아직 댓글이 없습니다</p>
-      ) : (
-        <ul className="comment-list">{q.data.map((c) => renderComment(c))}</ul>
-      )}
+      {renderList()}
 
       {me ? (
         <CommentForm

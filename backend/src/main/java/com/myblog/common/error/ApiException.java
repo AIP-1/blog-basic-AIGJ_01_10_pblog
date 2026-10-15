@@ -5,7 +5,8 @@ import java.util.Map;
 public class ApiException extends RuntimeException {
     private final ErrorCode code;
     private final Map<String, String> fields;
-    private final Map<String, Object> details;
+    // 직렬화하지 않는다. 오류 응답 JSON은 details()로 바로 만든다.
+    private final transient Map<String, Object> details;
 
     public ApiException(ErrorCode code) {
         this(code, code.message(), Map.of(), Map.of());

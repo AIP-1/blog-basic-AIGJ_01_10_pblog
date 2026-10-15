@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { errorMessage, isApiError } from "../api/client";
 import {
@@ -55,7 +55,7 @@ function lockedMessage(err: unknown): string {
   return errorMessage(err);
 }
 
-function MyPageForms({ profile }: { profile: MyProfile }) {
+function MyPageForms({ profile }: Readonly<{ profile: MyProfile }>) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
@@ -124,7 +124,7 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
   const dirty = profileChanged || cur !== "" || next !== "" || next2 !== "";
   const allowNavigation = useUnsavedChangesPrompt(dirty);
 
-  const onSaveProfile = async (e: FormEvent) => {
+  const onSaveProfile = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const errs: typeof profileErrors = {};
     if (!isValidNickname(nickname, limits.nicknameMin, limits.nicknameMax))
@@ -162,7 +162,7 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
     }
   };
 
-  const onChangePassword = async (e: FormEvent) => {
+  const onChangePassword = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const errs: typeof pwErrors = {};
     if (!cur) errs.currentPassword = AUTH.required;
@@ -206,7 +206,7 @@ function MyPageForms({ profile }: { profile: MyProfile }) {
     }
   };
 
-  const onWithdraw = async (e: FormEvent) => {
+  const onWithdraw = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!ack) return setWError(ACCOUNT.acknowledgeRequired);
     if (passwordSet && !wPw) return setWError(AUTH.required);
