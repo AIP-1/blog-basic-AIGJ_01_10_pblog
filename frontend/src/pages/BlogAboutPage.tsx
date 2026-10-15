@@ -11,7 +11,7 @@ export function BlogAboutPage() {
 }
 
 /** 블로그 첫 화면 위쪽 소개: 주인 이름 · 한 줄 소개 · 소개 글. 길면 접어 두고 "더보기"로 펼친다 (3.6) */
-export function BlogIntro({ blogId, isOwner }: { blogId: string; isOwner: boolean }) {
+export function BlogIntro({ blogId, isOwner }: Readonly<{ blogId: string; isOwner: boolean }>) {
   const { data } = useQuery({ queryKey: qk.blogAbout(blogId), queryFn: () => getBlogAbout(blogId) });
   const bodyRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);

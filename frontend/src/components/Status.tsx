@@ -11,7 +11,7 @@ export function Loading() {
   );
 }
 
-export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function ErrorBox({ error, onRetry }: Readonly<{ error: unknown; onRetry?: () => void }>) {
   return (
     <div className="status status--error" role="alert">
       <p>{errorMessage(error)}</p>
@@ -24,11 +24,11 @@ export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => v
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
+export function Empty({ children }: Readonly<{ children: ReactNode }>) {
   return <div className="empty">{children}</div>;
 }
 
-export function FieldError({ id, message }: { id?: string; message?: string | null }) {
+export function FieldError({ id, message }: Readonly<{ id?: string; message?: string | null }>) {
   if (!message) return null;
   return (
     <p id={id} className="field__error" role="alert">
@@ -37,7 +37,7 @@ export function FieldError({ id, message }: { id?: string; message?: string | nu
   );
 }
 
-export function FormMessage({ kind, message }: { kind: 'ok' | 'error' | 'info'; message?: string | null }) {
+export function FormMessage({ kind, message }: Readonly<{ kind: 'ok' | 'error' | 'info'; message?: string | null }>) {
   if (!message) return null;
   return (
     <p className={`form-msg form-msg--${kind}`} role={kind === 'error' ? 'alert' : 'status'}>

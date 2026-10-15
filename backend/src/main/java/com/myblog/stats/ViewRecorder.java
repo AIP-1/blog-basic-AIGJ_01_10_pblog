@@ -37,7 +37,7 @@ public class ViewRecorder {
         return memberId != null ? "m:" + memberId : "v:" + vid;
     }
 
-    public void record(PostRow post, Long viewerId, String vid) {
+    public void recordView(PostRow post, Long viewerId, String vid) {
         // 비공개 글은 세지 않는다. 구독자만 글은 구독자가 본 것을 센다.
         if ("PRIVATE".equals(post.visibility()) || (viewerId != null && viewerId == post.authorId())) {
             return;

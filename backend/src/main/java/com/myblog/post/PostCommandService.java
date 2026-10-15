@@ -23,8 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 /** 글 작성·수정·삭제 (CF-05, CF-13, CF-20, CF-22). */
 @Service
 public class PostCommandService {
-    /** draftId: 임시저장 글을 이어 써서 올리면, 올린 뒤 그 임시저장 글을 지운다 (새 글에만 쓴다). */
-    /** topicCode(분야)를 비우면 블로그의 주제로 쓴다. */
+    // 분류 입력 칸 이름 (응답에서도 같은 이름을 쓴다)
+    private static final String CATEGORY_ID = "categoryId";
+    /**
+     * draftId: 임시저장 글을 이어 써서 올리면, 올린 뒤 그 임시저장 글을 지운다 (새 글에만 쓴다).
+     * topicCode(분야)를 비우면 블로그의 주제로 쓴다.
+     */
     public record Request(String title, String body, Long categoryId, String topicCode, String visibility,
                           List<String> tags, List<Long> imageIds, Long coverImageId, Long draftId) {}
 
@@ -78,11 +82,11 @@ public class PostCommandService {
             throw ApiException.field("body", Messages.BODY_TOO_LONG);
         }
         if (req.categoryId() == null) {
-            throw ApiException.field("categoryId", Messages.CATEGORY_REQUIRED);
+            throw ApiException.field(CATEGORY_ID, Messages.CATEGORY_REQUIRED);
         }
         var category = categories.get(req.categoryId());
         if (category.blogId() != blogId) {
-            throw ApiException.field("categoryId", Messages.CATEGORY_REQUIRED);
+            throw ApiException.field(CATEGORY_ID, Messages.CATEGORY_REQUIRED);
         }
         long topicId = req.topicCode() == null || req.topicCode().isBlank()
                 ? jdbc.sql("SELECT topic_id FROM blogs WHERE id = ?").param(blogId).query(Long.class).single()
@@ -215,7 +219,7 @@ public class PostCommandService {
     public int movePosts(long blogId, long memberId, List<Long> postIds, Long categoryId) {
         List<Long> ids = requireOwnPosts(blogId, memberId, postIds);
         if (categoryId == null || categories.get(categoryId).blogId() != blogId) {
-            throw ApiException.field("categoryId", Messages.CATEGORY_REQUIRED);
+            throw ApiException.field(CATEGORY_ID, Messages.CATEGORY_REQUIRED);
         }
         int n = jdbc.sql("UPDATE posts SET category_id = :cat WHERE id IN (:ids)")
                 .param("cat", categoryId).param("ids", ids).update();
@@ -238,11 +242,10 @@ public class PostCommandService {
     /** 글쓰기 기본 분류: 마지막으로 쓴 글의 분류, 처음이면 기본 다이어리 (CF-05-5). */
     public Map<String, Long> lastCategory(long memberId) {
         long blogId = blogs.requireOwnBlogId(memberId);
-        Long id = jdbc.sql("""
-                SELECT category_id FROM posts WHERE blog_id = ? ORDER BY created_at DESC, id DESC LIMIT 1""")
+        Long id = jdbc.sql("SELECT category_id FROM posts WHERE blog_id = ? ORDER BY created_at DESC, id DESC LIMIT 1")
                 .param(blogId).query(Long.class).optional()
                 .orElseGet(() -> jdbc.sql("SELECT id FROM categories WHERE blog_id = ? AND is_default")
                         .param(blogId).query(Long.class).single());
-        return Map.of("categoryId", id);
+        return Map.of(CATEGORY_ID, id);
     }
 }

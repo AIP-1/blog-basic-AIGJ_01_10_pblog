@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class InkService {
+    // 원장 기록의 사유 컬럼·응답 이름
+    private static final String REASON = "reason";
     public static final String CHECKIN = "CHECKIN";
     public static final String POST = "POST";
     public static final String COMMENT = "COMMENT";
@@ -81,8 +83,8 @@ public class InkService {
     @Transactional
     public int debit(long memberId, int amount, String reason, String ref) {
         lockWallet(memberId);
-        int updated = jdbc.sql("""
-                UPDATE ink_wallets SET balance = balance - ?, updated_at = ? WHERE member_id = ? AND balance >= ?""")
+        int updated = jdbc.sql("UPDATE ink_wallets SET balance = balance - ?, updated_at = ?"
+                        + " WHERE member_id = ? AND balance >= ?")
                 .params(amount, clock.nowOffset(), memberId, amount).update();
         if (updated == 0) {
             throw new ApiException(ErrorCode.INSUFFICIENT_INK);
@@ -114,7 +116,7 @@ public class InkService {
 
     /** 하루 첫 출석. 오늘 이미 했으면 아무것도 주지 않는다. */
     @Transactional
-    public Map<String, Object> checkin(long memberId) {
+    public Map<String, Object> dailyCheckin(long memberId) {
         int earned = credit(memberId, rules.checkinInk(), CHECKIN, clock.today().toString(), 0);
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("earned", earned);
@@ -165,7 +167,7 @@ public class InkService {
         Map<String, Long> todayCounts = new LinkedHashMap<>();
         jdbc.sql("SELECT reason, count(*) AS n FROM ink_ledger_entries WHERE member_id = ? AND earned_on = ? GROUP BY reason")
                 .params(memberId, today)
-                .query((rs, i) -> todayCounts.put(rs.getString("reason"), rs.getLong("n"))).list();
+                .query((rs, i) -> todayCounts.put(rs.getString(REASON), rs.getLong("n"))).list();
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("balance", balance(memberId));
         m.put("checkedInToday", todayCounts.getOrDefault(CHECKIN, 0L) > 0);
@@ -190,7 +192,7 @@ public class InkService {
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("id", rs.getLong("id"));
                     row.put("amount", rs.getInt("amount"));
-                    row.put("reason", rs.getString("reason"));
+                    row.put(REASON, rs.getString(REASON));
                     row.put("label", rs.getString("label"));
                     row.put("createdAt", rs.getObject("created_at", OffsetDateTime.class));
                     return row;

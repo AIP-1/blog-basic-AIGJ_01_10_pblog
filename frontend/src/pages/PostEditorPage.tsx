@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type ChangeEvent, type SubmitEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { errorMessage, isApiError, isNotFound } from '../api/client';
 import {
@@ -43,7 +43,7 @@ function NoBlog() {
 }
 
 /** 새 글. "/write?draft=ID"면 그 임시저장 글을 불러와 이어 쓴다. */
-function CreateLoader({ me }: { me: MeResponse }) {
+function CreateLoader({ me }: Readonly<{ me: MeResponse }>) {
   const blogId = me.blog?.id;
   const [params] = useSearchParams();
   const draftParam = Number(params.get('draft'));
@@ -113,7 +113,7 @@ function CreateLoader({ me }: { me: MeResponse }) {
   );
 }
 
-function EditLoader({ me, postId }: { me: MeResponse; postId: string }) {
+function EditLoader({ me, postId }: Readonly<{ me: MeResponse; postId: string }>) {
   const blogId = me.blog?.id;
   const src = useQuery({ queryKey: qk.postEdit(postId), queryFn: () => getPostForEdit(postId), retry: false, staleTime: Infinity });
   const cats = useQuery({
@@ -173,7 +173,7 @@ interface EditorFormProps {
 type FieldKey = 'title' | 'body' | 'categoryId' | 'tags';
 
 /** 글쓰기·수정 (CF-05, CF-13-6, CF-20, CF-22) */
-function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, categories, initial }: EditorFormProps) {
+function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, categories, initial }: Readonly<EditorFormProps>) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { limits, draftLimit, draftAutosaveSeconds } = useConfig();
@@ -385,7 +385,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
     return e;
   };
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (busy.current) return; // 연타 방지 (CF-05-11)
     let finalTags = tags;
@@ -459,6 +459,37 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
       setSaving(false);
     }
   };
+
+  let submitLabel = mode === 'edit' ? '저장' : '올리기';
+  if (saving) submitLabel = '저장하는 중…';
+
+  let draftsContent: ReactNode;
+  if (drafts.isPending) {
+    draftsContent = <Loading />;
+  } else if (drafts.error) {
+    draftsContent = <ErrorBox error={drafts.error} onRetry={() => void drafts.refetch()} />;
+  } else if (drafts.data.items.length === 0) {
+    draftsContent = <p className="muted">{POST.draftNone}</p>;
+  } else {
+    draftsContent = (
+      <ul className="draft-list">
+        {drafts.data.items.map((d) => (
+          <li key={d.id} className={`draft-list__item${d.id === draftId ? ' is-current' : ''}`}>
+            <Link to={`/write?draft=${d.id}`} className="draft-list__open" onClick={() => setDraftsOpen(false)}>
+              <b>{d.title || POST.draftNoTitle}</b>
+              {d.preview && <span className="draft-list__preview">{d.preview}</span>}
+              <time className="muted" dateTime={d.updatedAt}>
+                {formatDateTime(d.updatedAt)}
+              </time>
+            </Link>
+            <button type="button" className="link-btn link-btn--danger" onClick={() => void removeDraft(d.id)}>
+              삭제
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
     <form className="editor" onSubmit={onSubmit} noValidate>
@@ -677,30 +708,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
 
       {draftsOpen && (
         <Modal title={`임시저장 글 ${drafts.data?.items.length ?? 0}/${drafts.data?.limit ?? draftLimit}`} onClose={() => setDraftsOpen(false)}>
-          {drafts.isPending ? (
-            <Loading />
-          ) : drafts.error ? (
-            <ErrorBox error={drafts.error} onRetry={() => void drafts.refetch()} />
-          ) : drafts.data.items.length === 0 ? (
-            <p className="muted">{POST.draftNone}</p>
-          ) : (
-            <ul className="draft-list">
-              {drafts.data.items.map((d) => (
-                <li key={d.id} className={`draft-list__item${d.id === draftId ? ' is-current' : ''}`}>
-                  <Link to={`/write?draft=${d.id}`} className="draft-list__open" onClick={() => setDraftsOpen(false)}>
-                    <b>{d.title || POST.draftNoTitle}</b>
-                    {d.preview && <span className="draft-list__preview">{d.preview}</span>}
-                    <time className="muted" dateTime={d.updatedAt}>
-                      {formatDateTime(d.updatedAt)}
-                    </time>
-                  </Link>
-                  <button type="button" className="link-btn link-btn--danger" onClick={() => void removeDraft(d.id)}>
-                    삭제
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          {draftsContent}
         </Modal>
       )}
 
@@ -718,7 +726,7 @@ function EditorForm({ mode, postId, draftId: initialDraftId = null, blogId, cate
           </button>
         )}
         <button type="submit" className="btn btn--primary" disabled={saving || uploading}>
-          {saving ? '저장하는 중…' : mode === 'edit' ? '저장' : '올리기'}
+          {submitLabel}
         </button>
       </div>
     </form>

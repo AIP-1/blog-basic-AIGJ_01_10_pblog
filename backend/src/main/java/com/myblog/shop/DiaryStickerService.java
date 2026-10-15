@@ -79,16 +79,7 @@ public class DiaryStickerService {
         if (list.size() > max) {
             throw new ApiException(ErrorCode.TOO_MANY_STICKERS, Messages.tooManyStickers(max), Map.of(), Map.of());
         }
-        Set<String> slots = new HashSet<>();
-        for (Placement p : list) {
-            if (p == null || p.slot() == null || !SLOTS.contains(p.slot()) || !slots.add(p.slot())) {
-                throw ApiException.field("stickers", Messages.STICKER_SLOT_INVALID);
-            }
-            int rotation = p.rotation() == null ? 0 : p.rotation();
-            if (!ROTATIONS.contains(rotation) || p.code() == null || p.code().isBlank()) {
-                throw ApiException.field("stickers", Messages.STICKER_SLOT_INVALID);
-            }
-        }
+        validatePlacements(list);
         Set<String> codes = list.stream().map(Placement::code).collect(Collectors.toSet());
         if (!stickers.ownsAll(memberId, codes)) {
             throw new ApiException(ErrorCode.STICKER_NOT_OWNED);
@@ -101,5 +92,19 @@ public class DiaryStickerService {
                     .params(categoryId, p.slot(), p.code(), p.rotation() == null ? 0 : p.rotation()).update();
         }
         return of(List.of(categoryId), memberId).getOrDefault(String.valueOf(categoryId), List.of());
+    }
+
+    /** 자리는 정해진 것 중 하나이고 겹치지 않아야 하며, 각도와 스티커 코드가 올바라야 한다 */
+    private static void validatePlacements(List<Placement> list) {
+        Set<String> slots = new HashSet<>();
+        for (Placement p : list) {
+            if (p == null || p.slot() == null || !SLOTS.contains(p.slot()) || !slots.add(p.slot())) {
+                throw ApiException.field("stickers", Messages.STICKER_SLOT_INVALID);
+            }
+            int rotation = p.rotation() == null ? 0 : p.rotation();
+            if (!ROTATIONS.contains(rotation) || p.code() == null || p.code().isBlank()) {
+                throw ApiException.field("stickers", Messages.STICKER_SLOT_INVALID);
+            }
+        }
     }
 }

@@ -51,7 +51,7 @@ export function mergeConfig(server: Partial<AppConfig> | null | undefined): AppC
   return {
     ...DEFAULT_CONFIG,
     ...server,
-    limits: { ...DEFAULT_CONFIG.limits, ...(server.limits ?? {}) },
+    limits: { ...DEFAULT_CONFIG.limits, ...server.limits },
     topics: server.topics && server.topics.length > 0 ? server.topics : DEFAULT_CONFIG.topics,
     socialLogin: Array.isArray(server.socialLogin) ? server.socialLogin : DEFAULT_CONFIG.socialLogin,
   };

@@ -28,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class DraftService {
+    // 컬럼·응답·입력 칸 이름
+    private static final String TITLE = "title";
+    private static final String UPDATED_AT = "updatedAt";
     public record Request(String title, String body, Long categoryId, String topicCode, String visibility,
                           List<String> tags, List<Long> imageIds, Long coverImageId) {}
 
@@ -51,14 +54,14 @@ public class DraftService {
     /** 최근에 저장한 것부터. 미리보기는 본문 앞부분. */
     public Map<String, Object> list(long memberId) {
         int excerpt = props.post().excerptLength();
-        List<Map<String, Object>> items = jdbc.sql("""
-                SELECT id, title, body, updated_at FROM drafts WHERE member_id = ? ORDER BY updated_at DESC, id DESC""")
+        List<Map<String, Object>> items = jdbc.sql("SELECT id, title, body, updated_at FROM drafts WHERE member_id = ?"
+                        + " ORDER BY updated_at DESC, id DESC")
                 .param(memberId).query((rs, i) -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("id", rs.getLong("id"));
-                    m.put("title", rs.getString("title"));
+                    m.put(TITLE, rs.getString(TITLE));
                     m.put("preview", ExcerptMaker.excerpt(rs.getString("body"), excerpt));
-                    m.put("updatedAt", rs.getObject("updated_at", OffsetDateTime.class));
+                    m.put(UPDATED_AT, rs.getObject("updated_at", OffsetDateTime.class));
                     return m;
                 }).list();
         return Map.of("items", items, "limit", props.draft().maxPerMember());
@@ -76,7 +79,7 @@ public class DraftService {
     private Map<String, Object> view(ResultSet rs, long memberId) throws SQLException {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", rs.getLong("id"));
-        m.put("title", rs.getString("title"));
+        m.put(TITLE, rs.getString(TITLE));
         m.put("body", rs.getString("body"));
         long categoryId = rs.getLong("category_id");
         m.put("categoryId", rs.wasNull() ? null : categoryId);
@@ -84,14 +87,13 @@ public class DraftService {
         m.put("visibility", rs.getString("visibility"));
         m.put("tags", Arrays.asList((String[]) array(rs.getArray("tags"))));
         Long[] imageIds = (Long[]) array(rs.getArray("image_ids"));
-        m.put("images", jdbc.sql("""
-                SELECT id, storage_key FROM post_images WHERE uploader_id = :me AND id IN (:ids) ORDER BY id""")
+        m.put("images", jdbc.sql("SELECT id, storage_key FROM post_images WHERE uploader_id = :me AND id IN (:ids) ORDER BY id")
                 .param("me", memberId).param("ids", imageIds.length == 0 ? List.of(-1L) : Arrays.asList(imageIds))
                 .query((r, i) -> Map.of("id", r.getLong("id"), "url", ImageService.url(r.getString("storage_key"))))
                 .list());
         long cover = rs.getLong("cover_image_id");
         m.put("coverImageId", rs.wasNull() ? null : cover);
-        m.put("updatedAt", rs.getObject("updated_at", OffsetDateTime.class));
+        m.put(UPDATED_AT, rs.getObject("updated_at", OffsetDateTime.class));
         return m;
     }
 
@@ -108,7 +110,7 @@ public class DraftService {
             throw ApiException.field("body", Messages.DRAFT_EMPTY);
         }
         if (Texts.length(title) > props.post().titleMax()) {
-            throw ApiException.field("title", Messages.TITLE_TOO_LONG);
+            throw ApiException.field(TITLE, Messages.TITLE_TOO_LONG);
         }
         if (Texts.length(body) > props.post().bodyMax()) {
             throw ApiException.field("body", Messages.BODY_TOO_LONG);
@@ -148,7 +150,7 @@ public class DraftService {
                 throw new ApiException(ErrorCode.DRAFT_NOT_FOUND);
             }
         }
-        return Map.of("id", draftId, "updatedAt", now);
+        return Map.of("id", draftId, UPDATED_AT, now);
     }
 
     /** 내 블로그의 분류만. 지워졌거나 남의 분류면 비운다. */

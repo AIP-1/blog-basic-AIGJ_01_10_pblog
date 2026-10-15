@@ -38,9 +38,9 @@ public class SearchService {
                 .params(q.normalized(), clock.nowOffset()).update();
         String t = type == null ? "all" : type;
         boolean all = t.equals("all");
-        PageResponse<Map<String, Object>> blogs = all || t.equals("blog") ? blogs(q, all ? 1 : page) : empty();
-        PageResponse<Map<String, Object>> found = all || t.equals("post") ? posts.search(q.patterns(), all ? 1 : page)
-                : empty();
+        PageResponse<Map<String, Object>> blogs = all || t.equals("blog") ? blogs(q, pageFor(all, page)) : empty();
+        PageResponse<Map<String, Object>> found = all || t.equals("post")
+                ? posts.search(q.patterns(), pageFor(all, page)) : empty();
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("query", q.normalized());
         m.put("type", t);
@@ -48,6 +48,11 @@ public class SearchService {
         m.put("blogs", blogs);
         m.put("posts", found);
         return m;
+    }
+
+    /** 전체 검색은 블로그·글 모두 첫 쪽만 보여 준다. */
+    private static int pageFor(boolean all, Integer page) {
+        return all ? 1 : page;
     }
 
     private static PageResponse<Map<String, Object>> empty() {

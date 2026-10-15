@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 /** 스티커 팩 목록 · 팩 사기 · 내 스티커. 팩은 한 번만 살 수 있고, 사면 팩의 스티커를 모두 가진다. */
 @Service
 public class StickerService {
+    // 한정 스티커 여부 (컬럼·응답 이름)
+    private static final String LIMITED = "limited";
     private final JdbcClient jdbc;
     private final InkService ink;
     private final KoreanClock clock;
@@ -33,7 +35,7 @@ public class StickerService {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("code", s.code());
         m.put("name", s.name());
-        m.put("limited", s.limited());
+        m.put(LIMITED, s.limited());
         return m;
     }
 
@@ -102,7 +104,7 @@ public class StickerService {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("code", rs.getString("code"));
                     m.put("name", rs.getString("name"));
-                    m.put("limited", rs.getBoolean("limited"));
+                    m.put(LIMITED, rs.getBoolean(LIMITED));
                     m.put("packName", rs.getString("pack_name"));
                     m.put("acquiredAt", rs.getObject("acquired_at", OffsetDateTime.class));
                     return m;

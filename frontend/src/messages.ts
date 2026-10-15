@@ -28,8 +28,10 @@ export const AUTH = {
     `로그인 시도가 5회 실패해 잠겼습니다. ${minutes}분 뒤에 다시 시도해 주세요`,
   resetSent: '입력하신 이메일로 안내를 보냈습니다. 10분 안에 인증번호를 입력해 주세요',
   resetDone: '비밀번호를 변경했습니다. 새 비밀번호로 로그인해 주세요',
-  restoreConfirm: (until: string | null) =>
-    `탈퇴 신청한 계정입니다.${until ? ` ${until}까지` : ''} 복구할 수 있습니다. 지금 복구하고 로그인할까요?`,
+  restoreConfirm: (until: string | null) => {
+    const untilText = until ? ` ${until}까지` : '';
+    return `탈퇴 신청한 계정입니다.${untilText} 복구할 수 있습니다. 지금 복구하고 로그인할까요?`;
+  },
   withdrawnNotRestored: '탈퇴 신청한 계정입니다. 복구하려면 다시 로그인해 주세요',
   // [추가]
   required: '필수 입력 항목입니다',

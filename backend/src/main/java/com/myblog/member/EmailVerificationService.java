@@ -37,6 +37,9 @@ public class EmailVerificationService {
     }
 
     private static final DateTimeFormatter DAY = DateTimeFormatter.BASIC_ISO_DATE;
+    // 인증됨 표시, 인증했던 적이 있다는 표시의 키 끝부분
+    private static final String VERIFIED = "verified";
+    private static final String CONFIRMED = "confirmed";
 
     private final StringRedisTemplate redis;
     private final RedisGuard guard;
@@ -89,19 +92,24 @@ public class EmailVerificationService {
                 redis.expire(dailyKey, java.time.Duration.ofHours(24));
             }
             // 새 번호를 받으면 이전 번호·틀린 횟수·인증됨 표시는 모두 무효 (CF-01-15, CF-01-19)
-            redis.delete(java.util.List.of(key(purpose, email, "fails"), key(purpose, email, "verified"),
-                    key(purpose, email, "confirmed")));
-            String code = null;
-            if (sendMail) {
-                code = generator.generate();
-                ops.set(key(purpose, email, "code"), code, rules.codeTtl());
-                var m = purpose == Purpose.SIGNUP ? templates.signupCode(code) : templates.resetCode(code);
-                mail.send(email, m.subject(), m.body());
-            } else {
-                redis.delete(key(purpose, email, "code"));
-            }
+            redis.delete(java.util.List.of(key(purpose, email, "fails"), key(purpose, email, VERIFIED),
+                    key(purpose, email, CONFIRMED)));
+            String code = issueCode(purpose, email, sendMail);
             return new Sent(clock.now().plus(rules.codeTtl()), code);
         });
+    }
+
+    /** 새 번호를 저장하고 메일로 보낸다. 보내지 않을 때는 남은 번호만 지우고 null을 돌려준다. */
+    private String issueCode(Purpose purpose, String email, boolean sendMail) {
+        if (!sendMail) {
+            redis.delete(key(purpose, email, "code"));
+            return null;
+        }
+        String code = generator.generate();
+        redis.opsForValue().set(key(purpose, email, "code"), code, rules.codeTtl());
+        var m = purpose == Purpose.SIGNUP ? templates.signupCode(code) : templates.resetCode(code);
+        mail.send(email, m.subject(), m.body());
+        return code;
     }
 
     public record Sent(Instant expiresAt, String code) {}
@@ -131,9 +139,9 @@ public class EmailVerificationService {
                 throw new ApiException(ErrorCode.CODE_MISMATCH);
             }
             redis.delete(java.util.List.of(codeKey, failsKey));
-            ops.set(key(purpose, email, "verified"), "1", rules.verifiedTtl());
+            ops.set(key(purpose, email, VERIFIED), "1", rules.verifiedTtl());
             // 인증했던 적이 있다는 표시: 시간이 지나 거절할 때 "인증 먼저"와 "시간 초과"를 나눈다
-            ops.set(key(purpose, email, "confirmed"), "1", java.time.Duration.ofHours(24));
+            ops.set(key(purpose, email, CONFIRMED), "1", java.time.Duration.ofHours(24));
             return clock.now().plus(rules.verifiedTtl());
         });
     }
@@ -141,10 +149,10 @@ public class EmailVerificationService {
     /** 가입·변경 직전 서버가 다시 확인한다 (CF-01-20, CF-25-5). 한 번 쓰면 지운다. */
     public void requireVerified(Purpose purpose, String email) {
         ErrorCode problem = guard.required(() -> {
-            if (Boolean.TRUE.equals(redis.hasKey(key(purpose, email, "verified")))) {
+            if (Boolean.TRUE.equals(redis.hasKey(key(purpose, email, VERIFIED)))) {
                 return null;
             }
-            return Boolean.TRUE.equals(redis.hasKey(key(purpose, email, "confirmed")))
+            return Boolean.TRUE.equals(redis.hasKey(key(purpose, email, CONFIRMED)))
                     ? ErrorCode.VERIFICATION_EXPIRED : ErrorCode.NOT_VERIFIED;
         });
         if (problem != null) {
@@ -154,7 +162,7 @@ public class EmailVerificationService {
 
     public void consume(Purpose purpose, String email) {
         guard.optional(() -> redis.delete(java.util.List.of(
-                key(purpose, email, "verified"), key(purpose, email, "confirmed"))));
+                key(purpose, email, VERIFIED), key(purpose, email, CONFIRMED))));
     }
 
     /** 같은 요청이 처리 중이면 거절한다 (CF-01-10). Redis가 없으면 DB 제약에 맡긴다. */

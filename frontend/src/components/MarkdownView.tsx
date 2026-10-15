@@ -19,9 +19,9 @@ const components: Components = {
 };
 
 /** 마크다운 본문. 원시 HTML 은 그리지 않는다 (skipHtml). */
-export function MarkdownView({ source, className }: { source: string; className?: string }) {
+export function MarkdownView({ source, className }: Readonly<{ source: string; className?: string }>) {
   return (
-    <div className={`markdown${className ? ` ${className}` : ''}`}>
+    <div className={className ? `markdown ${className}` : 'markdown'}>
       <Markdown remarkPlugins={[remarkGfm]} skipHtml urlTransform={safeUrlTransform} components={components}>
         {source}
       </Markdown>

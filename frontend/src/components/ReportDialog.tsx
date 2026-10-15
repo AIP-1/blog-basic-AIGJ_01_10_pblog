@@ -17,7 +17,7 @@ const REASONS: { value: ReportReason; label: string }[] = [
 ];
 
 /** 신고: 사유 하나 + 기타 설명 0~200자 (CF-21) */
-export function ReportDialog({ postId, onClose }: { postId: number; onClose: () => void }) {
+export function ReportDialog({ postId, onClose }: Readonly<{ postId: number; onClose: () => void }>) {
   const { limits } = useConfig();
   const toast = useToast();
   const detailId = useId();

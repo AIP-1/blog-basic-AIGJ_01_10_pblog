@@ -8,7 +8,7 @@ import { AuthContext, type AuthContextValue, type AuthModalState, type OpenLogin
 
 const CLOSED: AuthModalState = { open: false, tab: 'login', notice: null, email: '' };
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const queryClient = useQueryClient();
   const [modal, setModal] = useState<AuthModalState>(CLOSED);
   const pending = useRef<PendingAction | null>(null);

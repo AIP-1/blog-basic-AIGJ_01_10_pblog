@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type SubmitEvent } from 'react';
 import { errorMessage, isApiError } from '../../api/client';
 import { createCategory, deleteCategory, getCategories, moveCategory, renameCategory } from '../../api/endpoints';
 import { qk, useConfig } from '../../api/queries';
@@ -63,7 +63,7 @@ export function CategoriesPage() {
     }
   };
 
-  const onAdd = async (e: FormEvent) => {
+  const onAdd = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = nameError(newName, limits.categoryNameMax);
     if (err) {

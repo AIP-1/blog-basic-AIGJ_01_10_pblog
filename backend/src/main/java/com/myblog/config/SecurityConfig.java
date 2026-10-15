@@ -144,11 +144,13 @@ public class SecurityConfig {
         @Override
         public void saveAuthorizedClient(OAuth2AuthorizedClient client, Authentication principal,
                                          HttpServletRequest request, HttpServletResponse response) {
+            // 토큰을 보관하지 않으므로 저장하지 않는다.
         }
 
         @Override
         public void removeAuthorizedClient(String registrationId, Authentication principal,
                                            HttpServletRequest request, HttpServletResponse response) {
+            // 보관한 토큰이 없으므로 지울 것도 없다.
         }
     }
 

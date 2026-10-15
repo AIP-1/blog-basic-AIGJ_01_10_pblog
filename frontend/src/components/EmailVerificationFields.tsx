@@ -13,22 +13,27 @@ interface Props {
   hideSendButton?: boolean;
 }
 
+function sendLabel(v: Verification): string {
+  if (v.sending) return '보내는 중…';
+  return v.sent ? '인증번호 다시 받기' : '인증번호 받기';
+}
+
 /** 인증번호 받기 / 다시 받기 버튼 */
 export function SendCodeButton({
   verification: v,
   canSend,
   onSend,
   className = 'btn btn--outline btn--block',
-}: Pick<Props, 'verification' | 'canSend' | 'onSend'> & { className?: string }) {
+}: Readonly<Pick<Props, 'verification' | 'canSend' | 'onSend'> & { className?: string }>) {
   return (
     <button type="button" className={className} disabled={!canSend || v.sending} onClick={onSend}>
-      {v.sending ? '보내는 중…' : v.sent ? '인증번호 다시 받기' : '인증번호 받기'}
+      {sendLabel(v)}
     </button>
   );
 }
 
 /** 인증번호 받기 / 다시 받기 · 인증번호 입력 · 확인 */
-export function EmailVerificationFields({ verification: v, canSend, onSend, onConfirm, hideSendButton = false }: Props) {
+export function EmailVerificationFields({ verification: v, canSend, onSend, onConfirm, hideSendButton = false }: Readonly<Props>) {
   const codeId = useId();
   if (v.verified) {
     return <FormMessage kind="ok" message={v.message?.text} />;
