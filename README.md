@@ -285,6 +285,8 @@ cd frontend && npm install && npm run dev   # http://localhost:5173 (/api는 808
 
 ## 테스트
 
+테스트 도구 · 피라미드 · 단계별 실행 · AI와 일하는 규칙은 [TESTING.md](TESTING.md)에 정리했다. 핵심 흐름 3개는 Playwright 종단 테스트(`frontend/e2e`)로 확인한다.
+
 ```bash
 # 서버: PostgreSQL의 myblog_test DB와 Redis가 떠 있어야 한다
 createdb -h localhost -U myblog myblog_test
