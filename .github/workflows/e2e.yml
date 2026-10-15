@@ -1,0 +1,86 @@
+name: e2e
+
+# 종단(E2E) 테스트: 실제 이미지(화면 + 서버)를 PostgreSQL · Redis와 함께 띄우고 브라우저로 핵심 흐름을 확인한다.
+# 느려서 PR마다 돌리지 않고, develop · main에 들어온 뒤에 돌린다. E2E 파일을 고친 PR에서만 PR 때도 돌린다.
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    paths:
+      - "frontend/e2e/**"
+      - "frontend/playwright.config.ts"
+      - ".github/workflows/e2e.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: myblog
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: myblog_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U myblog" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 이미지 만들기
+        run: docker build -t myblog:e2e .
+
+      - name: 서버 띄우기
+        run: |
+          docker run -d --name myblog-e2e --network host \
+            -e DB_URL=jdbc:postgresql://localhost:5432/myblog_e2e \
+            -e DB_USERNAME=myblog -e DB_PASSWORD=e2e \
+            -e REDIS_HOST=localhost -e MYBLOG_MAIL_MODE=log -e SERVER_PORT=8080 \
+            myblog:e2e
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8080/api/topics >/dev/null && { echo "서버 준비됨"; exit 0; }
+            sleep 3
+          done
+          echo "::error::서버가 3분 안에 뜨지 않았어요"; docker logs --tail 100 myblog-e2e; exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: E2E 테스트
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:8080
+          CI: "1"
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+          npm run e2e
+
+      - name: 서버 로그
+        if: failure()
+        run: docker logs --tail 200 myblog-e2e || true
+
+      - name: 실패한 E2E 리포트 남기기 (화면 녹화 · 스크린샷 포함)
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 14
+          if-no-files-found: ignore
