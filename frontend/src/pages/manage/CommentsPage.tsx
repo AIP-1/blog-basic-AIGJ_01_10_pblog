@@ -57,6 +57,7 @@ export function CommentsPage() {
               <div className="mcomment__head">
                 {c.isNew && <span className="badge badge--new">NEW</span>}
                 {c.reply && <span className="badge badge--muted">답글</span>}
+                {c.secret && <span className="badge badge--muted">🔒 {SOCIAL.secretComment}</span>}
                 <span className={`comment__author${c.author ? '' : ' is-withdrawn'}`}>
                   {c.author ? c.author.nickname : SOCIAL.withdrawnUser}
                 </span>

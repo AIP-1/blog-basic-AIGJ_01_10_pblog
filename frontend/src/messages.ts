@@ -142,6 +142,9 @@ export const SOCIAL = {
   withdrawnUser: '탈퇴한 사용자',
   commentRequired: '댓글 내용을 입력해 주세요',
   commentTooLong: (max: number) => `댓글은 ${max}자 이하로 입력해 주세요`,
+  secretComment: '비밀 댓글',
+  secretCommentHidden: '비밀 댓글입니다',
+  secretReplyForced: '비밀 댓글에 다는 답글은 비밀 댓글이 됩니다',
   ownPost: '자기 글에는 할 수 없습니다',
   reportReasonRequired: '신고 사유를 골라 주세요',
 } as const;

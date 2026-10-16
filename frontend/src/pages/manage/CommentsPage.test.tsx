@@ -46,6 +46,16 @@ describe('댓글 관리', () => {
     await waitFor(() => expect(fetchMock.mock.calls.filter(([u]) => u === '/api/auth/me').length).toBeGreaterThan(1));
   });
 
+  it('비밀 댓글은 비밀 표시와 함께 내용까지 보여 준다', async () => {
+    mockFetch([
+      { path: '/api/auth/me', body: me },
+      { path: '/api/manage/comments', body: page([{ ...comments[0], secret: true, preview: '주인만 보세요' }]) },
+    ]);
+    renderAt();
+    expect(await screen.findByText('주인만 보세요')).toBeInTheDocument();
+    expect(screen.getByText('🔒 비밀 댓글')).toBeInTheDocument();
+  });
+
   it('삭제를 확인하면 그 댓글만 목록에서 뺀다 (답글이 아니면 답글도 지워질 수 있다고 묻는다)', async () => {
     const fetchMock = mockFetch([
       { path: '/api/auth/me', body: me },
