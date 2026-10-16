@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class CommentController {
-    public record CommentRequest(String body, Long parentId) {}
+    /** secret이 true면 비밀 댓글. 비우면 공개 댓글 */
+    public record CommentRequest(String body, Long parentId, Boolean secret) {}
 
     private final CommentService comments;
 
@@ -29,7 +30,7 @@ public class CommentController {
     @PostMapping("/api/posts/{postId}/comments")
     public ResponseEntity<Map<String, Object>> create(@PathVariable long postId, @AuthenticationPrincipal Long me,
                                                       @RequestBody CommentRequest req) {
-        return ResponseEntity.status(201).body(comments.create(postId, me, req.body(), req.parentId()));
+        return ResponseEntity.status(201).body(comments.create(postId, me, req.body(), req.parentId(), Boolean.TRUE.equals(req.secret())));
     }
 
     @DeleteMapping("/api/comments/{id}")

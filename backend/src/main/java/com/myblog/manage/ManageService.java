@@ -144,7 +144,7 @@ public class ManageService {
                 .param(blogId).query(Long.class).single();
         int preview = props.comment().previewLength();
         var result = PageRequests.page(page, props.post().pageSize(), total, (limit, offset) -> jdbc.sql("""
-                SELECT cm.id, cm.parent_id, CASE WHEN m.deleted_at IS NULL THEN cm.author_id END AS author_id, m.nickname, cm.body, cm.created_at, p.id AS post_id, p.title
+                SELECT cm.id, cm.parent_id, CASE WHEN m.deleted_at IS NULL THEN cm.author_id END AS author_id, m.nickname, cm.body, cm.created_at, cm.secret, p.id AS post_id, p.title
                 FROM comments cm JOIN posts p ON p.id = cm.post_id LEFT JOIN members m ON m.id = cm.author_id
                 WHERE p.blog_id = ? ORDER BY cm.created_at DESC, cm.id DESC LIMIT ? OFFSET ?""")
                 .params(blogId, limit, offset).query((rs, i) -> {
@@ -158,6 +158,7 @@ public class ManageService {
                     m.put("preview", Texts.cut(rs.getString("body").replaceAll("\\s+", " "), preview));
                     m.put("post", Map.of("id", rs.getLong("post_id"), TITLE, rs.getString(TITLE)));
                     m.put("reply", rs.getObject("parent_id") != null);
+                    m.put("secret", rs.getBoolean("secret")); // 블로그 주인은 비밀 댓글도 내용까지 본다
                     m.put("isNew", at.isAfter(seenAt) && (deleted || authorId != ownerId));
                     return m;
                 }).list());

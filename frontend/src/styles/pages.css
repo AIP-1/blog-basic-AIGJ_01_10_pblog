@@ -1541,6 +1541,12 @@
 .comment-form__foot .counter {
   margin-left: 0;
 }
+.comment-form__secret {
+  margin-right: auto;
+}
+.comment.is-hidden .comment__body {
+  color: var(--text-faint);
+}
 .comment-login {
   margin-top: 20px;
   padding: var(--gap-4);
