@@ -437,10 +437,16 @@ export interface Comment {
   id: number;
   /** null이면 원 댓글, 값이 있으면 그 원 댓글의 답글 (한 단계) */
   parentId: number | null;
+  /** hidden이면 null (탈퇴한 사용자도 null) */
   author: { nickname: string } | null;
-  body: string;
+  /** hidden이면 null */
+  body: string | null;
   createdAt: ISODateString;
   canDelete: boolean;
+  /** 비밀 댓글. 쓴 사람 · 블로그 주인 · 원 댓글을 쓴 사람만 내용을 본다 */
+  secret: boolean;
+  /** 비밀 댓글인데 내가 볼 수 없으면 true. 내용과 작성자가 오지 않는다 */
+  hidden: boolean;
   /** 원 댓글에만 있다. 오래된 순 */
   replies?: Comment[];
 }
@@ -523,6 +529,8 @@ export interface ManageCommentItem {
   post: { id: number; title: string };
   /** 답글이면 true */
   reply: boolean;
+  /** 비밀 댓글이면 true (블로그 주인은 내용까지 본다) */
+  secret: boolean;
   isNew: boolean;
 }
 

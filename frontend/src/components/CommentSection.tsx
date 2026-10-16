@@ -12,13 +12,19 @@ import { SOCIAL } from '../messages';
 import { ErrorBox, FieldError, Loading } from './Status';
 import { useToast } from './toastContext';
 
-/** 댓글 입력칸. 원 댓글과 답글이 같이 쓴다. */
+/** 비밀 댓글 표시 */
+function SecretBadge() {
+  return <span className="badge badge--muted comment__secret">🔒 {SOCIAL.secretComment}</span>;
+}
+
+/** 댓글 입력칸. 원 댓글과 답글이 같이 쓴다. secretLocked면 비밀 댓글로만 쓴다(비밀 댓글의 답글). */
 function CommentForm({
   label,
   placeholder,
   submitLabel,
   rows,
   pending,
+  secretLocked = false,
   onSubmit,
   onCancel,
 }: Readonly<{
@@ -27,13 +33,15 @@ function CommentForm({
   submitLabel: string;
   rows: number;
   pending: boolean;
-  onSubmit: (text: string) => Promise<unknown>;
+  secretLocked?: boolean;
+  onSubmit: (text: string, secret: boolean) => Promise<unknown>;
   onCancel?: () => void;
 }>) {
   const { limits } = useConfig();
   const requireLogin = useRequireLogin();
   const inputId = useId();
   const [body, setBody] = useState('');
+  const [secret, setSecret] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
@@ -43,9 +51,10 @@ function CommentForm({
     if (charCount(text) > limits.commentMax) return setError(SOCIAL.commentTooLong(limits.commentMax));
     if (pending) return;
     requireLogin(() =>
-      onSubmit(body).then(
+      onSubmit(body, secretLocked || secret).then(
         () => {
           setBody('');
+          setSecret(false);
           setError(null);
         },
         (err: unknown) => {
@@ -74,6 +83,15 @@ function CommentForm({
         }}
       />
       <div className="comment-form__foot">
+        <label className="checkbox comment-form__secret" title={secretLocked ? SOCIAL.secretReplyForced : undefined}>
+          <input
+            type="checkbox"
+            checked={secretLocked || secret}
+            disabled={secretLocked}
+            onChange={(e) => setSecret(e.target.checked)}
+          />
+          {SOCIAL.secretComment}
+        </label>
         <span className="counter">
           {charCount(body.trim())}/{limits.commentMax}
         </span>
@@ -118,7 +136,8 @@ export function CommentSection({ post }: Readonly<{ post: PostDetail }>) {
   };
 
   const add = useMutation({
-    mutationFn: ({ text, parentId }: { text: string; parentId?: number }) => createComment(post.id, text, parentId),
+    mutationFn: ({ text, parentId, secret }: { text: string; parentId?: number; secret: boolean }) =>
+      createComment(post.id, text, parentId, secret),
     onSuccess: (_data, vars) => {
       if (vars.parentId !== undefined) setReplyTo(null);
       changeCount(1);
@@ -146,17 +165,21 @@ export function CommentSection({ post }: Readonly<{ post: PostDetail }>) {
     setReplyTo(replyTo === id ? null : id);
   };
 
+  const authorName = (c: Comment) => {
+    if (c.author) return c.author.nickname;
+    return c.hidden ? SOCIAL.secretComment : SOCIAL.withdrawnUser;
+  };
+
   const renderComment = (c: Comment, root?: Comment) => (
-    <li key={c.id} id={`comment-${c.id}`} className={`comment${root ? ' comment--reply' : ''}`}>
+    <li key={c.id} id={`comment-${c.id}`} className={`comment${root ? ' comment--reply' : ''}${c.hidden ? ' is-hidden' : ''}`}>
       <div className="comment__head">
-        <span className={`comment__author${c.author ? '' : ' is-withdrawn'}`}>
-          {c.author ? c.author.nickname : SOCIAL.withdrawnUser}
-        </span>
+        <span className={`comment__author${c.author ? '' : ' is-withdrawn'}`}>{authorName(c)}</span>
+        {c.secret && !c.hidden && <SecretBadge />}
         <time className="comment__time" dateTime={c.createdAt}>
           {formatDateTime(c.createdAt)}
         </time>
         <span className="comment__actions">
-          {!root && (
+          {!root && !c.hidden && (
             <button
               type="button"
               className="link-btn comment__reply"
@@ -172,7 +195,7 @@ export function CommentSection({ post }: Readonly<{ post: PostDetail }>) {
           )}
         </span>
       </div>
-      <p className="comment__body">{c.body}</p>
+      <p className="comment__body">{c.hidden ? `🔒 ${SOCIAL.secretCommentHidden}` : c.body}</p>
       {!root && (c.replies?.length || replyTo === c.id) ? (
         <ul className="comment-replies">
           {c.replies?.map((r) => renderComment(r, c))}
@@ -184,7 +207,8 @@ export function CommentSection({ post }: Readonly<{ post: PostDetail }>) {
                 submitLabel="답글 등록"
                 rows={2}
                 pending={add.isPending}
-                onSubmit={(text) => add.mutateAsync({ text, parentId: c.id })}
+                secretLocked={c.secret}
+                onSubmit={(text, secret) => add.mutateAsync({ text, parentId: c.id, secret })}
                 onCancel={() => setReplyTo(null)}
               />
             </li>
@@ -218,7 +242,7 @@ export function CommentSection({ post }: Readonly<{ post: PostDetail }>) {
           submitLabel="댓글 등록"
           rows={3}
           pending={add.isPending}
-          onSubmit={(text) => add.mutateAsync({ text })}
+          onSubmit={(text, secret) => add.mutateAsync({ text, secret })}
         />
       ) : (
         <div className="comment-login">
