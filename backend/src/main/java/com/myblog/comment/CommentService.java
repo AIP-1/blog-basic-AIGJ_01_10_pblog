@@ -20,11 +20,15 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 블로그 글 댓글 (CF-18). 답글은 한 단계만 단다. */
+/**
+ * 블로그 글 댓글 (CF-18). 답글은 한 단계만 단다.
+ * 비밀 댓글(v1.11.0): 쓴 사람, 그 글의 블로그 주인, (답글이면) 원 댓글을 쓴 사람만 내용을 본다.
+ * 그 밖의 사람에게는 내용과 작성자를 빼고 "비밀 댓글"이라는 표시만 준다. 비밀 댓글에 단 답글은 늘 비밀이다.
+ */
 @Service
 public class CommentService {
     public record CommentRow(long id, long postId, Long parentId, Long authorId, String authorNickname, String body,
-                             OffsetDateTime createdAt, long blogOwnerId) {}
+                             OffsetDateTime createdAt, long blogOwnerId, boolean secret, Long parentAuthorId) {}
 
     private final JdbcClient jdbc;
     private final PostQueryService posts;
@@ -49,17 +53,31 @@ public class CommentService {
             SELECT cm.id, cm.post_id, cm.parent_id,
                    CASE WHEN m.deleted_at IS NULL THEN cm.author_id END AS author_id, -- 탈퇴 신청·익명화한 회원은 "탈퇴한 사용자"
                    m.nickname AS author_nickname, cm.body, cm.created_at,
-                   b.owner_id AS blog_owner_id
+                   b.owner_id AS blog_owner_id, cm.secret, pc.author_id AS parent_author_id
             FROM comments cm JOIN posts p ON p.id = cm.post_id JOIN blogs b ON b.id = p.blog_id
             LEFT JOIN members m ON m.id = cm.author_id
+            LEFT JOIN comments pc ON pc.id = cm.parent_id
             """;
+
+    /** 비밀 댓글의 내용을 볼 수 있는 사람인가. 공개 댓글은 누구나 본다. */
+    static boolean canRead(CommentRow c, Long viewer) {
+        if (!c.secret()) {
+            return true;
+        }
+        return viewer != null
+                && (viewer.equals(c.authorId()) || viewer == c.blogOwnerId() || viewer.equals(c.parentAuthorId()));
+    }
 
     static Map<String, Object> view(CommentRow c, Long viewer) {
         Map<String, Object> v = new LinkedHashMap<>();
+        boolean readable = canRead(c, viewer);
         v.put("id", c.id());
         v.put("parentId", c.parentId());
-        v.put("author", c.authorId() == null ? null : Map.of("id", c.authorId(), "nickname", c.authorNickname()));
-        v.put("body", c.body());
+        v.put("secret", c.secret());
+        v.put("hidden", !readable); // true면 내용 · 작성자를 보내지 않는다 (화면은 "비밀 댓글입니다")
+        v.put("author", !readable || c.authorId() == null ? null
+                : Map.of("id", c.authorId(), "nickname", c.authorNickname()));
+        v.put("body", readable ? c.body() : null);
         v.put("createdAt", c.createdAt());
         v.put("canDelete", viewer != null && (viewer.equals(c.authorId()) || viewer == c.blogOwnerId()));
         return v;
@@ -96,15 +114,17 @@ public class CommentService {
 
     /** 댓글과 잉크를 한 트랜잭션에 저장한다. 잉크 저장이 실패하면 댓글도 남지 않는다. */
     @Transactional
-    public Map<String, Object> create(long postId, long memberId, String rawBody, Long parentId) {
+    public Map<String, Object> create(long postId, long memberId, String rawBody, Long parentId, boolean secret) {
         var post = posts.requireVisible(postId, memberId);
         if (parentId != null) {
             // 같은 글의 원 댓글에만 답글을 단다 (답글의 답글은 안 됨)
-            boolean ok = jdbc.sql("SELECT count(*) FROM comments WHERE id = ? AND post_id = ? AND parent_id IS NULL")
-                    .params(parentId, postId).query(Long.class).single() > 0;
-            if (!ok) {
+            CommentRow parent = jdbc.sql(SELECT + " WHERE cm.id = ? AND cm.post_id = ? AND cm.parent_id IS NULL")
+                    .params(parentId, postId).query(CommentRow.class).optional().orElse(null);
+            // 내용을 볼 수 없는 비밀 댓글에는 답글을 달 수 없다. 있는지 없는지도 알리지 않으려고 같은 오류를 낸다
+            if (parent == null || !canRead(parent, memberId)) {
                 throw ApiException.field("parentId", Messages.REPLY_PARENT_NOT_FOUND);
             }
+            secret = secret || parent.secret(); // 비밀 댓글에 단 답글은 비밀
         }
         String body = rawBody == null ? "" : rawBody.strip();
         if (body.isEmpty()) {
@@ -119,8 +139,8 @@ public class CommentService {
             throw new ApiException(ErrorCode.COMMENT_TOO_SOON); // 5초 안에 다시 등록 (CF-18-7)
         }
         var keys = new GeneratedKeyHolder();
-        jdbc.sql("INSERT INTO comments (post_id, parent_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)")
-                .params(postId, parentId, memberId, body, clock.nowOffset()).update(keys, "id");
+        jdbc.sql("INSERT INTO comments (post_id, parent_id, author_id, body, created_at, secret) VALUES (?, ?, ?, ?, ?, ?)")
+                .params(postId, parentId, memberId, body, clock.nowOffset(), secret).update(keys, "id");
         long id = keys.getKey().longValue();
         ink.rewardComment(memberId, post.authorId(), id); // 스티커 상점: 다른 사람 글이면 잉크 (하루 한도)
         return view(jdbc.sql(SELECT + " WHERE cm.id = ?").param(id).query(CommentRow.class).single(), memberId);

@@ -173,10 +173,11 @@ export const getTagPosts = (name: string, page: number) =>
 
 /* 소통 */
 export const getComments = (postId: number) => api<Comment[]>(`/api/posts/${postId}/comments`);
-export const createComment = (postId: number, body: string, parentId?: number) =>
+/** secret은 true일 때만 보낸다 (빠지면 서버가 공개 댓글로 본다) */
+export const createComment = (postId: number, body: string, parentId?: number, secret = false) =>
   api<Comment | undefined>(`/api/posts/${postId}/comments`, {
     method: 'POST',
-    body: parentId === undefined ? { body } : { body, parentId },
+    body: { body, ...(parentId === undefined ? {} : { parentId }), ...(secret ? { secret } : {}) },
   });
 export const deleteComment = (id: number) => api<void>(`/api/comments/${id}`, { method: 'DELETE' });
 /** 책갈피에 꽂거나, 이미 꽂은 글이면 폴더만 옮긴다 (folderId null = 미분류) */
