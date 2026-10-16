@@ -59,6 +59,18 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
         with:
           projectBaseDir: .
+      # 실패하면 원인을 볼 수 있게 테스트 리포트를 남긴다 (Actions 실행 화면 아래 Artifacts, 14일 보관)
+      - name: 실패한 테스트 리포트 남기기
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: backend-test-reports
+          path: |
+            backend/build/reports/tests/test
+            backend/build/test-results/test
+            frontend/coverage
+          retention-days: 14
+          if-no-files-found: ignore
 
   frontend:
     runs-on: ubuntu-latest
@@ -75,5 +87,13 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm test -- --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml
       - run: npm run build
+      - name: 실패한 테스트 리포트 남기기
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-test-reports
+          path: frontend/test-results
+          retention-days: 14
+          if-no-files-found: ignore
