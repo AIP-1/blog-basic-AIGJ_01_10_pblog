@@ -21,7 +21,7 @@
 | 항목 | 내용 |
 |---|---|
 | 사이트 | **https://sagak.java21.net** |
-| 현재 버전 | v1.11.0 ([CHANGELOG](CHANGELOG.md)) |
+| 현재 버전 | v1.11.1 ([CHANGELOG](CHANGELOG.md)) |
 | 기간 | 2026.10.08 ~ 2026.10.16 |
 | 인원 | 4인 팀. 팀원 4명의 요구사항을 비교해 공통 기능을 함께 정하고([공통 요구사항](https://github.com/home-my-blog/docs/blob/main/docs/기획/요구사항-공통.md)), 구현은 각자 진행 |
 | 담당 | 사각의 기획 · 설계 · 백엔드 · 프론트엔드 · 배포 전부 |
