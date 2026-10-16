@@ -50,8 +50,8 @@ public class ChallengeService {
             case "comments-10" -> count("""
                     SELECT count(*) FROM comments c JOIN posts p ON p.id = c.post_id
                     WHERE c.author_id = ? AND p.author_id <> ?""", memberId, memberId);
-            case "likes-50" -> count("""
-                    SELECT count(*) FROM post_likes l JOIN posts p ON p.id = l.post_id WHERE p.author_id = ?""", memberId);
+            case "likes-50" -> count("SELECT count(*) FROM post_likes l JOIN posts p ON p.id = l.post_id"
+                    + " WHERE p.author_id = ?", memberId);
             case "diaries-3" -> count("""
                     SELECT count(*) FROM categories c JOIN blogs b ON b.id = c.blog_id
                     WHERE b.owner_id = ? AND NOT c.is_default""", memberId);

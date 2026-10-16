@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type SubmitEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { errorMessage, isApiError, isNotFound } from '../api/client';
 import { getSocialPending, socialSignup } from '../api/endpoints';
@@ -37,7 +37,7 @@ export function SocialSignupPage() {
   return <SocialSignupForm pending={data} />;
 }
 
-function SocialSignupForm({ pending }: { pending: SocialPending }) {
+function SocialSignupForm({ pending }: Readonly<{ pending: SocialPending }>) {
   const navigate = useNavigate();
   const toast = useToast();
   const { completeLogin } = useAuth();
@@ -54,10 +54,12 @@ function SocialSignupForm({ pending }: { pending: SocialPending }) {
 
   const providerName = SOCIAL_LOGIN.providerName[pending.provider] ?? pending.provider;
   const nicknameOk = isValidNickname(nickname, limits.nicknameMin, limits.nicknameMax);
-  const clientError = !nickname.trim() ? AUTH.required : nicknameOk ? null : AUTH.nicknameRule;
+  let clientError: string | null = null;
+  if (!nickname.trim()) clientError = AUTH.required;
+  else if (!nicknameOk) clientError = AUTH.nicknameRule;
   const shownError = nicknameError ?? (touched ? clientError : null);
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setTouched(true);
     if (clientError) {
@@ -72,7 +74,7 @@ function SocialSignupForm({ pending }: { pending: SocialPending }) {
       await socialSignup({ nickname: nickname.trim() });
       await completeLogin();
       toast.show(SOCIAL_LOGIN.signupDone);
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
     } catch (err) {
       if (isApiError(err) && (err.code === 'NICKNAME_TAKEN' || err.fields.nickname)) {
         setNicknameError(err.fields.nickname ?? errorMessage(err));

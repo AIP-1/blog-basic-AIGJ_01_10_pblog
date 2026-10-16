@@ -6,9 +6,11 @@ import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -29,7 +31,24 @@ public class ImageService {
 
     public record Uploaded(long id, String url) {}
 
-    public record Image(byte[] bytes, String contentType) {}
+    /** 사진 파일 내용. 배열은 기본 equals가 주소를 비교하므로 내용으로 비교하게 바꾼다. */
+    public record Image(byte[] bytes, String contentType) {
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Image other && Arrays.equals(bytes, other.bytes)
+                    && Objects.equals(contentType, other.contentType);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Arrays.hashCode(bytes) + Objects.hashCode(contentType);
+        }
+
+        @Override
+        public String toString() {
+            return "Image[" + (bytes == null ? 0 : bytes.length) + " bytes, " + contentType + "]";
+        }
+    }
 
     private final ImageStorage storage;
     private final JdbcClient jdbc;

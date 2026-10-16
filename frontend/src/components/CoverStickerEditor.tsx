@@ -15,6 +15,12 @@ import { SHOP } from '../messages';
 import { DiaryCover } from './BlogShell';
 import { StickerImg } from './Sticker';
 
+function rotationLabel(r: number): string {
+  if (r > 0) return `↻${r}°`;
+  if (r < 0) return `↺${-r}°`;
+  return '0°';
+}
+
 /**
  * 다이어리 설정의 표지 꾸미기: 큰 표지 위의 자리(점선 동그라미)를 고르고, 가진 스티커를 눌러 붙인다.
  * 자리마다 기울기를 고르거나 뗄 수 있다. 저장은 다이어리 설정의 '저장'과 함께 한다.
@@ -24,12 +30,12 @@ export function CoverStickerEditor({
   visibility,
   value,
   onChange,
-}: {
+}: Readonly<{
   colorIndex: number;
   visibility: Visibility;
   value: DiarySticker[];
   onChange: (next: DiarySticker[]) => void;
-}) {
+}>) {
   const mineQ = useQuery({ queryKey: shopKeys.mine, queryFn: getMyStickers });
   // 처음 고른 자리: 자리가 남았으면 빈 자리, 다 찼으면 첫 스티커 자리
   const [slot, setSlot] = useState<StickerSlot>(() =>
@@ -54,6 +60,34 @@ export function CoverStickerEditor({
   const remove = () => {
     onChange(value.filter((v) => v.slot !== slot));
     setWarn(false);
+  };
+
+  const renderOwned = () => {
+    if (mineQ.isPending) return null;
+    if (owned.length === 0) {
+      return (
+        <p className="cover-editor__empty muted">
+          {SHOP.coverEmpty} <Link to="/shop">{SHOP.coverGoShop}</Link>
+        </p>
+      );
+    }
+    return (
+      <ul className="cover-editor__stickers">
+        {owned.map((s) => (
+          <li key={s.code}>
+            <button
+              type="button"
+              className={current?.code === s.code ? 'is-on' : undefined}
+              title={s.name}
+              aria-label={s.name}
+              onClick={() => place(s.code)}
+            >
+              <StickerImg code={s.code} size={40} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   return (
@@ -100,33 +134,13 @@ export function CoverStickerEditor({
                 aria-pressed={current.rotation === r}
                 onClick={() => tilt(r)}
               >
-                {r > 0 ? `↻${r}°` : r < 0 ? `↺${-r}°` : '0°'}
+                {rotationLabel(r)}
               </button>
             ))}
           </div>
         )}
         {warn && <p className="cover-editor__warn">{SHOP.coverMax(STICKERS_PER_DIARY)}</p>}
-        {mineQ.isPending ? null : owned.length === 0 ? (
-          <p className="cover-editor__empty muted">
-            {SHOP.coverEmpty} <Link to="/shop">{SHOP.coverGoShop}</Link>
-          </p>
-        ) : (
-          <ul className="cover-editor__stickers">
-            {owned.map((s) => (
-              <li key={s.code}>
-                <button
-                  type="button"
-                  className={current?.code === s.code ? 'is-on' : undefined}
-                  title={s.name}
-                  aria-label={s.name}
-                  onClick={() => place(s.code)}
-                >
-                  <StickerImg code={s.code} size={40} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        {renderOwned()}
       </div>
     </div>
   );

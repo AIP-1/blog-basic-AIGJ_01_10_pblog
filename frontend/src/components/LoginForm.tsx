@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type SubmitEvent } from 'react';
 import { Link } from 'react-router';
 import { errorMessage, isApiError } from '../api/client';
 import { login, restoreAccount } from '../api/endpoints';
@@ -16,7 +16,7 @@ interface LoginFormProps {
 }
 
 /** 로그인 (CF-02): 실패 문구는 하나, 잠금이면 남은 시간 안내, "비밀번호를 잊으셨나요?" */
-export function LoginForm({ initialEmail = '', notice, onSuccess, onForgot }: LoginFormProps) {
+export function LoginForm({ initialEmail = '', notice, onSuccess, onForgot }: Readonly<LoginFormProps>) {
   const emailId = useId();
   const pwId = useId();
   const pwRef = useRef<HTMLInputElement>(null);
@@ -28,7 +28,7 @@ export function LoginForm({ initialEmail = '', notice, onSuccess, onForgot }: Lo
   const [submitting, setSubmitting] = useState(false);
   const busy = useRef(false);
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const next: { email?: string; password?: string } = {};
     if (!email.trim()) next.email = AUTH.required;

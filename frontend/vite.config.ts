@@ -30,6 +30,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // 종단 테스트(e2e/*.spec.ts)는 Playwright가 따로 돌린다
+    include: ['src/**/*.test.{ts,tsx}'],
     css: false,
     // SonarQube가 읽는 커버리지 보고서 (coverage/lcov.info). npm run test:coverage 로 만든다
     coverage: {

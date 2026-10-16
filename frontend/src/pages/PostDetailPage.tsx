@@ -49,7 +49,7 @@ export function PostDetailPage() {
       queryClient.removeQueries({ queryKey: qk.post(postId) });
       void queryClient.invalidateQueries({ queryKey: ['blog'] });
       void queryClient.invalidateQueries({ queryKey: ['manage'] });
-      navigate(blogId ? `/blogs/${blogId}` : '/', { replace: true });
+      void navigate(blogId ? `/blogs/${blogId}` : '/', { replace: true });
     },
     onError: (e) => toast.show(errorMessage(e), 'error'),
   });

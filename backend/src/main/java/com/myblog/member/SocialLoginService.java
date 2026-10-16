@@ -125,7 +125,7 @@ public class SocialLoginService {
     }
 
     /** 제공자 화면에서 취소하거나 실패했을 때. 탈퇴 확인 중이었다면 로그인은 그대로 두고 내 정보로 돌려보낸다 */
-    public String failed(HttpServletRequest req, HttpServletResponse res) {
+    public String failureRedirect(HttpServletRequest req, HttpServletResponse res) {
         var intent = withdrawIntent(req);
         if (intent.isPresent()) {
             req.getSession().removeAttribute(WITHDRAW_INTENT_ATTRIBUTE);

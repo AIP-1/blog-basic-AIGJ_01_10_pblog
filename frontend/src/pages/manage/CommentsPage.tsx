@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { errorMessage } from '../../api/client';
 import { deleteComment, getManageComments } from '../../api/endpoints';
@@ -41,51 +41,56 @@ export function CommentsPage() {
     onError: (e) => toast.show(errorMessage(e), 'error'),
   });
 
+  let content: ReactNode;
+  if (q.isPending) {
+    content = <Loading />;
+  } else if (q.error) {
+    content = <ErrorBox error={q.error} onRetry={() => void q.refetch()} />;
+  } else if (q.data.items.length === 0) {
+    content = <Empty>{MANAGE.noComments}</Empty>;
+  } else {
+    content = (
+      <>
+        <ul className="mcomment-list card">
+          {q.data.items.map((c) => (
+            <li key={c.id} className={`mcomment${c.isNew ? ' is-new' : ''}`}>
+              <div className="mcomment__head">
+                {c.isNew && <span className="badge badge--new">NEW</span>}
+                {c.reply && <span className="badge badge--muted">답글</span>}
+                <span className={`comment__author${c.author ? '' : ' is-withdrawn'}`}>
+                  {c.author ? c.author.nickname : SOCIAL.withdrawnUser}
+                </span>
+                <time className="comment__time" dateTime={c.createdAt}>
+                  {formatDateTime(c.createdAt)}
+                </time>
+                <button
+                  type="button"
+                  className="link-btn link-btn--danger mcomment__delete"
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    const msg = c.reply ? SOCIAL.commentDeleteConfirm : SOCIAL.commentDeleteMaybeRepliesConfirm;
+                    if (window.confirm(msg)) remove.mutate(c.id);
+                  }}
+                >
+                  삭제
+                </button>
+              </div>
+              <p className="mcomment__body">{c.preview}</p>
+              <Link to={`/posts/${c.post.id}#comment-${c.id}`} className="mcomment__post">
+                {c.post.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <Pagination page={q.data.page} totalPages={q.data.totalPages} onChange={(p) => setParams(p > 1 ? { page: String(p) } : {})} />
+      </>
+    );
+  }
+
   return (
     <div>
       <h1 className="page-title">댓글 관리</h1>
-      {q.isPending ? (
-        <Loading />
-      ) : q.error ? (
-        <ErrorBox error={q.error} onRetry={() => void q.refetch()} />
-      ) : q.data.items.length === 0 ? (
-        <Empty>{MANAGE.noComments}</Empty>
-      ) : (
-        <>
-          <ul className="mcomment-list card">
-            {q.data.items.map((c) => (
-              <li key={c.id} className={`mcomment${c.isNew ? ' is-new' : ''}`}>
-                <div className="mcomment__head">
-                  {c.isNew && <span className="badge badge--new">NEW</span>}
-                  {c.reply && <span className="badge badge--muted">답글</span>}
-                  <span className={`comment__author${c.author ? '' : ' is-withdrawn'}`}>
-                    {c.author ? c.author.nickname : SOCIAL.withdrawnUser}
-                  </span>
-                  <time className="comment__time" dateTime={c.createdAt}>
-                    {formatDateTime(c.createdAt)}
-                  </time>
-                  <button
-                    type="button"
-                    className="link-btn link-btn--danger mcomment__delete"
-                    disabled={remove.isPending}
-                    onClick={() => {
-                      const msg = c.reply ? SOCIAL.commentDeleteConfirm : SOCIAL.commentDeleteMaybeRepliesConfirm;
-                      if (window.confirm(msg)) remove.mutate(c.id);
-                    }}
-                  >
-                    삭제
-                  </button>
-                </div>
-                <p className="mcomment__body">{c.preview}</p>
-                <Link to={`/posts/${c.post.id}#comment-${c.id}`} className="mcomment__post">
-                  {c.post.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Pagination page={q.data.page} totalPages={q.data.totalPages} onChange={(p) => setParams(p > 1 ? { page: String(p) } : {})} />
-        </>
-      )}
+      {content}
     </div>
   );
 }

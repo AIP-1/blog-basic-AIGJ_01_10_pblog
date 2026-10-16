@@ -47,7 +47,7 @@ public class ShopController {
     /** 하루 첫 출석 (로그인한 화면이 하루 한 번 부른다). 이미 했으면 earned = 0 */
     @PostMapping("/api/shop/checkin")
     public Map<String, Object> checkin(@AuthenticationPrincipal Long me) {
-        return ink.checkin(required(me));
+        return ink.dailyCheckin(required(me));
     }
 
     /** 팩 목록: 누구나 볼 수 있다 */

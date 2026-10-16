@@ -8,7 +8,7 @@ import { SOCIAL } from '../messages';
 import { useToast } from './toastContext';
 
 /** 좋아요 누름/취소 (CF-19). 자기 글에는 누를 수 없다. */
-export function LikeButton({ post }: { post: PostDetail }) {
+export function LikeButton({ post }: Readonly<{ post: PostDetail }>) {
   const queryClient = useQueryClient();
   const requireLogin = useRequireLogin();
   const toast = useToast();

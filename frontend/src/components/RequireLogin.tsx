@@ -6,7 +6,7 @@ import { AUTH } from '../messages';
 import { Loading } from './Status';
 
 /** 로그인한 회원만 보는 화면. 비로그인이면 로그인 창을 띄운다 (CF-16-1, CF-15-2, BM-01-2). */
-export function RequireLogin({ children }: { children: (me: MeResponse) => ReactNode }) {
+export function RequireLogin({ children }: Readonly<{ children: (me: MeResponse) => ReactNode }>) {
   const { data: me, isPending } = useMe();
   const { openLogin } = useAuth();
   const loggedOut = !isPending && !me;

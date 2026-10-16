@@ -10,7 +10,7 @@ public final class ExcerptMaker {
     private static final Pattern LINK = Pattern.compile("\\[([^\\]]*)]\\([^)]*\\)");
     private static final Pattern LINE_PREFIX = Pattern.compile("(?m)^\\s{0,3}(#{1,6}\\s+|>\\s?|[-*+]\\s+|\\d+\\.\\s+)");
     private static final Pattern EMPHASIS = Pattern.compile("(\\*\\*|__|\\*|_|~~|`)");
-    private static final Pattern RULE = Pattern.compile("(?m)^\\s*([-*_]\\s*){3,}$");
+    private static final Pattern RULE = Pattern.compile("(?m)^[ \\t]*+(?:[-*_][ \\t]*+){3,}+$");
     private static final Pattern SPACES = Pattern.compile("\\s+");
     private static final Pattern FIRST_IMAGE = Pattern.compile("!\\[[^\\]]*]\\((/api/images/[^)\\s]+|https?://[^)\\s]+)\\)");
 

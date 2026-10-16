@@ -28,7 +28,7 @@ function useSubscribeToggle(toggle: () => Promise<ToggleResult>, onDone: (res: T
 }
 
 /** 블로그 구독/취소: 이 블로그의 모든 공개 다이어리를 받아 본다. 새 글은 구독 화면(/subscriptions)에 모인다 */
-export function SubscribeButton({ blog }: { blog: BlogDetail }) {
+export function SubscribeButton({ blog }: Readonly<{ blog: BlogDetail }>) {
   const queryClient = useQueryClient();
   const requireLogin = useRequireLogin();
   const on = !!blog.subscribedByMe;
@@ -58,7 +58,7 @@ export function SubscribeButton({ blog }: { blog: BlogDetail }) {
 }
 
 /** 다이어리 한 권 구독/취소. 내 다이어리 · 비공개 다이어리는 버튼이 없다 */
-export function DiarySubscribeButton({ blogId, diary }: { blogId: number; diary: Category }) {
+export function DiarySubscribeButton({ blogId, diary }: Readonly<{ blogId: number; diary: Category }>) {
   const queryClient = useQueryClient();
   const requireLogin = useRequireLogin();
   const on = !!diary.subscribedByMe;

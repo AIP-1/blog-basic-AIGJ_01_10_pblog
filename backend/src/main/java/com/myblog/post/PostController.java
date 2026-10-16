@@ -78,7 +78,7 @@ public class PostController {
     public Map<String, Object> detail(@PathVariable long id, @AuthenticationPrincipal Long viewer,
                                       HttpServletRequest req) {
         var p = queries.requireVisible(id, viewer);
-        views.record(p, viewer, (String) req.getAttribute(VisitorIdFilter.ATTRIBUTE));
+        views.recordView(p, viewer, (String) req.getAttribute(VisitorIdFilter.ATTRIBUTE));
         var blog = blogs.get(p.blogId());
         var n = queries.neighbors(p);
         Map<String, Object> m = new LinkedHashMap<>();

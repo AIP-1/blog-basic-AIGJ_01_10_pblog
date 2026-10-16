@@ -6,7 +6,8 @@ export function charCount(s: string): number {
 }
 
 /** CF-01-2: 앞뒤 공백 제거 후 형식 검사 */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 도메인은 점으로 나뉜 조각으로 본다. 점이 연달아 오거나 끝에 오면 틀린 주소다 (서버 EmailNormalizer와 같다)
+const EMAIL_RE = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -20,8 +21,8 @@ export function isValidNickname(nickname: string, min = 2, max = 10): boolean {
   return n.length >= min && n.length <= max && /^[가-힣A-Za-z0-9]+$/.test(n);
 }
 
-/** CF-01-4 허용 특수문자 */
-export const PASSWORD_SPECIALS = '!@#$%^&*()_+-=';
+/** CF-01-4 비밀번호에 쓸 수 있는 특수문자 목록 (비밀번호 값이 아니다) */
+export const ALLOWED_SPECIAL_CHARS = '!@#$%^&*()_+-=';
 const SPECIAL_RE = /[!@#$%^&*()_+\-=]/;
 const ALLOWED_RE = /^[A-Za-z\d!@#$%^&*()_+\-=]*$/;
 

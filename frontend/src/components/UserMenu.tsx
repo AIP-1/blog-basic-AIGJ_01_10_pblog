@@ -15,7 +15,7 @@ const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
 ];
 
 /** 사용자 메뉴: 이름·이메일 / 내 블로그 / 블로그 관리(새 댓글 수) / 책갈피 / 내 정보 / 화면 밝기 / 로그아웃 (데모 이름 메뉴) */
-export function UserMenu({ me }: { me: MeResponse }) {
+export function UserMenu({ me }: Readonly<{ me: MeResponse }>) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const { doLogout } = useAuth();
@@ -44,7 +44,7 @@ export function UserMenu({ me }: { me: MeResponse }) {
   const onLogout = async () => {
     setOpen(false);
     // 로그인이 필요한 화면이면 먼저 첫 화면으로 옮긴다 (CF-02-11)
-    if (isLoginRequiredPath(pathname)) navigate('/', { replace: true });
+    if (isLoginRequiredPath(pathname)) void navigate('/', { replace: true });
     await doLogout();
   };
 

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { errorMessage } from '../../api/client';
 import { deletePost, getCategories, getManagePosts } from '../../api/endpoints';
@@ -52,6 +53,87 @@ export function PostsPage() {
 
   const filtered = !!visibility || !!categoryId;
 
+  let content: ReactNode;
+  if (list.isPending) {
+    content = <Loading />;
+  } else if (list.error) {
+    content = <ErrorBox error={list.error} onRetry={() => void list.refetch()} />;
+  } else if (list.data.items.length === 0) {
+    content = (
+      <Empty>
+        {filtered ? (
+          <p>{MANAGE.noFilteredPosts}</p>
+        ) : (
+          <>
+            <p>{MANAGE.noPostsYet}</p>
+            <Link to="/write" className="btn btn--primary">
+              글쓰기
+            </Link>
+          </>
+        )}
+      </Empty>
+    );
+  } else {
+    content = (
+      <>
+        <table className="rtable">
+          <thead>
+            <tr>
+              <th>제목</th>
+              <th>다이어리</th>
+              <th>작성일</th>
+              <th>공개</th>
+              <th className="num">조회</th>
+              <th className="num">댓글</th>
+              <th>
+                <span className="sr-only">동작</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.data.items.map((p) => (
+              <tr key={p.id}>
+                <td data-label="제목" className="rtable__title">
+                  <Link to={`/posts/${p.id}`}>{p.title}</Link>
+                </td>
+                <td data-label="다이어리">{p.category.name}</td>
+                <td data-label="작성일">{formatDate(p.createdAt)}</td>
+                <td data-label="공개">
+                  {p.visibility === 'PUBLIC' ? '공개' : <VisBadge visibility={p.visibility} />}
+                </td>
+                <td data-label="조회" className="num">
+                  {p.viewCount.toLocaleString()}
+                </td>
+                <td data-label="댓글" className="num">
+                  {p.commentCount.toLocaleString()}
+                </td>
+                <td className="rtable__actions">
+                  <Link to={`/posts/${p.id}`} className="link-btn">
+                    보기
+                  </Link>
+                  <Link to={`/posts/${p.id}/edit`} className="link-btn">
+                    수정
+                  </Link>
+                  <button
+                    type="button"
+                    className="link-btn link-btn--danger"
+                    disabled={remove.isPending}
+                    onClick={() => {
+                      if (window.confirm(POST.deleteConfirm)) remove.mutate(p.id);
+                    }}
+                  >
+                    삭제
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <Pagination page={list.data.page} totalPages={list.data.totalPages} onChange={(p) => update('page', p > 1 ? String(p) : null)} />
+      </>
+    );
+  }
+
   return (
     <div>
       <div className="page-head-row">
@@ -83,81 +165,7 @@ export function PostsPage() {
         </label>
       </div>
 
-      {list.isPending ? (
-        <Loading />
-      ) : list.error ? (
-        <ErrorBox error={list.error} onRetry={() => void list.refetch()} />
-      ) : list.data.items.length === 0 ? (
-        <Empty>
-          {filtered ? (
-            <p>{MANAGE.noFilteredPosts}</p>
-          ) : (
-            <>
-              <p>{MANAGE.noPostsYet}</p>
-              <Link to="/write" className="btn btn--primary">
-                글쓰기
-              </Link>
-            </>
-          )}
-        </Empty>
-      ) : (
-        <>
-          <table className="rtable">
-            <thead>
-              <tr>
-                <th>제목</th>
-                <th>다이어리</th>
-                <th>작성일</th>
-                <th>공개</th>
-                <th className="num">조회</th>
-                <th className="num">댓글</th>
-                <th>
-                  <span className="sr-only">동작</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.data.items.map((p) => (
-                <tr key={p.id}>
-                  <td data-label="제목" className="rtable__title">
-                    <Link to={`/posts/${p.id}`}>{p.title}</Link>
-                  </td>
-                  <td data-label="다이어리">{p.category.name}</td>
-                  <td data-label="작성일">{formatDate(p.createdAt)}</td>
-                  <td data-label="공개">
-                    {p.visibility === 'PUBLIC' ? '공개' : <VisBadge visibility={p.visibility} />}
-                  </td>
-                  <td data-label="조회" className="num">
-                    {p.viewCount.toLocaleString()}
-                  </td>
-                  <td data-label="댓글" className="num">
-                    {p.commentCount.toLocaleString()}
-                  </td>
-                  <td className="rtable__actions">
-                    <Link to={`/posts/${p.id}`} className="link-btn">
-                      보기
-                    </Link>
-                    <Link to={`/posts/${p.id}/edit`} className="link-btn">
-                      수정
-                    </Link>
-                    <button
-                      type="button"
-                      className="link-btn link-btn--danger"
-                      disabled={remove.isPending}
-                      onClick={() => {
-                        if (window.confirm(POST.deleteConfirm)) remove.mutate(p.id);
-                      }}
-                    >
-                      삭제
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination page={list.data.page} totalPages={list.data.totalPages} onChange={(p) => update('page', p > 1 ? String(p) : null)} />
-        </>
-      )}
+      {content}
     </div>
   );
 }

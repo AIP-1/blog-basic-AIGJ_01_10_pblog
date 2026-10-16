@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type SubmitEvent } from 'react';
 import { errorMessage, isApiError } from '../api/client';
 import { signup } from '../api/endpoints';
 import { useConfig } from '../api/queries';
@@ -10,12 +10,18 @@ import { PasswordRules } from './PasswordRules';
 import { FieldError, FormMessage } from './Status';
 
 type Field = 'nickname' | 'email' | 'password' | 'passwordConfirm';
+
+/** 비었으면 '필수', 규칙에 어긋나면 그 안내, 맞으면 없음 */
+function fieldError(empty: boolean, ok: boolean, rule: string): string | undefined {
+  if (empty) return AUTH.required;
+  return ok ? undefined : rule;
+}
 const FIELD_ORDER: Field[] = ['nickname', 'email', 'password', 'passwordConfirm'];
 
 /**
  * 회원가입 (CF-01): 닉네임·이메일 → 인증번호 받기 → 확인 → 이메일 잠금 → 비밀번호·확인 → 가입하기
  */
-export function SignupForm({ onDone }: { onDone: (email: string) => void }) {
+export function SignupForm({ onDone }: Readonly<{ onDone: (email: string) => void }>) {
   const { limits } = useConfig();
   const ids = { nickname: useId(), email: useId(), password: useId(), passwordConfirm: useId() };
   const nicknameRef = useRef<HTMLInputElement>(null);
@@ -43,10 +49,10 @@ export function SignupForm({ onDone }: { onDone: (email: string) => void }) {
   const confirmOk = passwordConfirm.length > 0 && passwordConfirm === password;
 
   const clientErrors: Partial<Record<Field, string>> = {
-    nickname: !nickname.trim() ? AUTH.required : nicknameOk ? undefined : AUTH.nicknameRule,
-    email: !email.trim() ? AUTH.required : emailOk ? undefined : AUTH.emailInvalid,
-    password: !password ? AUTH.required : passwordOk ? undefined : AUTH.passwordRule,
-    passwordConfirm: !passwordConfirm ? AUTH.required : confirmOk ? undefined : AUTH.passwordMismatch,
+    nickname: fieldError(!nickname.trim(), nicknameOk, AUTH.nicknameRule),
+    email: fieldError(!email.trim(), emailOk, AUTH.emailInvalid),
+    password: fieldError(!password, passwordOk, AUTH.passwordRule),
+    passwordConfirm: fieldError(!passwordConfirm, confirmOk, AUTH.passwordMismatch),
   };
   const shownError = (f: Field): string | undefined => serverErrors[f] ?? (touched[f] ? clientErrors[f] : undefined);
   // 확인 칸은 입력하는 동안에도 불일치를 바로 알려 준다 (CF-01-5)
@@ -80,7 +86,7 @@ export function SignupForm({ onDone }: { onDone: (email: string) => void }) {
     if (first) focusField(first);
   };
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setTouched({ nickname: true, email: true, password: true, passwordConfirm: true });
     if (!canSubmit) {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { search } from '../api/endpoints';
 import { qk, useConfig } from '../api/queries';
@@ -45,6 +45,15 @@ export function SearchPage() {
     setParams(next);
   };
 
+  let resultContent: ReactNode;
+  if (result.isPending) {
+    resultContent = <Loading />;
+  } else if (result.error) {
+    resultContent = <ErrorBox error={result.error} onRetry={() => void result.refetch()} />;
+  } else {
+    resultContent = <Results data={result.data} type={type} onTypePage={setTypePage} q={q} />;
+  }
+
   return (
     <div className="with-aside">
       <div className="search-results">
@@ -62,13 +71,7 @@ export function SearchPage() {
             <p className="search-summary">
               <b>‘{q}’</b> {TYPES.find((t) => t.value === type)?.label} · {result.data ? EXPLORE.searchTotal(result.data.total) : ''}
             </p>
-            {result.isPending ? (
-              <Loading />
-            ) : result.error ? (
-              <ErrorBox error={result.error} onRetry={() => void result.refetch()} />
-            ) : (
-              <Results data={result.data} type={type} onTypePage={setTypePage} q={q} />
-            )}
+            {resultContent}
           </>
         )}
       </div>
@@ -84,12 +87,12 @@ function Results({
   type,
   q,
   onTypePage,
-}: {
+}: Readonly<{
   data: SearchResponse;
   type: SearchType;
   q: string;
   onTypePage: (t: SearchType, p?: number) => void;
-}) {
+}>) {
   if (data.total === 0) return <Empty>{EXPLORE.searchNoResult}</Empty>;
   const showBlogs = type === 'all' || type === 'blog';
   const showPosts = type === 'all' || type === 'post';
@@ -157,12 +160,12 @@ function SearchForm({
   type,
   maxLength,
   onSubmit,
-}: {
+}: Readonly<{
   initial: string;
   type: SearchType;
   maxLength: number;
   onSubmit: (q: string, type: SearchType) => void;
-}) {
+}>) {
   const [value, setValue] = useState(initial);
   const [scope, setScope] = useState<SearchType>(type);
   return (
