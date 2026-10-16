@@ -5,6 +5,7 @@ import { errorMessage } from '../../api/client';
 import { deleteComment, getManageComments } from '../../api/endpoints';
 import { qk } from '../../api/queries';
 import type { ManageCommentItem, Page } from '../../api/types';
+import { LockIcon } from '../../components/LockIcon';
 import { Pagination } from '../../components/Pagination';
 import { Empty, ErrorBox, Loading } from '../../components/Status';
 import { useToast } from '../../components/toastContext';
@@ -57,7 +58,12 @@ export function CommentsPage() {
               <div className="mcomment__head">
                 {c.isNew && <span className="badge badge--new">NEW</span>}
                 {c.reply && <span className="badge badge--muted">답글</span>}
-                {c.secret && <span className="badge badge--muted">🔒 {SOCIAL.secretComment}</span>}
+                {c.secret && (
+                  <span className="badge badge--muted comment__secret">
+                    <LockIcon />
+                    {SOCIAL.secretComment}
+                  </span>
+                )}
                 <span className={`comment__author${c.author ? '' : ' is-withdrawn'}`}>
                   {c.author ? c.author.nickname : SOCIAL.withdrawnUser}
                 </span>
