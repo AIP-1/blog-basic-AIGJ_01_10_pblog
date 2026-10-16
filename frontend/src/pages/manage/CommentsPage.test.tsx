@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithProviders } from '../../test/utils';
@@ -53,7 +53,7 @@ describe('댓글 관리', () => {
     ]);
     renderAt();
     expect(await screen.findByText('주인만 보세요')).toBeInTheDocument();
-    expect(screen.getByText('🔒 비밀 댓글')).toBeInTheDocument();
+    expect(within(screen.getByText('비밀 댓글', { selector: '.comment__secret' })).getByTestId('lock-icon')).toBeInTheDocument();
   });
 
   it('삭제를 확인하면 그 댓글만 목록에서 뺀다 (답글이 아니면 답글도 지워질 수 있다고 묻는다)', async () => {
