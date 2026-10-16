@@ -25,6 +25,7 @@ describe('입력 규칙', () => {
     expect(normalizeTag('#여행')).toBe('여행');
     expect(isValidTag('여행')).toBe(true);
     expect(isValidTag('a,b')).toBe(false);
+    expect(isValidTag('a'.repeat(15))).toBe(true); // 경계: 15자까지
     expect(isValidTag('a'.repeat(16))).toBe(false);
   });
 
