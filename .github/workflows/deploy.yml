@@ -75,3 +75,22 @@ jobs:
             chmod +x deploy/deploy.sh
             ./deploy/deploy.sh ~/myblog-deploy/myblog-image.tar.gz "$IMAGE_TAG"
             rm -f ~/myblog-deploy/myblog-image.tar.gz
+
+      # 스모크 테스트: 배포가 끝난 뒤 실제 주소(HTTPS)로 메인 화면과 API가 열리는지 확인한다.
+      # 서버 안 확인(deploy.sh)은 통과했는데 바깥 nginx · 인증서 · 프록시에서 막히는 경우를 잡는다
+      - name: 배포 후 실제 사이트 확인
+        env:
+          SITE: ${{ vars.SITE_URL || 'https://sagak.java21.net' }}
+        run: |
+          check() {
+            for i in 1 2 3 4 5; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$SITE$1" || true)
+              if [ "$code" = "200" ]; then echo "OK  $1"; return 0; fi
+              echo "$1 → $code, 5초 뒤 다시 ($i/5)"; sleep 5
+            done
+            echo "::error::$SITE$1 이 200으로 응답하지 않아요"; return 1
+          }
+          check /
+          check /api/topics
+          check /api/home
+          curl -sI "$SITE/" | grep -qi '^strict-transport-security' || { echo "::error::HSTS 헤더가 없어요"; exit 1; }
