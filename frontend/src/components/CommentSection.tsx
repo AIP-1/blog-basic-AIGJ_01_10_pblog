@@ -9,12 +9,18 @@ import { useAuth } from '../auth/context';
 import { formatDateTime } from '../lib/format';
 import { charCount } from '../lib/validation';
 import { SOCIAL } from '../messages';
+import { LockIcon } from './LockIcon';
 import { ErrorBox, FieldError, Loading } from './Status';
 import { useToast } from './toastContext';
 
 /** 비밀 댓글 표시 */
 function SecretBadge() {
-  return <span className="badge badge--muted comment__secret">🔒 {SOCIAL.secretComment}</span>;
+  return (
+    <span className="badge badge--muted comment__secret">
+      <LockIcon />
+      {SOCIAL.secretComment}
+    </span>
+  );
 }
 
 /** 댓글 입력칸. 원 댓글과 답글이 같이 쓴다. secretLocked면 비밀 댓글로만 쓴다(비밀 댓글의 답글). */
@@ -195,7 +201,14 @@ export function CommentSection({ post }: Readonly<{ post: PostDetail }>) {
           )}
         </span>
       </div>
-      <p className="comment__body">{c.hidden ? `🔒 ${SOCIAL.secretCommentHidden}` : c.body}</p>
+      {c.hidden ? (
+        <p className="comment__body comment__body--hidden">
+          <LockIcon size={14} />
+          {SOCIAL.secretCommentHidden}
+        </p>
+      ) : (
+        <p className="comment__body">{c.body}</p>
+      )}
       {!root && (c.replies?.length || replyTo === c.id) ? (
         <ul className="comment-replies">
           {c.replies?.map((r) => renderComment(r, c))}

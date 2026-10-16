@@ -1547,6 +1547,15 @@
 .comment.is-hidden .comment__body {
   color: var(--text-faint);
 }
+.comment__secret,
+.comment__body--hidden {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.lock-icon {
+  flex-shrink: 0;
+}
 .comment-login {
   margin-top: 20px;
   padding: var(--gap-4);

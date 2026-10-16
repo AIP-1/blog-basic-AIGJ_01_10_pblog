@@ -40,8 +40,9 @@ describe('비밀 댓글', () => {
       { path: '/api/posts/7/comments', body: [hidden(1), comment(2)] },
     ]);
     renderWithProviders(<CommentSection post={post} />);
-    const item = await screen.findByText('🔒 비밀 댓글입니다');
+    const item = await screen.findByText('비밀 댓글입니다');
     const li = item.closest('li') as HTMLElement;
+    expect(within(item).getByTestId('lock-icon')).toBeInTheDocument();
     expect(within(li).getByText('비밀 댓글')).toBeInTheDocument();
     expect(within(li).queryByText('탈퇴한 사용자')).toBeNull();
     expect(within(li).queryByRole('button', { name: '답글' })).toBeNull();
@@ -56,7 +57,7 @@ describe('비밀 댓글', () => {
     ]);
     renderWithProviders(<CommentSection post={post} />);
     expect(await screen.findByText('주인만 보세요')).toBeInTheDocument();
-    expect(screen.getByText('🔒 비밀 댓글')).toBeInTheDocument();
+    expect(within(screen.getByText('비밀 댓글', { selector: '.comment__secret' })).getByTestId('lock-icon')).toBeInTheDocument();
   });
 
   it('비밀 댓글을 고르면 secret 을 함께 보내고, 등록하면 선택을 푼다', async () => {
